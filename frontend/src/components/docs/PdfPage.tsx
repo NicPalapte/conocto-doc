@@ -43,6 +43,7 @@ function PdfPageView({
   marks,
   extra,
   reveal,
+  onRevealed,
   onSize,
   scrollBy,
   badge,
@@ -61,6 +62,8 @@ function PdfPageView({
   extra: readonly DocHighlightItem[];
   /** Stelle, die nach dem Zeichnen ins Bild soll; `nonce` macht sie wiederholbar. */
   reveal: { start: number; text: string; nonce: number } | null;
+  /** Sprungziel steht im Bild; kommt nach jedem Zurechtrücken. */
+  onRevealed: (nonce: number) => void;
   /** Verschiebt den Bildlauf um `dy` px — die Seite selbst kennt nur ihren Rahmen. */
   scrollBy: (dy: number) => void;
   onSize: (page: number, size: PageSize) => void;
@@ -310,9 +313,12 @@ function PdfPageView({
     const range = start < 0 ? null : rangeIn(layer, start, start + reveal.text.length);
     if (range === null || typeof range.getBoundingClientRect !== 'function') return;
     const rect = range.getBoundingClientRect();
+    // Seite weit weg und Textebene geleert: noch nicht melden, sonst bliebe der Sprung stehen.
+    if (rect.height === 0) return;
     const view = root.getBoundingClientRect();
     scrollBy(rect.top - view.top - view.height / 3);
-  }, [reveal, version, root, scrollBy]);
+    onRevealed(reveal.nonce);
+  }, [reveal, version, root, scrollBy, onRevealed]);
 
   const width = Math.floor(size.width * scale);
   const height = Math.floor(size.height * scale);
