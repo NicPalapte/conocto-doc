@@ -13,8 +13,10 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 - **Sprung zur Stelle:** Ein Klick auf eine verknüpfte Stelle (Graph, Positionskarte) öffnet
   das PDF jetzt direkt an dieser Stelle, auch wenn der Bereich „Dokument“ vorher zu war.
-  Bisher stand er dann auf Seite 1. Liegt die Stelle auf einer gerade ausgeblendeten Seite,
-  zeigt das PDF wieder alle Seiten.
+  Bisher stand er dann auf Seite 1, oder der erste Klick landete an einer anderen Stelle, weil
+  sich Seiten unterschiedlicher Größe (Pläne) beim Laden noch verschoben. Der Sprung rückt jetzt
+  nach, bis die Stelle wirklich im Bild ist. Liegt die Stelle auf einer gerade ausgeblendeten
+  Seite, zeigt das PDF wieder alle Seiten.
 - **Zurück zur Übersicht:** ist jetzt ein Pfeil ← ganz links statt ✕ rechts. So verwechselt man
   ihn nicht mehr mit „Bereich schließen“.
 - **Seitenangabe:** „3 / 14“ schwebt jetzt unten mittig über dem PDF statt in der Kopfleiste.

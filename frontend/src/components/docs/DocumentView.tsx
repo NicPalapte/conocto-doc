@@ -95,6 +95,8 @@ const TIGHT_BAR_PLANS = 520;
 const GUTTER = 16;
 /** So lange leuchtet die Stelle nach einem Sprung. */
 const FLASH_MS = 1800;
+/** So lange wartet ein Sprung höchstens darauf, dass seine Seite gezeichnet ist. */
+const JUMP_MAX_MS = 15_000;
 
 /** Auswahl im Dokument samt Seite; Grundlage für Menü und Verknüpfen. */
 interface Picked {
@@ -206,8 +208,6 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     left: number;
     top: number;
   } | null>(null);
-  /** Sprung, zu dem schon gescrollt ist. */
-  const [landed, setLanded] = useState(0);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const attachScroller = useCallback((el: HTMLDivElement | null): void => {
@@ -883,25 +883,44 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     if (scrollerRef.current !== null) scrollerRef.current.scrollTop += dy;
   }, []);
 
-  // Sprung von einer Verknüpfung (Positionskarte, Graph): hinscrollen, sobald die Seite
-  // steht — frisch geöffnet ist sie das erst nach dem Messen der Seitengröße. Die Stelle
-  // leuchtet kurz, dann ist der Sprung erledigt und wiederholt sich beim nächsten Öffnen nicht.
+  // Sprung von einer Verknüpfung (Positionskarte, Graph). Bis die Seite die Stelle ins Bild
+  // gerückt hat, wird nachgescrollt, sooft sich Seitengrößen ändern: frisch geöffnet steht
+  // erst Seite 1, die anderen werden beim Näherkommen gemessen und verschieben das Ziel
+  // (Nico, 07.11.2026: erster Klick landete woanders). Danach leuchtet die Stelle kurz, der
+  // Sprung ist erledigt und wiederholt sich beim nächsten Öffnen nicht.
   const target = jump !== null && jump.spot.doc === doc.id ? jump : null;
+  const [revealed, setRevealed] = useState(0);
+  // Die Seite meldet im Layout-Effekt, also vor dem Effekt hier: per Ref sofort sichtbar,
+  // sonst scrollte er die eben gerückte Stelle zurück an den Seitenanfang.
+  const revealedRef = useRef(0);
+  const onRevealed = useCallback((nonce: number): void => {
+    revealedRef.current = nonce;
+    setRevealed(nonce);
+  }, []);
   useEffect(() => {
-    if (target === null || target.nonce === landed) return;
+    if (target === null || target.nonce === revealedRef.current) return;
     // Andere Fassung des PDFs mit weniger Seiten: Ziel gibt es nicht, Sprung verwerfen.
     if (target.spot.page > pages) return doneJump(target.nonce);
     if (first === null) return;
     if (scrollerRef.current?.querySelector(`[data-page="${target.spot.page}"]`) == null) return;
     scrollToPage(target.spot.page);
-    setLanded(target.nonce);
-  }, [target, landed, first, shownPages, pages, scrollToPage, doneJump]);
-  const flash = target !== null && target.nonce === landed ? target : null;
+  }, [target, revealed, first, sizes, shownPages, pages, scrollToPage, doneJump]);
   useEffect(() => {
-    if (flash === null) return;
-    const timer = window.setTimeout(() => doneJump(flash.nonce), FLASH_MS);
+    if (target === null) return;
+    // Lädt die Seite nicht (defekt, sehr langsam), gibt der Sprung nach JUMP_MAX_MS auf.
+    const wait = target.nonce === revealed ? FLASH_MS : JUMP_MAX_MS;
+    const timer = window.setTimeout(() => doneJump(target.nonce), wait);
     return () => window.clearTimeout(timer);
-  }, [flash, doneJump]);
+  }, [target, revealed, doneJump]);
+  const flash = target;
+  // Neu je Seitengröße: rückt die Stelle nach, falls sich darüber noch etwas verschiebt.
+  const reveal = useMemo(
+    () =>
+      flash === null
+        ? null
+        : { start: flash.spot.start, text: flash.spot.text, nonce: flash.nonce, sizes },
+    [flash, sizes],
+  );
 
   // Aktuelle Seite aus der Scrolllage.
   useEffect(() => {
@@ -941,8 +960,9 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     const key = `${doc.id}:${needle}`;
     if (hits.length === 0 || scrolledFor.current === key) return;
     scrolledFor.current = key;
-    scrollToPage(hits[0].page);
-  }, [hits, needle, doc.id, scrollToPage]);
+    // Ein Sprung zu einer Stelle geht vor; sonst holt die Suche das PDF an den ersten Treffer.
+    if (target === null) scrollToPage(hits[0].page);
+  }, [hits, needle, doc.id, scrollToPage, target]);
   const stepHit = (step: number): void => {
     if (hits.length === 0) return;
     const next = (hitIndex + step + hits.length) % hits.length;
@@ -1272,11 +1292,8 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
                   root={scroller}
                   marks={byPage.get(page) ?? NO_MARKS}
                   extra={extras.get(page) ?? NO_EXTRA}
-                  reveal={
-                    flash !== null && flash.spot.page === page
-                      ? { start: flash.spot.start, text: flash.spot.text, nonce: flash.nonce }
-                      : null
-                  }
+                  reveal={reveal !== null && flash?.spot.page === page ? reveal : null}
+                  onRevealed={onRevealed}
                   onSize={onSize}
                   scrollBy={scrollBy}
                   badge={badge}
