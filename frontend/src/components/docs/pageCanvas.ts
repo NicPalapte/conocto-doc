@@ -28,30 +28,100 @@ export interface PageDrawing {
   readonly cancel: () => void;
 }
 
-/** Ausschnitt `region` der Seite bei Maßstab `scale` auf eine neue Fläche zeichnen. */
+/**
+ * Höchstens so viele Bilder gleichzeitig. Alle Seiten auf einmal (großes Fenster, Vollbild)
+ * lassen die sichtbare Seite warten, und zu viele große Flächen bleiben im Browser weiß.
+ */
+const MAX_RUNNING = 2;
+
+interface Job {
+  /** Kleiner = früher; 0 = sichtbar. Erst beim Start gefragt, die Lage ändert sich. */
+  readonly rank: () => number;
+  readonly start: () => void;
+}
+
+const waiting: Job[] = [];
+let running = 0;
+
+function pump(): void {
+  while (running < MAX_RUNNING && waiting.length > 0) {
+    let best = 0;
+    let bestRank = waiting[0].rank();
+    for (let i = 1; i < waiting.length; i += 1) {
+      const rank = waiting[i].rank();
+      if (rank < bestRank) {
+        best = i;
+        bestRank = rank;
+      }
+    }
+    const [job] = waiting.splice(best, 1);
+    running += 1;
+    job.start();
+  }
+}
+
+/**
+ * Ausschnitt `region` der Seite bei Maßstab `scale` auf eine neue Fläche zeichnen.
+ * Wartet in einer Schlange; `rank` (Abstand zum sichtbaren Bereich) bestimmt die Reihenfolge.
+ */
 export function drawRegion(
   proxy: PDFPageProxy,
   scale: number,
   ratio: number,
   region: Region,
+  rank: () => number = () => 0,
 ): PageDrawing {
-  const viewport = proxy.getViewport({ scale });
-  // Immer im Hauptfenster zeichnen: im zweiten Fenster (Entscheidung 0039) fehlen die
-  // Schriften, die PDF.js hier anmeldet.
-  const work = document.createElement('canvas');
-  work.width = Math.max(1, Math.floor(region.width * ratio));
-  work.height = Math.max(1, Math.floor(region.height * ratio));
-  const task = proxy.render({
-    canvas: work,
-    viewport,
-    transform: [ratio, 0, 0, ratio, -region.x * ratio, -region.y * ratio],
+  let cancelled = false;
+  let stop: (() => void) | null = null;
+  let job: Job | null = null;
+  let fail: (error: Error) => void = () => undefined;
+  const promise = new Promise<HTMLCanvasElement>((resolve, reject) => {
+    fail = reject;
+    job = {
+      rank,
+      start: () => {
+        const viewport = proxy.getViewport({ scale });
+        // Immer im Hauptfenster zeichnen: im zweiten Fenster (Entscheidung 0039) fehlen die
+        // Schriften, die PDF.js hier anmeldet. Fläche erst jetzt anlegen: spart Speicher.
+        const work = document.createElement('canvas');
+        work.width = Math.max(1, Math.floor(region.width * ratio));
+        work.height = Math.max(1, Math.floor(region.height * ratio));
+        const task = proxy.render({
+          canvas: work,
+          viewport,
+          transform: [ratio, 0, 0, ratio, -region.x * ratio, -region.y * ratio],
+        });
+        stop = () => {
+          task.cancel();
+          work.width = 0;
+          work.height = 0;
+        };
+        task.promise
+          .then(
+            () => (cancelled ? reject(new Error('abgebrochen')) : resolve(work)),
+            (error: unknown) => reject(error),
+          )
+          .finally(() => {
+            running -= 1;
+            pump();
+          });
+      },
+    };
+    waiting.push(job);
   });
+  pump();
   return {
-    promise: task.promise.then(() => work),
+    promise,
     cancel: () => {
-      task.cancel();
-      work.width = 0;
-      work.height = 0;
+      if (cancelled) return;
+      cancelled = true;
+      const index = job === null ? -1 : waiting.indexOf(job);
+      if (index >= 0) {
+        // Wartete noch: nie gestartet, also nur absagen.
+        waiting.splice(index, 1);
+        fail(new Error('abgebrochen'));
+      }
+      stop?.();
     },
   };
 }

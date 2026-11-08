@@ -18,6 +18,8 @@ import { bundleSpots, type Bundle } from '../../lib/docs/linkBundles';
 const NEAR = '800px 0px';
 /** So lange muss der Maßstab oder Bildlauf stehen, bis neu gezeichnet wird. */
 const SETTLE_MS = 140;
+/** Erst nach so langem Verdecken neu zeichnen; kurz (Vollbild, Tab-Wechsel) bleibt das Bild. */
+const HIDDEN_REPAINT_MS = 30_000;
 
 export interface PageSize {
   readonly width: number;
@@ -118,9 +120,51 @@ function PdfPageView({
     };
   }, [near, proxy, doc, page, onSize]);
 
+  // Liegt ein Fenster lange verdeckt, gibt der Browser den Speicher der Zeichenflächen frei;
+  // zurück kommen sie schwarz oder leer (Issue #191, PDF im eigenen Fenster). Dann neu zeichnen.
+  const drawn = useRef(false);
+  const [repaint, setRepaint] = useState(0);
+  // Abstand zum sichtbaren Bereich in px: die sichtbare Seite zeichnet zuerst.
+  const rankRef = useRef<() => number>(() => 0);
+  useEffect(() => {
+    rankRef.current = () => {
+      const frame = box.current;
+      if (frame === null || root === null) return 0;
+      const page = frame.getBoundingClientRect();
+      const view = root.getBoundingClientRect();
+      if (page.bottom < view.top) return view.top - page.bottom;
+      if (page.top > view.bottom) return page.top - view.bottom;
+      return 0;
+    };
+  }, [root]);
+  const rank = (): number => rankRef.current();
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas === null) return;
+    const host = canvas.ownerDocument;
+    const again = (): void => setRepaint((value) => value + 1);
+    let hiddenAt: number | null = host.visibilityState === 'visible' ? null : Date.now();
+    const onVisible = (): void => {
+      if (host.visibilityState !== 'visible') {
+        hiddenAt = Date.now();
+        return;
+      }
+      const long = hiddenAt !== null && Date.now() - hiddenAt >= HIDDEN_REPAINT_MS;
+      hiddenAt = null;
+      // Nicht jeder Browser meldet den freigegebenen Speicher über `isContextLost` —
+      // nach langem Verdecken deshalb immer neu zeichnen.
+      if (long && drawn.current) again();
+    };
+    canvas.addEventListener('contextrestored', again);
+    host.addEventListener('visibilitychange', onVisible);
+    return () => {
+      canvas.removeEventListener('contextrestored', again);
+      host.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+
   // Bild und Textebene zeichnen; neu bei anderem Maßstab. Beim Zoomen erst, wenn der
   // Maßstab kurz steht — bis dahin streckt der Browser das alte Bild.
-  const drawn = useRef(false);
   const [coarse, setCoarse] = useState(false);
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -134,12 +178,13 @@ function PdfPageView({
       const wanted = canvas.ownerDocument.defaultView?.devicePixelRatio ?? 1;
       const ratio = pixelRatio(viewport.width, viewport.height, wanted);
       setCoarse(ratio < wanted * 0.9);
-      drawing = drawRegion(proxy, scale, ratio, {
-        x: 0,
-        y: 0,
-        width: viewport.width,
-        height: viewport.height,
-      });
+      drawing = drawRegion(
+        proxy,
+        scale,
+        ratio,
+        { x: 0, y: 0, width: viewport.width, height: viewport.height },
+        rank,
+      );
       drawing.promise
         .then((work) => {
           if (!alive) return;
@@ -174,7 +219,7 @@ function PdfPageView({
       drawing?.cancel();
       textLayer?.cancel();
     };
-  }, [near, proxy, scale]);
+  }, [near, proxy, scale, repaint]);
 
   // Grobes Gesamtbild (großer Plan, hoher Zoom): sichtbaren Ausschnitt scharf darüber.
   useEffect(() => {
@@ -197,7 +242,7 @@ function PdfPageView({
       if (width <= 0 || height <= 0) return;
       const wanted = detail.ownerDocument.defaultView?.devicePixelRatio ?? 1;
       const region = { x, y, width, height };
-      drawing = drawRegion(proxy, scale, pixelRatio(width, height, wanted), region);
+      drawing = drawRegion(proxy, scale, pixelRatio(width, height, wanted), region, rank);
       drawing.promise
         .then((work) => {
           if (!alive) return;
@@ -224,7 +269,7 @@ function PdfPageView({
       drawing?.cancel();
       root.removeEventListener('scroll', later);
     };
-  }, [near, coarse, proxy, scale, root]);
+  }, [near, coarse, proxy, scale, root, repaint]);
 
   // Weit weg: Speicher freigeben, beim nächsten Mal neu zeichnen.
   useEffect(() => {

@@ -9,6 +9,23 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.54.0 — 07.11.2026 · Funde aus dem Praxistest, Runde 2
+
+- **Ganzes Dokument verknüpfen:** „Dokument verknüpfen“ in der Kopfzeile eines PDFs hängt
+  das ganze Dokument an Positionen, z. B. die AIA an die BIM-Position. Positionskarte und
+  Graph zeigen „ganzes Dokument“.
+- **Vor und zurück durch die eigenen Stellen:** ‹ und › in der Kopfzeile des PDFs springen
+  zur nächsten oder vorigen angestrichenen oder verknüpften Stelle.
+- **Mengen der Treffer:** Mit Suche oder Filter nennt die Tabelle die Mengen je Einheit,
+  z. B. für alle Fundamente. Bedarfs-, Wahl- und Zulagepositionen zählen nicht mit.
+- **„LPH 3-4“** wird nicht mehr als Pos. 3.4 vorgeschlagen. Zahlen mit Bindestrich gelten
+  nur mit „Pos.“ oder „OZ“ davor als OZ.
+- **PDF im eigenen Fenster** wird nach längerem Verdecken nicht mehr schwarz.
+- **PDF im Vollbild:** Die sichtbare Seite wird zuerst gezeichnet, höchstens zwei Seiten
+  gleichzeitig. Große Pläne erscheinen dadurch schneller und bleiben seltener weiß.
+- **„Kurze Tour“** fragt nicht mehr bei jedem Öffnen, wenn man sie gesehen oder weggeklickt hat.
+- **Legende im Graphen** ohne „N mit Hinweis“. Die Zahl steht schon oben links.
+
 ## 0.53.1 — 06.11.2026 · Dokument: Sprung zur Stelle, Kopfzeile
 
 - **Sprung zur Stelle:** Ein Klick auf eine verknüpfte Stelle (Graph, Positionskarte) öffnet

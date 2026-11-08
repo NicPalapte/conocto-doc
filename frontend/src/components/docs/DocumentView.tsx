@@ -45,8 +45,12 @@ import {
 import { useHostWindow } from '../common/hostWindow';
 import { useJumpToPosition } from '../common/useJumpToPosition';
 import {
+  isWholeDoc,
   marksOfDoc,
+  nextMarkIndex,
+  wholeDocSpot,
   pendingSuggestions,
+  steppableMarks,
   type DocMark,
   type DocSpot,
 } from '../../lib/docs/docNotes';
@@ -179,6 +183,7 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     donePlanWanted,
     error,
     jump,
+    jumpTo,
     doneJump,
     docSearch,
     setDocSearch,
@@ -902,8 +907,10 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     // Andere Fassung des PDFs mit weniger Seiten: Ziel gibt es nicht, Sprung verwerfen.
     if (target.spot.page > pages) return doneJump(target.nonce);
     if (first === null) return;
-    if (scrollerRef.current?.querySelector(`[data-page="${target.spot.page}"]`) == null) return;
-    scrollToPage(target.spot.page);
+    // Ganzes Dokument (Seite 0, Entscheidung 0099): an den Anfang.
+    const page = Math.max(1, target.spot.page);
+    if (scrollerRef.current?.querySelector(`[data-page="${page}"]`) == null) return;
+    scrollToPage(page);
   }, [target, revealed, first, sizes, shownPages, pages, scrollToPage, doneJump]);
   useEffect(() => {
     if (target === null) return;
@@ -1095,6 +1102,75 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
       </button>
     </>
   );
+  // Vor/zurück durch die eigenen Stellen dieses PDFs (Issue #191): angestrichen oder verknüpft,
+  // in Lesereihenfolge. Ohne letzte Wahl geht es von der aktuellen Seite aus.
+  // `from`: Seite beim Sprung — bis der Sprung angekommen ist, gilt die Wahl weiter.
+  const [markPick, setMarkPick] = useState<{ index: number; from: number } | null>(null);
+  const [seenMarks, setSeenMarks] = useState(marks);
+  if (seenMarks !== marks) {
+    setSeenMarks(marks);
+    setMarkPick(null);
+  }
+  const spots = steppableMarks(marks);
+  // Nach eigenem Blättern passt die letzte Wahl nicht mehr zur Seite — dann von der Seite aus.
+  const pickedSpot = markPick === null ? undefined : spots[markPick.index];
+  const markIndex =
+    markPick !== null &&
+    pickedSpot !== undefined &&
+    (pickedSpot.page === current || markPick.from === current)
+      ? markPick.index
+      : null;
+  // Das ganze Dokument mit Positionen verknüpfen (Issue #191, Entscheidung 0099).
+  const wholeLinks = marks.find(isWholeDoc)?.links ?? NO_IDS;
+  const wholeEl = (
+    <button
+      type="button"
+      title="Das ganze Dokument mit Positionen verknüpfen, ohne Textstelle"
+      onClick={(event) => {
+        const box = event.currentTarget.getBoundingClientRect();
+        setLinking({ spot: wholeDocSpot(doc.id), left: box.left, top: box.bottom + 4 });
+      }}
+      className={`${TOOL} ${wholeLinks.length > 0 ? 'border-cyan bg-cyanS text-cyan' : ''}`}
+    >
+      {wholeLinks.length > 0 ? `Dokument verknüpft · ${wholeLinks.length}` : 'Dokument verknüpfen'}
+    </button>
+  );
+  const stepMark = (step: 1 | -1): void => {
+    const next = nextMarkIndex(spots, current, markIndex, step);
+    if (next === null) return;
+    setMarkPick({ index: next, from: current });
+    jumpTo(spots[next]);
+  };
+  const markEls =
+    spots.length > 0 ? (
+      <span
+        role="group"
+        aria-label="Eigene Stellen"
+        className="flex shrink-0 items-center gap-[2px]"
+      >
+        <button
+          type="button"
+          aria-label="Vorige Stelle"
+          title="Vorige angestrichene oder verknüpfte Stelle"
+          onClick={() => stepMark(-1)}
+          className={TOOL}
+        >
+          ‹
+        </button>
+        <span className="font-mono text-[11.5px] text-mute">
+          {markIndex === null ? '–' : markIndex + 1} / {spots.length}
+        </span>
+        <button
+          type="button"
+          aria-label="Nächste Stelle"
+          title="Nächste angestrichene oder verknüpfte Stelle"
+          onClick={() => stepMark(1)}
+          className={TOOL}
+        >
+          ›
+        </button>
+      </span>
+    ) : null;
   const zoomEls = (
     <>
       <button
@@ -1202,12 +1278,15 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
           </button>
         )}
         <span className="flex-1" />
+        {!narrow && wholeEl}
         {!narrow && suggestEl}
+        {markEls}
         {!narrow && searchEl}
         {!narrow && stepEls}
         {!narrow && zoomEls}
         {narrow && (
           <MoreMenu>
+            {wholeEl}
             {searchEl}
             {stepEls}
             {zoomEls}
