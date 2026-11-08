@@ -284,6 +284,11 @@ export function marksOfDoc(notes: DocNotes, doc: string): DocMark[] {
  * (`from` `null`) zählt die Seite `page`: vor zur ersten Stelle ab dieser Seite, zurück zur
  * letzten davor. Am Ende geht es von vorn weiter. `null`, wenn es keine Stelle gibt.
  */
+/** Die Stellen zum Durchblättern: ohne das ganze Dokument, das keine Stelle im Text hat. */
+export function steppableMarks<T extends DocSpot>(marks: readonly T[]): T[] {
+  return marks.filter((mark) => !isWholeDoc(mark));
+}
+
 export function nextMarkIndex(
   marks: readonly DocSpot[],
   page: number,

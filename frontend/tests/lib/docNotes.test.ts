@@ -18,6 +18,7 @@ import {
   marksOfPosition,
   marksOnPage,
   isWholeDoc,
+  steppableMarks,
   mergeDocNotes,
   nextMarkIndex,
   paintDocMark,
@@ -305,7 +306,13 @@ describe('Ganzes Dokument verknüpfen (Issue #191, Entscheidung 0099)', () => {
 
   it('lässt sich nicht anstreichen und zählt nicht beim Blättern durch die Stellen', () => {
     expect(paintDocMark(EMPTY_DOC_NOTES, ganz, 'blau', 1)).toBe(EMPTY_DOC_NOTES);
-    expect(nextMarkIndex([], 1, null, 1)).toBeNull();
+    const stelle = { doc: 'doc-aia', page: 2, start: 5, text: 'Wort' };
+    const notes = linkDocMark(linkDocMark(EMPTY_DOC_NOTES, ganz, ['p1'], 1), stelle, ['p2'], 2);
+    expect(notes.marks).toHaveLength(2);
+    const spots = steppableMarks(notes.marks);
+    expect(spots.map((mark) => mark.page)).toEqual([2]);
+    expect(nextMarkIndex(spots, 1, null, 1)).toBe(0);
+    expect(nextMarkIndex(steppableMarks(notes.marks.filter(isWholeDoc)), 1, null, 1)).toBeNull();
   });
 
   it('nimmt Seite 0 nur ohne Text als ganzes Dokument', () => {
