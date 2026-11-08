@@ -15,12 +15,12 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0006 | [Fokus: ein LV vollständig verstehen](0006-fokus-lv-verstehen.md)                                              | akzeptiert                         | 2026-09-11 |
 | 0007 | [Previews werden beim Deploy aufgeräumt](0007-previews-im-deploy-aufraeumen.md)                                | akzeptiert                         | 2026-09-11 |
 | 0008 | [Positionen als Wolke statt als Ring](0008-graph-layout-positionswolke.md)                                     | ersetzt durch 0035                 | 2026-09-11 |
-| 0009 | [Demo-LV in der App](0009-demo-lv.md)                                                                          | akzeptiert                         | 2026-09-11 |
+| 0009 | [Demo-LV in der App](0009-demo-lv.md)                                                                          | teilweise ersetzt durch 0098       | 2026-09-11 |
 | 0010 | [Positions-Index und vorberechnete Aggregate](0010-positions-index-und-aggregate.md)                           | akzeptiert                         | 2026-09-14 |
 | 0011 | [Extraktoren und Fundstellen im Langtext](0011-extraktoren-und-fundstellen.md)                                 | ergänzt durch 0044                 | 2026-09-14 |
 | 0012 | [Prüfregeln: Norm-Verweise aus der Referenzdatei](0012-pruefregeln-und-norm-verweise.md)                       | akzeptiert                         | 2026-09-14 |
 | 0013 | [Eine Gewerk-Farbskala für alle Ansichten](0013-gewerk-farbskala.md)                                           | ergänzt durch 0043, 0044           | 2026-09-16 |
-| 0014 | [Zweites Demo-LV: Angebot mit Preisen](0014-demo-lv-mit-preisen.md)                                            | akzeptiert                         | 2026-09-16 |
+| 0014 | [Zweites Demo-LV: Angebot mit Preisen](0014-demo-lv-mit-preisen.md)                                            | teilweise ersetzt durch 0098       | 2026-09-16 |
 | 0015 | [Gewerk aus der Abschnittsüberschrift erben](0015-gewerk-aus-der-abschnittsueberschrift.md)                    | ersetzt durch 0044                 | 2026-09-16 |
 | 0016 | [Ähnliche Positionen: wie Bubble sie findet](0016-aehnlichkeit-und-cluster.md)                                 | akzeptiert                         | 2026-09-16 |
 | 0017 | [Keine Nutzungsmessung, nur ein Melde-Knopf](0017-keine-nutzungsmessung.md)                                    | ersetzt durch 0056                 | 2026-09-21 |
@@ -104,6 +104,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0095 | [Pläne im PDF messen: Ausnahme vom Feature-Freeze](0095-plaene-messen-im-pdf.md)                               | akzeptiert                         | 2026-11-05 |
 | 0096 | [Dokumentart der PDFs: erkennen, ändern, sortieren](0096-dokumentart-der-pdfs.md)                              | akzeptiert                         | 2026-11-06 |
 | 0097 | [PDF-Verknüpfungen im Graphen: Karten am Rand mit Linien](0097-pdf-verknuepfungen-im-graphen.md)               | akzeptiert                         | 2026-11-06 |
+| 0098 | [Ein Demo-Projekt mit PDFs, Verknüpfungen und Plan](0098-ein-demo-projekt.md)                                  | akzeptiert                         | 2026-11-08 |
 
 ## Wann schreibe ich eine neue Datei?
 

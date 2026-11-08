@@ -18,6 +18,7 @@ import {
   readNotesFile,
   MAX_NOTES_FILE_BYTES,
 } from '../../src/lib/notesFile';
+import { EMPTY_PLAN_NOTES, putMeasure } from '../../src/lib/docs/planNotes';
 import type { LVNode } from '../../src/types/lvNode';
 
 function pos(id: string, oz: string, hash: string, text: string): LVNode {
@@ -240,5 +241,32 @@ describe('mergeNotes', () => {
 
   it('lässt die Notizen unverändert, wenn nichts passt', () => {
     expect(mergeNotes(EMPTY_ANNOTATIONS, [])).toBe(EMPTY_ANNOTATIONS);
+  });
+});
+
+describe('Notiz-Datei · Messungen in Plänen (Entscheidung 0095)', () => {
+  it('Position nur mit Messung findet beim Laden ihre Messung wieder', () => {
+    const plans = putMeasure(EMPTY_PLAN_NOTES, {
+      doc: 'plan',
+      page: 1,
+      id: 'm1',
+      kind: 'flaeche',
+      points: [
+        [0, 0],
+        [10, 0],
+        [10, 10],
+        [0, 10],
+      ],
+      name: 'Raum',
+      links: ['p1'],
+      at: 1000,
+    });
+    const text = notesFileText({ ...EMPTY_ANNOTATIONS, plans }, ALT, QUELLE, 2000);
+    const file = parseNotesFile(text);
+    const { same } = matchNotes(file, ALT);
+    const merged = mergeNotes(EMPTY_ANNOTATIONS, same, file.dokumente, file.plaene);
+
+    expect(file.positionen.map((entry) => entry.hash)).toEqual(['h1']);
+    expect(merged.plans?.measures[0]?.links).toEqual(['p1']);
   });
 });

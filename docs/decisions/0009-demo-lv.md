@@ -1,6 +1,6 @@
 # 0008 – Demo-LV in der App
 
-- **Status:** akzeptiert
+- **Status:** teilweise ersetzt durch 0098 (ein Demo-Projekt)
 - **Datum:** 2026-09-11
 - **Betrifft:** Frontend (Startbildschirm), Auslieferung
 

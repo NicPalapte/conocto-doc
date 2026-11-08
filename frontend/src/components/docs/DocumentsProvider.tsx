@@ -40,6 +40,7 @@ import { createSuggester, type Suggester } from '../../lib/docs/suggester';
 import { suggestRulesOf } from '../../lib/docs/suggestRules';
 import type { PositionIndex } from '../../lib/index/positionIndex';
 import { firstPageOf, isPdfFile, openPdf, PdfOpenError, type OpenedPdf } from '../../lib/docs/pdf';
+import { takeDocs } from '../../lib/docs/pendingDocs';
 import { kindOfDoc, type DocKindOf, type DocSort } from '../../lib/docs/docList';
 import { guessDocKind, type DocKind, type DocKindGuess } from '@core';
 import { useAdmin } from '../../state/admin';
@@ -263,6 +264,14 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     },
     [load],
   );
+
+  // PDFs, die mit dem LV gekommen sind (Demo-Projekt, Entscheidung 0098), gleich öffnen —
+  // nach dem Rendern, nicht mitten im Effekt.
+  useEffect(() => {
+    if (lv === null) return;
+    const files = takeDocs(lv);
+    if (files.length > 0) queueMicrotask(() => void openFiles(files));
+  }, [lv, openFiles]);
 
   const close = useCallback((id: string): void => {
     const doc = docsRef.current.find((entry) => entry.id === id);

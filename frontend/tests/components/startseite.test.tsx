@@ -25,7 +25,7 @@ describe('Startseite', () => {
     render(<App />);
     expect(screen.getByText('Erlebe dein Leistungsverzeichnis wie nie zuvor.')).toBeInTheDocument();
     expect(screen.getByText('Eigenes LV öffnen')).toBeInTheDocument();
-    expect(screen.getByText('Demo-LV ansehen')).toBeInTheDocument();
+    expect(screen.getByText('Demo-Projekt ansehen')).toBeInTheDocument();
     // Die Zusage im Klartext, nicht nur in der Datenschutzerklärung (Issue #72).
     expect(screen.getByText('Die Datei bleibt im Browser')).toBeInTheDocument();
   });
