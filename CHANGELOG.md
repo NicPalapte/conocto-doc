@@ -21,6 +21,8 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 - **„LPH 3-4“** wird nicht mehr als Pos. 3.4 vorgeschlagen. Zahlen mit Bindestrich gelten
   nur mit „Pos.“ oder „OZ“ davor als OZ.
 - **PDF im eigenen Fenster** wird nach längerem Verdecken nicht mehr schwarz.
+- **PDF im Vollbild:** Die sichtbare Seite wird zuerst gezeichnet, höchstens zwei Seiten
+  gleichzeitig. Große Pläne erscheinen dadurch schneller und bleiben seltener weiß.
 - **„Kurze Tour“** fragt nicht mehr bei jedem Öffnen, wenn man sie gesehen oder weggeklickt hat.
 - **Legende im Graphen** ohne „N mit Hinweis“. Die Zahl steht schon oben links.
 
