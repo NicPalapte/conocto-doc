@@ -85,13 +85,13 @@ describe('Viewer', () => {
     expect(screen.queryByRole('group', { name: 'Kennzahlen' })).not.toBeInTheDocument();
   });
 
-  it('bietet zwei Demo-LVs zum Ausprobieren an — mit und ohne Preise', () => {
+  it('bietet genau ein Demo-Projekt zum Ausprobieren an', () => {
     render(<App />);
     // Zweiter Weg neben der eigenen Datei — das Laden selbst deckt
     // tests/pipeline/loadDemoLv.test.ts ab.
-    expect(screen.getByRole('button', { name: 'Demo mit Preisen' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Demo ohne Preise' })).toBeInTheDocument();
-    expect(screen.getByText('Demo-LV ansehen')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Demo-Projekt öffnen' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Demo ohne Preise' })).not.toBeInTheDocument();
+    expect(screen.getByText('Demo-Projekt ansehen')).toBeInTheDocument();
   });
 
   it('lädt eine echte GAEB-Datei und zeigt Graph und Filter', async () => {

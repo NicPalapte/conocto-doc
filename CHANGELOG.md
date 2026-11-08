@@ -9,6 +9,17 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.55.0 — 08.11.2026 · Ein Demo-Projekt
+
+- **Demo-Projekt:** Statt zwei Demo-LVs gibt es ein Projekt zum Ausprobieren: LV mit Preisen,
+  Baubeschreibung, Vorbemerkungen und ein Grundriss. Alles erfunden.
+- **Schon verknüpft:** Stellen in den PDFs hängen an Positionen. Weitere OZ und Mengen stehen
+  als Vorschläge bereit.
+- **Grundriss:** Maßstab 1:100 ist übernommen, eine Fläche und eine Länge sind gemessen und mit
+  Positionen verknüpft. Tabelle und Positionskarte zeigen die VA-Menge.
+- **Korrektur:** Eine Position, die nur eine Messung im Plan hatte, verlor sie beim „Notizen
+  laden“. Jetzt bleibt sie dran.
+
 ## 0.54.0 — 07.11.2026 · Funde aus dem Praxistest, Runde 2
 
 - **Ganzes Dokument verknüpfen:** „Dokument verknüpfen“ in der Kopfzeile eines PDFs hängt

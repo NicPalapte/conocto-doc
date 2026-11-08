@@ -1,6 +1,6 @@
 # 0014 – Zweites Demo-LV: Angebot mit Preisen
 
-- **Status:** akzeptiert
+- **Status:** teilweise ersetzt durch 0100 (ein Demo-Projekt)
 - **Datum:** 2026-09-16
 - **Betrifft:** Frontend, Demodaten
 

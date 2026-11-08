@@ -330,7 +330,16 @@ function readDocSpots(value: unknown, links: readonly string[]): DocMark[] {
     .filter((mark): mark is DocMark => mark !== null);
 }
 
-function readPosition(value: unknown, version: number): NotesFilePosition | null {
+/**
+ * `planned`: Hashes, an denen Messungen oder Mengen der Pläne hängen. Solche Einträge
+ * bleiben auch ohne eigene Notiz stehen, sonst fände ihre Messung beim Laden nicht zur
+ * Position zurück.
+ */
+function readPosition(
+  value: unknown,
+  version: number,
+  planned: ReadonlySet<string>,
+): NotesFilePosition | null {
   if (typeof value !== 'object' || value === null) return null;
   const raw = value as Record<string, unknown>;
   const hash = text(raw.hash);
@@ -372,7 +381,7 @@ function readPosition(value: unknown, version: number): NotesFilePosition | null
   const abgelehnt = readRejections(raw.abgelehnt, hash);
   const leer = fortschritt === null && !wichtig && anstreichungen.length === 0;
   const ohneDokument = dokumentstellen.length === 0 && abgelehnt.length === 0;
-  if (leer && verlauf.length === 0 && ohneDokument) return null;
+  if (leer && verlauf.length === 0 && ohneDokument && !planned.has(hash)) return null;
   return {
     hash,
     text: text(raw.text),
@@ -438,15 +447,17 @@ export function parseNotesFile(content: string): NotesFile {
   if (version !== 1 && version !== 2 && version !== 3 && version !== NOTES_FILE_VERSION) {
     throw new NotesFileError('Die Notiz-Datei stammt aus einer neueren Conocto-Version.');
   }
+  const plaene = fromStoredPlanNotes(file.plaene);
+  const planned = positionsWithVa(plaene);
   return {
     datei: text(file.datei),
     gesichert: at(file.gesichert),
     farben: toPaintNames(file.farben),
     positionen: file.positionen
-      .map((position) => readPosition(position, version))
+      .map((position) => readPosition(position, version, planned))
       .filter((position): position is NotesFilePosition => position !== null),
     dokumente: readDokumente(file),
-    plaene: fromStoredPlanNotes(file.plaene),
+    plaene,
   };
 }
 

@@ -1,13 +1,18 @@
-// Datei laden → lokale Pipeline anstoßen. Drag & Drop + Datei-Dialog, dazu die
-// mitgelieferten Demo-LVs zum Ausprobieren ohne eigene Datei — eines mit und
-// eines ohne Preise, weil beides in der Praxis vorkommt und die App beides
-// unterschiedlich zeigt (lib/pipeline/loadDemoLv.ts).
+// Datei laden → lokale Pipeline anstoßen. Drag & Drop + Datei-Dialog, dazu das
+// mitgelieferte Demo-Projekt zum Ausprobieren ohne eigene Datei: LV mit Preisen,
+// verknüpfte PDFs und ein Plan mit Messung (lib/pipeline/loadDemoLv.ts, Entscheidung 0100).
 // Die Datei verlässt den Browser nie: kein Upload. Die zuletzt geöffnete eigene
 // Datei bleibt in der IndexedDB dieses Browsers (Entscheidung 0046, lib/persist).
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ConoctoLogo } from '@conocto/design';
-import { DEMO_LVS, loadDemoLv, takeDemoFromUrl, type DemoLv } from '../../lib/pipeline/loadDemoLv';
+import {
+  DEMO_PROJEKT,
+  loadDemoLv,
+  takeDemoFromUrl,
+  type DemoProjekt,
+} from '../../lib/pipeline/loadDemoLv';
+import { handOverDocs } from '../../lib/docs/pendingDocs';
 import { GAEB_ENDUNGEN } from '@core';
 import { formatPositions, formatWhen } from '../../lib/format';
 import {
@@ -109,16 +114,30 @@ export function FileDropzone() {
     [dispatch],
   );
 
-  // „Demo starten" auf der Startseite verlinkt `doc/?demo=muster`: die Demo öffnet
+  /**
+   * Demo-Projekt öffnen: Notizen gehen, bleiben aber nur in der Sitzung (`persistId`
+   * fehlt). Die PDFs öffnet der Bereich „Dokument“, sobald das LV da ist.
+   */
+  const runDemo = useCallback(
+    (demo: DemoProjekt): void => {
+      void run(async (onNotice) => {
+        const { lv, annotations, docs } = await loadDemoLv(demo, { onNotice });
+        handOverDocs(lv, docs);
+        return { lv, annotations };
+      }).then((lv) => {
+        if (lv !== null) countEvent('demo-geoeffnet');
+      });
+    },
+    [run],
+  );
+
+  // „Demo starten" auf der Startseite verlinkt `doc/?demo=projekt`: die Demo öffnet
   // direkt. Der Parameter verschwindet beim ersten Lesen — im StrictMode-Doppellauf
   // findet der zweite Durchgang deshalb nichts mehr.
   useEffect(() => {
     const demo = takeDemoFromUrl();
-    if (demo === undefined) return;
-    void run(async (onNotice) => ({ lv: await loadDemoLv(demo, { onNotice }) })).then((lv) => {
-      if (lv !== null) countEvent('demo-geoeffnet');
-    });
-  }, [run]);
+    if (demo !== undefined) runDemo(demo);
+  }, [runDemo]);
 
   const handleFiles = useCallback(
     async (files: readonly File[]): Promise<void> => {
@@ -241,21 +260,14 @@ export function FileDropzone() {
     }
   };
 
-  const openDemo = (demo: DemoLv): void => {
-    if (loading) return;
-    // Demo-LVs: Notizen gehen, bleiben aber nur in der Sitzung (`persistId` fehlt).
-    void run(async (onNotice) => ({ lv: await loadDemoLv(demo, { onNotice }) })).then((lv) => {
-      if (lv !== null) countEvent('demo-geoeffnet');
-    });
+  const openDemo = (): void => {
+    if (!loading) runDemo(DEMO_PROJEKT);
   };
 
   const openDialog = (): void => {
     if (loading) return;
     inputRef.current?.click();
   };
-
-  const ohnePreise = DEMO_LVS.find((demo) => demo.id === 'muster') ?? DEMO_LVS[0];
-  const weitere = DEMO_LVS.filter((demo) => demo !== ohnePreise);
 
   return (
     <div className="start">
@@ -350,35 +362,20 @@ export function FileDropzone() {
             )}
           </div>
 
-          {/*
-            Erste Nutzer sind Bauunternehmer — ihre LVs kommen meist ohne
-            Preise. Deshalb ist die Demo ohne Preise der Hauptknopf.
-          */}
           <div className="start-card start-demo">
             <DemoArt />
-            <h2 className="start-title">Demo-LV ansehen</h2>
-            <span className="start-sub">{ohnePreise.title}</span>
-            <span className="start-meta">{ohnePreise.hint}</span>
+            <h2 className="start-title">Demo-Projekt ansehen</h2>
+            <span className="start-sub">{DEMO_PROJEKT.title}</span>
+            <span className="start-meta">{DEMO_PROJEKT.hint}</span>
             <span className="flex flex-wrap justify-center gap-[8px]">
               <button
                 type="button"
                 className="start-btn primary"
-                onClick={() => openDemo(ohnePreise)}
-                title={ohnePreise.hint}
+                onClick={openDemo}
+                title={DEMO_PROJEKT.hint}
               >
-                {ohnePreise.label}
+                {DEMO_PROJEKT.label}
               </button>
-              {weitere.map((demo) => (
-                <button
-                  key={demo.id}
-                  type="button"
-                  className="start-btn"
-                  onClick={() => openDemo(demo)}
-                  title={`${demo.title} — ${demo.hint}`}
-                >
-                  {demo.label}
-                </button>
-              ))}
             </span>
           </div>
         </div>

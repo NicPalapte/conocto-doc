@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "0.54.0",
+  "version": "0.55.0",
   "license": "UNLICENSED",
   "type": "module",
   "engines": {
@@ -13,6 +13,7 @@
     "typecheck": "tsc -b",
     "preview": "vite preview",
     "export-lv": "node scripts/exportLv.ts",
+    "demo-projekt": "node scripts/makeDemoProjekt.ts",
     "test": "vitest run",
     "lint": "eslint . && cd ../packages/core && eslint .",
     "format": "prettier --write \"{src,tests}/**/*.{ts,tsx,css}\" \"../packages/core/{src,tests}/**/*.ts\"",

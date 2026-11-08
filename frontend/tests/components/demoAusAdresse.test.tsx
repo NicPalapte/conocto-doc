@@ -1,5 +1,5 @@
-// „Demo starten" auf der Startseite verlinkt `doc/?demo=muster` (Entscheidung 0092):
-// Der Viewer öffnet die Demo ohne Preise direkt und nimmt den Parameter aus der Adresse.
+// „Demo starten" auf der Startseite verlinkt `doc/?demo=projekt` (Entscheidung 0092, 0100):
+// Der Viewer öffnet das Demo-Projekt direkt und nimmt den Parameter aus der Adresse.
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -18,16 +18,23 @@ afterEach(() => {
 });
 
 describe('Demo aus der Adresse', { timeout: 30_000 }, () => {
-  it('?demo=muster öffnet die Demo ohne Preise', async () => {
-    const bytes = demoBytes('bvbs-gaeb-musterdatei.x83');
+  it('?demo=projekt öffnet das Demo-Projekt', async () => {
+    // Nur das LV: Notizen und PDFs fehlen hier, die Demo öffnet trotzdem (mit Hinweis).
+    const bytes = demoBytes('conocto-demo-angebot.x84');
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => ({ ok: true, status: 200, arrayBuffer: async () => bytes })),
+      vi.fn(async (url: string) => ({
+        ok: url.includes('.x84'),
+        status: url.includes('.x84') ? 200 : 404,
+        arrayBuffer: async () => bytes,
+      })),
     );
-    window.history.replaceState(null, '', '/doc/?demo=muster');
+    window.history.replaceState(null, '', '/doc/?demo=projekt');
     render(<App />);
     await screen.findByRole('main', { name: 'Bubble-Graph' }, { timeout: 10_000 });
-    expect(screen.getAllByText('BVBS GAEB Musterdatei 3.3').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Conocto Demo-LV 3.3 · Angebot mit Preisen').length).toBeGreaterThan(
+      0,
+    );
     expect(window.location.search).toBe('');
   });
 });
