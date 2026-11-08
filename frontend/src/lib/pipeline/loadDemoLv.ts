@@ -1,5 +1,5 @@
 // Mitgeliefertes Demo-Projekt, damit sich die App ohne eigene Datei ausprobieren lässt
-// (Entscheidung 0098). Ein Projekt mit allem, was die App kann:
+// (Entscheidung 0100). Ein Projekt mit allem, was die App kann:
 //
 //  - **LV mit Preisen** — eigene Demodatei (x84) auf Basis der BVBS-Musterdatei, Preise und
 //    Zusatzpositionen erfunden (docs/decisions/0014-demo-lv-mit-preisen.md).

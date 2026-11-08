@@ -9,7 +9,7 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
-## 0.54.0 — 08.11.2026 · Ein Demo-Projekt
+## 0.55.0 — 08.11.2026 · Ein Demo-Projekt
 
 - **Demo-Projekt:** Statt zwei Demo-LVs gibt es ein Projekt zum Ausprobieren: LV mit Preisen,
   Baubeschreibung, Vorbemerkungen und ein Grundriss. Alles erfunden.
@@ -19,6 +19,38 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
   Positionen verknüpft. Tabelle und Positionskarte zeigen die VA-Menge.
 - **Korrektur:** Eine Position, die nur eine Messung im Plan hatte, verlor sie beim „Notizen
   laden“. Jetzt bleibt sie dran.
+
+## 0.54.0 — 07.11.2026 · Funde aus dem Praxistest, Runde 2
+
+- **Ganzes Dokument verknüpfen:** „Dokument verknüpfen“ in der Kopfzeile eines PDFs hängt
+  das ganze Dokument an Positionen, z. B. die AIA an die BIM-Position. Positionskarte und
+  Graph zeigen „ganzes Dokument“.
+- **Vor und zurück durch die eigenen Stellen:** ‹ und › in der Kopfzeile des PDFs springen
+  zur nächsten oder vorigen angestrichenen oder verknüpften Stelle.
+- **Mengen der Treffer:** Mit Suche oder Filter nennt die Tabelle die Mengen je Einheit,
+  z. B. für alle Fundamente. Bedarfs-, Wahl- und Zulagepositionen zählen nicht mit.
+- **„LPH 3-4“** wird nicht mehr als Pos. 3.4 vorgeschlagen. Zahlen mit Bindestrich gelten
+  nur mit „Pos.“ oder „OZ“ davor als OZ.
+- **PDF im eigenen Fenster** wird nach längerem Verdecken nicht mehr schwarz.
+- **PDF im Vollbild:** Die sichtbare Seite wird zuerst gezeichnet, höchstens zwei Seiten
+  gleichzeitig. Große Pläne erscheinen dadurch schneller und bleiben seltener weiß.
+- **„Kurze Tour“** fragt nicht mehr bei jedem Öffnen, wenn man sie gesehen oder weggeklickt hat.
+- **Legende im Graphen** ohne „N mit Hinweis“. Die Zahl steht schon oben links.
+
+## 0.53.1 — 06.11.2026 · Dokument: Sprung zur Stelle, Kopfzeile
+
+- **Sprung zur Stelle:** Ein Klick auf eine verknüpfte Stelle (Graph, Positionskarte) öffnet
+  das PDF jetzt direkt an dieser Stelle, auch wenn der Bereich „Dokument“ vorher zu war.
+  Bisher stand er dann auf Seite 1, oder der erste Klick landete an einer anderen Stelle, weil
+  sich Seiten unterschiedlicher Größe (Pläne) beim Laden noch verschoben. Der Sprung rückt jetzt
+  nach, bis die Stelle wirklich im Bild ist. Liegt die Stelle auf einer gerade ausgeblendeten
+  Seite, zeigt das PDF wieder alle Seiten.
+- **Zurück zur Übersicht:** ist jetzt ein Pfeil ← ganz links statt ✕ rechts. So verwechselt man
+  ihn nicht mehr mit „Bereich schließen“.
+- **Seitenangabe:** „3 / 14“ schwebt jetzt unten mittig über dem PDF statt in der Kopfleiste.
+- **Schmaler Bereich:** Dateiname, Dokumentart und Knöpfe schieben sich nicht mehr übereinander.
+  „Alle / Text / Pläne“ ist dort eine Auswahl, Suche, Zoom und Blättern liegen unter „⋯“; bei
+  PDFs mit Plänen schon etwas früher. Ein langer Dateiname wird gekürzt.
 
 ## 0.53.0 — 06.11.2026 · PDF-Verknüpfungen im Graphen
 

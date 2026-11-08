@@ -1,4 +1,4 @@
-# 0098 – Ein Demo-Projekt mit PDFs, Verknüpfungen und Plan
+# 0100 – Ein Demo-Projekt mit PDFs, Verknüpfungen und Plan
 
 - **Status:** akzeptiert
 - **Datum:** 2026-11-08

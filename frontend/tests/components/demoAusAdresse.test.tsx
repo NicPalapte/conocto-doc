@@ -1,4 +1,4 @@
-// „Demo starten" auf der Startseite verlinkt `doc/?demo=projekt` (Entscheidung 0092, 0098):
+// „Demo starten" auf der Startseite verlinkt `doc/?demo=projekt` (Entscheidung 0092, 0100):
 // Der Viewer öffnet das Demo-Projekt direkt und nimmt den Parameter aus der Adresse.
 
 import { readFileSync } from 'node:fs';

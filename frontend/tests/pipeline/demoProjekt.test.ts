@@ -1,4 +1,4 @@
-// Demo-Projekt (Entscheidung 0098): Passen Notiz-Datei, PDFs und LV zusammen? Liest die
+// Demo-Projekt (Entscheidung 0100): Passen Notiz-Datei, PDFs und LV zusammen? Liest die
 // PDFs mit PDF.js wie die App und rechnet die Vorschläge wie der Bereich „Dokument“.
 // Fällt auf, wenn jemand LV, PDFs oder Notizen ändert, ohne `npm run demo-projekt`.
 

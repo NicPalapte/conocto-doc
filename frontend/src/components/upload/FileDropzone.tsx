@@ -1,6 +1,6 @@
 // Datei laden → lokale Pipeline anstoßen. Drag & Drop + Datei-Dialog, dazu das
 // mitgelieferte Demo-Projekt zum Ausprobieren ohne eigene Datei: LV mit Preisen,
-// verknüpfte PDFs und ein Plan mit Messung (lib/pipeline/loadDemoLv.ts, Entscheidung 0098).
+// verknüpfte PDFs und ein Plan mit Messung (lib/pipeline/loadDemoLv.ts, Entscheidung 0100).
 // Die Datei verlässt den Browser nie: kein Upload. Die zuletzt geöffnete eigene
 // Datei bleibt in der IndexedDB dieses Browsers (Entscheidung 0046, lib/persist).
 
