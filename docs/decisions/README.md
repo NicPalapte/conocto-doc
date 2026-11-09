@@ -108,6 +108,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0099 | [Ganzes Dokument mit Positionen verknüpfen](0099-ganzes-dokument-verknuepfen.md)                               | akzeptiert                         | 2026-11-07 |
 | 0100 | [Ein Demo-Projekt mit PDFs, Verknüpfungen und Plan](0100-ein-demo-projekt.md)                                  | akzeptiert                         | 2026-11-08 |
 | 0101 | [„Arbeitsstand“ statt „Notizen“ für die gesicherte Datei](0101-arbeitsstand-statt-notizen.md)                  | akzeptiert                         | 2026-11-09 |
+| 0102 | [Ganze Kopfleiste im eigenen Fenster](0102-kopfleiste-im-eigenen-fenster.md)                                   | akzeptiert                         | 2026-11-09 |
 
 ## Wann schreibe ich eine neue Datei?
 

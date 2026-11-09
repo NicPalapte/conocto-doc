@@ -6,6 +6,7 @@
 import { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useDismiss } from '../common/useDismiss';
+import { useHostWindow } from '../common/hostWindow';
 
 interface Kuerzel {
   keys: readonly string[];
@@ -59,6 +60,8 @@ function groups(mod: string): readonly { title: string; items: readonly Kuerzel[
 export function ShortcutsDialog({ onClose }: { onClose: () => void }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   // Capture-Phase wie beim Melde-Fenster: Escape schließt nur dieses Fenster.
+  // Im ausgelagerten Fenster öffnet der Dialog dort, wo geklickt wurde.
+  const host = useHostWindow();
   useDismiss(dialogRef, true, onClose);
 
   return createPortal(
@@ -113,6 +116,6 @@ export function ShortcutsDialog({ onClose }: { onClose: () => void }) {
         </div>
       </div>
     </div>,
-    document.body,
+    host.document.body,
   );
 }

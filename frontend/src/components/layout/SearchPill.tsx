@@ -6,8 +6,17 @@
 // (docs/decisions/0058-nicht-treffer-in-der-suche.md). Er regelt auch, ob ein
 // hervorgehobener Abschnitt die übrigen blass zeigt oder ausblendet, und erscheint
 // deshalb auch dann (Entscheidung 0078).
+// Im sehr schmalen ausgelagerten Fenster (`collapsible`) steht nur eine Lupe; die Leiste
+// fährt beim Darüberfahren oder Antippen über die Kopfleiste aus (Entscheidung 0102).
 
-import { useEffect, useRef, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { useHostWindow } from '../common/hostWindow';
 import { useSearchDraft } from '../common/useSearchDraft';
 import { PROGRESS_INFO } from '../../lib/annotations';
@@ -17,6 +26,21 @@ import { useViewer, useViewerDispatch, type HideMode } from '../../state/viewer'
 
 /** So viele Filter-Chips passen in die Suche; der Rest steht als „+N". */
 const MAX_CHIPS = 2;
+
+/** Fensterbreite, unter der die Suche im ausgelagerten Fenster einklappt. */
+export const COLLAPSE_BELOW = 560;
+
+/** Ist das Fenster schmaler als `COLLAPSE_BELOW`? Folgt Größenänderungen. */
+function useNarrow(host: Window, enabled: boolean): boolean {
+  const subscribe = useCallback(
+    (onChange: () => void): (() => void) => {
+      host.addEventListener('resize', onChange);
+      return () => host.removeEventListener('resize', onChange);
+    },
+    [host],
+  );
+  return useSyncExternalStore(subscribe, () => enabled && host.innerWidth < COLLAPSE_BELOW);
+}
 
 interface ActiveChip {
   key: string;
@@ -154,6 +178,8 @@ export interface SearchPillProps {
   className?: string;
   /** Für die Tour: nur die Suche in der Kopfleiste. */
   tour?: boolean;
+  /** Ausgelagertes Fenster: schmal nur eine Lupe, die beim Darüberfahren ausfährt. */
+  collapsible?: boolean;
 }
 
 export function SearchPill({
@@ -161,6 +187,7 @@ export function SearchPill({
   onFilterOpen,
   className = '',
   tour = false,
+  collapsible = false,
 }: SearchPillProps) {
   const { view, active } = useViewer();
   const spotlighted = view.graph.layout === 'lv' && view.graph.spotlight !== null;
@@ -168,6 +195,20 @@ export function SearchPill({
   const inputRef = useRef<HTMLInputElement>(null);
   const [draft, changeSearch] = useSearchDraft();
   const chips = useActiveChips();
+  const narrow = useNarrow(host, collapsible);
+  /** Schmal: Maus darüber bzw. Fokus im Feld fährt die Leiste aus. */
+  const [hover, setHover] = useState(false);
+  const [focused, setFocused] = useState(false);
+  /** Antippen der Lupe: sobald das Feld steht, bekommt es den Fokus. */
+  const focusOnMount = useRef(false);
+  const expanded = !narrow || hover || focused;
+  const setInput = useCallback((element: HTMLInputElement | null): void => {
+    inputRef.current = element;
+    if (element !== null && focusOnMount.current) {
+      focusOnMount.current = false;
+      element.focus();
+    }
+  }, []);
 
   // "/" und Strg/Cmd + K holen die Suche — im Fenster, in dem sie steht. Strg K greift
   // auch in Eingabefeldern: wer es drückt, will suchen; "/" dagegen ist dort ein Zeichen.
@@ -179,17 +220,64 @@ export function SearchPill({
       const imFeld = tag === 'INPUT' || tag === 'TEXTAREA';
       if (!strgK && (event.key !== '/' || imFeld)) return;
       event.preventDefault();
-      inputRef.current?.focus();
-      inputRef.current?.select();
+      if (inputRef.current === null) {
+        focusOnMount.current = true;
+        setFocused(true);
+        return;
+      }
+      inputRef.current.focus();
+      inputRef.current.select();
     };
     host.addEventListener('keydown', onKey);
     return () => host.removeEventListener('keydown', onKey);
   }, [host]);
 
-  return (
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        aria-label="Suche aufklappen"
+        title={draft === '' ? 'Suche' : draft}
+        onPointerEnter={(event) => {
+          if (event.pointerType === 'mouse') setHover(true);
+        }}
+        onClick={() => {
+          focusOnMount.current = true;
+          setFocused(true);
+        }}
+        // Nur so breit wie nötig: die Lupe soll Platz machen, nicht die Zeile füllen.
+        className="mx-auto flex h-[36px] min-w-0 max-w-[160px] cursor-pointer items-center gap-[6px] rounded-[var(--r-pill)] border border-line bg-surface px-[12px] font-mono text-[12px] text-ink shadow-[var(--shadow-sm)] hover:bg-sunken"
+      >
+        <span className="text-[14px] text-mute" aria-hidden="true">
+          ⌕
+        </span>
+        <span className="truncate">{draft}</span>
+      </button>
+    );
+  }
+
+  // Schmal und ausgefahren: über die ganze Kopfleiste, bis Maus und Fokus gehen.
+  const overlay = narrow
+    ? 'absolute inset-x-[8px] top-[8px] z-[30] !border-accent !shadow-[0_0_0_3px_var(--accent-soft)]'
+    : '';
+
+  const pill = (
     <div
       data-tour={tour ? 'search' : undefined}
-      className={`flex h-[36px] min-w-0 items-center gap-[6px] overflow-hidden rounded-[var(--r-pill)] border border-line bg-surface pl-[12px] pr-[6px] shadow-[var(--shadow-sm)] focus-within:border-accent focus-within:shadow-[0_0_0_3px_var(--accent-soft)] ${className}`}
+      onPointerLeave={(event) => {
+        if (event.pointerType === 'mouse') setHover(false);
+      }}
+      onFocus={() => setFocused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);
+      }}
+      onKeyDown={(event) => {
+        if (narrow && event.key === 'Escape') {
+          (event.target as HTMLElement).blur();
+          setHover(false);
+        }
+      }}
+      className={`flex h-[36px] min-w-0 items-center gap-[6px] overflow-hidden rounded-[var(--r-pill)] border border-line bg-surface pl-[12px] pr-[6px] shadow-[var(--shadow-sm)] focus-within:border-accent focus-within:shadow-[0_0_0_3px_var(--accent-soft)] ${narrow ? overlay : className}`}
     >
       <span className="text-[14px] text-mute" aria-hidden="true">
         ⌕
@@ -220,7 +308,7 @@ export function SearchPill({
         </button>
       )}
       <input
-        ref={inputRef}
+        ref={setInput}
         value={draft}
         onChange={(event) => changeSearch(event.target.value)}
         placeholder="Positionen, OZ, Langtext durchsuchen"
@@ -260,5 +348,13 @@ export function SearchPill({
         + Filter
       </button>
     </div>
+  );
+  if (!narrow) return pill;
+  return (
+    <>
+      {/* Hält den Platz der Lupe, damit die Kopfleiste beim Ausfahren nicht springt. */}
+      <span aria-hidden="true" className="mx-auto h-[36px] w-[44px]" />
+      {pill}
+    </>
   );
 }

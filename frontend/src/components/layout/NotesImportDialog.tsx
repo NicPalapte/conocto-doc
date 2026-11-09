@@ -4,6 +4,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDismiss } from '../common/useDismiss';
+import { useHostWindow } from '../common/hostWindow';
 import { formatAt } from '../../lib/annotations';
 import { matchNotes, mergeNotes, type NotesFile, type NotesMatch } from '../../lib/notesFile';
 import { countEvent } from '../../lib/usage/count';
@@ -63,6 +64,8 @@ export function NotesImportDialog({ file, fileName, onClose }: Props) {
   const { adopt: adoptPaintNames } = usePaintNames();
   const dispatch = useViewerDispatch();
   const dialogRef = useRef<HTMLDivElement>(null);
+  // Im ausgelagerten Fenster öffnet der Dialog dort, wo geklickt wurde.
+  const host = useHostWindow();
   useDismiss(dialogRef, true, onClose);
   const matching = useMemo(() => matchNotes(file, index.nodes), [file, index]);
   const [mitUmnummerierten, setMitUmnummerierten] = useState(true);
@@ -214,6 +217,6 @@ export function NotesImportDialog({ file, fileName, onClose }: Props) {
         </div>
       </div>
     </div>,
-    document.body,
+    host.document.body,
   );
 }

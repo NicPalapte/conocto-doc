@@ -5,8 +5,10 @@
 // hauptscreen.md): kein Ansichtsumschalter mehr, die Filter wählt man in der
 // Filterleiste darunter („+ Filter", Issue #154), hier stehen sie nur als
 // entfernbare Chips — auch die eigenen Marker.
-// Die Suchleiste selbst ist `SearchPill` — sie steht auch in Graph und Tabelle im
-// eigenen Browserfenster.
+// Die Suchleiste selbst ist `SearchPill`. Die ganze Kopfleiste steht auch in Graph,
+// Tabelle und Dokument im eigenen Browserfenster (`popout`, Entscheidung 0102): gleicher
+// Zustand, eigene Filterleiste, Dialoge öffnen dort; Tour und Kurzumfrage bleiben im
+// Hauptfenster, „Ansicht“ ordnet immer das Hauptfenster.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ReportDialog } from '../report/ReportDialog';
@@ -21,12 +23,21 @@ import { useOptionalDocuments } from '../docs/DocumentsProvider';
 import { NotesFileError, notesCount, readNotesFile, type NotesFile } from '../../lib/notesFile';
 import { useAdmin } from '../../state/admin';
 import { useSurvey } from '../../state/survey';
+import { useHostWindow } from '../common/hostWindow';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
 
 const GHOST =
   'inline-flex h-[32px] shrink-0 cursor-pointer items-center gap-[6px] rounded-[var(--r-sm)] border-none bg-transparent px-[10px] font-mono text-[12px] text-dim hover:bg-sunken hover:text-ink';
 
-export function TopBar() {
+export interface TopBarProps {
+  /** Kopf eines ausgelagerten Fensters (Graph, Tabelle, Dokument). */
+  popout?: boolean;
+  /** Filterleiste des ausgelagerten Fensters; im Hauptfenster gilt `view.filterBar`. */
+  filterOpen?: boolean;
+  onFilterOpen?: (open: boolean) => void;
+}
+
+export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen }: TopBarProps) {
   const { lv, annotations, view } = useViewer();
   const dispatch = useViewerDispatch();
   const survey = useSurvey();
@@ -39,8 +50,10 @@ export function TopBar() {
   /** „Admin-Werkzeuge" aus dem Logo-Menü (Entscheidung 0053). */
   const [adminOffen, setAdminOffen] = useState(false);
   const { unlocked: adminFrei, ruleRequest, requestRule } = useAdmin();
-  // „Als Regel…" im Langtext öffnet den Regeleditor (Entscheidung 0081).
-  if (ruleRequest !== null && !adminOffen) setAdminOffen(true);
+  // „Als Regel…" im Langtext öffnet den Regeleditor (Entscheidung 0081) — nur im
+  // Hauptfenster, sonst ginge er in jedem ausgelagerten Fenster mit auf.
+  if (!popout && ruleRequest !== null && !adminOffen) setAdminOffen(true);
+  const host = useHostWindow();
   /** „Arbeitsstand laden…": versteckter Dateidialog, danach das Ergebnisfenster (0061). */
   const notizDateiRef = useRef<HTMLInputElement>(null);
   const pdfDateiRef = useRef<HTMLInputElement>(null);
@@ -70,13 +83,17 @@ export function TopBar() {
       event.preventDefault();
       setKuerzel(true);
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+    host.addEventListener('keydown', onKey);
+    return () => host.removeEventListener('keydown', onKey);
+  }, [host]);
 
   const loaded = lv !== null;
 
-  const filterOpen = view.filterBar;
+  const filterOpen = ownFilterOpen ?? view.filterBar;
+  const setFilterOpen = (open: boolean): void => {
+    if (onFilterOpen !== undefined) onFilterOpen(open);
+    else dispatch({ type: 'filterBar', open });
+  };
 
   return (
     <>
@@ -86,8 +103,8 @@ export function TopBar() {
         <AboutMenu
           onFehlerMelden={() => setMelden(true)}
           onTastenkuerzel={() => setKuerzel(true)}
-          onTour={loaded ? () => dispatch({ type: 'tour', step: 0 }) : undefined}
-          onFeedback={loaded ? survey.show : undefined}
+          onTour={loaded && !popout ? () => dispatch({ type: 'tour', step: 0 }) : undefined}
+          onFeedback={loaded && !popout ? survey.show : undefined}
           onAnderesLv={loaded ? () => dispatch({ type: 'clear' }) : undefined}
           mitnehmen={loaded ? mitnehmen : undefined}
           onPdfHinzufuegen={
@@ -138,7 +155,7 @@ export function TopBar() {
             {/* Einzige h1 der Seite, auch auf schmalen Bildschirmen, wo der
                 sichtbare Titel ausgeblendet ist: Bildschirmleser springen über
                 Überschriften. */}
-            <h1 className="sr-only">{lv.projectName ?? lv.fileName}</h1>
+            {!popout && <h1 className="sr-only">{lv.projectName ?? lv.fileName}</h1>}
             {/* Datei: begrenzt und abgeschnitten — reale Projektnamen sind lang. */}
             <div className="hidden min-w-0 max-w-[300px] shrink flex-col border-l border-line pl-[12px] leading-tight lg:flex">
               <b
@@ -155,9 +172,10 @@ export function TopBar() {
             </div>
 
             <SearchPill
-              tour
+              tour={!popout}
+              collapsible={popout}
               filterOpen={filterOpen}
-              onFilterOpen={(open) => dispatch({ type: 'filterBar', open })}
+              onFilterOpen={setFilterOpen}
               className="mx-auto max-w-[620px] flex-1"
             />
 

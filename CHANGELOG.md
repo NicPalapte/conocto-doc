@@ -9,6 +9,15 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.56.0 — 09.11.2026 · Ganzer Kopf im eigenen Fenster
+
+- **Eigenes Fenster:** Graph, Tabelle und Dokument haben dort jetzt den ganzen Kopf: Logo-Menü,
+  Suchleiste mit Filtern, „Ansicht“ und „LV schließen“. Vorher gab es nur die Suchleiste,
+  beim Dokument gar keine.
+- **Sehr schmales Fenster:** Die Suche ist nur eine Lupe und fährt beim Darüberfahren oder
+  Antippen aus.
+- **Dialoge** wie „Fehler melden“ öffnen im Fenster, in dem man klickt.
+
 ## 0.55.1 — 09.11.2026 · Arbeitsstand statt Notizen
 
 - **Neuer Name:** „Notizen sichern“ und „Notizen laden…“ heißen jetzt „Arbeitsstand sichern“
