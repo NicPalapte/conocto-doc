@@ -44,7 +44,7 @@ import { attrString, attrStrings } from '../../lib/attributes';
 import { facetOptionLabel, FACETS_BY_ID } from '../../lib/facets';
 import { formatCount, formatEuro, formatNumber } from '../../lib/format';
 import { createPositionFilter } from '../../lib/index/positionIndex';
-import { flat, searchSnippet } from '../../lib/searchSnippet';
+import { searchSnippet } from '../../lib/searchSnippet';
 import { headingOf } from '../../lib/tree/heading';
 import { sumsByUnit } from '../../lib/units';
 import {
@@ -66,7 +66,7 @@ import {
 import { EMPTY_PLAN_NOTES, positionsWithVa, vaOf } from '../../lib/docs/planNotes';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
 import type { LVNode, PositionSummary } from '../../types/lvNode';
-import type { PositionType } from '@core';
+import { searchKeyOf, type PositionType } from '@core';
 
 type SortKey = 'oz' | 'shortText' | 'positionsart' | 'beton' | 'unit' | 'quantity' | 'unitPrice';
 
@@ -136,14 +136,16 @@ function TypeMark({ type }: { type: PositionType }) {
 function ShortTextCell({ position, query }: { position: PositionSummary; query: string }) {
   const { shortText, longText } = position;
   const snippet =
-    query === '' || shortText.toLowerCase().includes(query) ? null : searchSnippet(longText, query);
+    query === '' || searchKeyOf(shortText).key.includes(query)
+      ? null
+      : searchSnippet(longText, query);
   return (
     <>
       <TypeMark type={position.positionType} />
       <Highlighted text={shortText} query={query} />
       {snippet !== null && (
         <span className="ml-[8px] font-normal text-mute" title="Treffer im Langtext">
-          <Highlighted text={snippet} query={flat(query)} />
+          <Highlighted text={snippet} query={query} />
         </span>
       )}
     </>

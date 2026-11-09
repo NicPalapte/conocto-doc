@@ -2,9 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { docNeedleOf, hitsInPage } from '../../src/lib/docs/docSearch';
 
 describe('docSearch', () => {
-  it('fasst Leerraum zusammen, ignoriert Groß/klein und zu kurze Begriffe', () => {
-    expect(docNeedleOf('  WU-\n Beton ')).toBe('wu- beton');
+  it('lässt Leerraum weg, ignoriert Groß/klein und zu kurze Begriffe', () => {
+    expect(docNeedleOf('  WU- Beton ')).toBe('wu-beton');
     expect(docNeedleOf('a')).toBe('');
+  });
+
+  it('findet ein Wort über einen Trennstrich am Zeilenende (PDF.js-Zeilenende)', () => {
+    // „Stahl-“ beendet die Zeile, „beton“ hängt ohne Leerzeichen dran.
+    expect(hitsInPage('Die Stahl-beton-Decke', 'stahlbeton', 1, new Set([10]))).toEqual([
+      { page: 1, start: 4, text: 'Stahl-beton' },
+    ]);
+    expect(hitsInPage('Die Stahl-beton-Decke', 'stahlbeton', 1)).toEqual([]);
   });
 
   it('findet alle Vorkommen mit Lage und Originaltext', () => {

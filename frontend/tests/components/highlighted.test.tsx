@@ -111,3 +111,12 @@ describe('Highlighted mit sehr langem Suchbegriff (Issue #108)', () => {
     expect(container.textContent).toBe(text);
   });
 });
+
+describe('Highlighted mit Suchschlüssel', () => {
+  it('markiert Treffer über Leerraum hinweg im Original', () => {
+    const { container } = render(<Highlighted text="Beton C 25/30 XC4" query="c25/30" />);
+    expect([...container.querySelectorAll('mark')].map((mark) => mark.textContent)).toEqual([
+      'C 25/30',
+    ]);
+  });
+});

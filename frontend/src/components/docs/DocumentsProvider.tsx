@@ -28,7 +28,8 @@ import {
   type ReactNode,
 } from 'react';
 import { shownSuggestions, type DocSpot } from '../../lib/docs/docNotes';
-import { docNeedleOf, hitsInPage, type DocHit } from '../../lib/docs/docSearch';
+import { docNeedleOf, hitsInKey, type DocHit } from '../../lib/docs/docSearch';
+import { searchKeyOf, type SearchKey } from '@core';
 import {
   suggestIndexOf,
   type DocSuggestion,
@@ -126,6 +127,31 @@ function* suggestPositions(index: PositionIndex): Generator<SuggestPosition> {
 const DocumentsContext = createContext<DocumentsApi | null>(null);
 
 const NO_SEARCH_HITS: ReadonlyMap<string, readonly DocHit[]> = new Map();
+
+/** Seitentext wie die Textebene, dazu sein Suchschlüssel (Entscheidung 0103). */
+interface PageLines {
+  readonly text: string;
+  readonly key: SearchKey;
+}
+
+const NO_LINES: PageLines = { text: '', key: { key: '', at: [] } };
+
+/**
+ * Die Stücke von PDF.js ohne Trennzeichen aneinander, wie die Textebene sie zeigt — an
+ * diesen Zeichenstellen hängen gespeicherte Stellen. Wo ein Stück eine Zeile beendet
+ * (`hasEOL`), merkt sich der Suchschlüssel das Zeilenende, damit ein Trennstrich dort nicht
+ * zählt.
+ */
+function linesOf(items: ReadonlyArray<object>): PageLines {
+  let text = '';
+  const lineEnds = new Set<number>();
+  for (const item of items) {
+    if (!('str' in item) || typeof item.str !== 'string') continue;
+    text += item.str;
+    if ('hasEOL' in item && item.hasEOL === true) lineEnds.add(text.length);
+  }
+  return { text, key: searchKeyOf(text, lineEnds) };
+}
 const NO_FOUND = { needle: '', hits: NO_SEARCH_HITS };
 const NO_SUGGESTIONS: ReadonlyMap<string, readonly DocSuggestion[]> = new Map();
 
@@ -154,7 +180,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const [overview, setOverview] = useState(false);
   const [docSort, setDocSort] = useState<DocSort>('art');
   const [guesses, setGuesses] = useState<ReadonlyMap<string, DocKindGuess>>(new Map());
-  const texts = useRef(new Map<string, Promise<string>>());
+  const texts = useRef(new Map<string, Promise<PageLines>>());
   // Kennungen der angemeldeten Dokumente, sofort gesetzt: `docsRef` folgt erst nach dem
   // Rendern, zwei kurz nacheinander abgeworfene gleiche PDFs kämen sonst beide durch.
   const openIds = useRef(new Set<string>());
@@ -311,23 +337,30 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     setJump((current) => (current?.nonce === nonce ? null : current));
   }, []);
 
-  const pageText = useCallback((doc: OpenedPdf, page: number): Promise<string> => {
+  // Seitentext samt Zeilenenden und Suchschlüssel, je Seite einmal gelesen.
+  const pageLines = useCallback((doc: OpenedPdf, page: number): Promise<PageLines> => {
     const key = `${doc.id}:${page}`;
-    let text = texts.current.get(key);
-    if (text === undefined) {
-      text = doc.pdf
+    let lines = texts.current.get(key);
+    if (lines === undefined) {
+      lines = doc.pdf
         .getPage(page)
         .then((proxy) => proxy.getTextContent())
-        .then((content) => content.items.map((item) => ('str' in item ? item.str : '')).join(''))
+        .then((content) => linesOf(content.items))
         .catch(() => {
           // Defekte Seite oder Dokument geschlossen: ohne Text weiter, später neu versuchen.
           texts.current.delete(key);
-          return '';
+          return NO_LINES;
         });
-      texts.current.set(key, text);
+      texts.current.set(key, lines);
     }
-    return text;
+    return lines;
   }, []);
+
+  const pageText = useCallback(
+    (doc: OpenedPdf, page: number): Promise<string> =>
+      pageLines(doc, page).then((lines) => lines.text),
+    [pageLines],
+  );
 
   // Die PDF-Suche läuft durch alle offenen PDFs — Seite für Seite, abbrechbar, kurz
   // gesammelt, damit nicht jeder Tastendruck sofort alle Seiten liest. Die anderen PDFs
@@ -346,9 +379,9 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
         for (const doc of docs) {
           const list: DocHit[] = [];
           for (let page = 1; page <= doc.pdf.numPages; page++) {
-            const text = await pageText(doc, page);
+            const lines = await pageLines(doc, page);
             if (!alive) return;
-            list.push(...hitsInPage(text, needle, page));
+            list.push(...hitsInKey(lines.key, lines.text, needle, page));
           }
           hits.set(doc.id, list);
           // Je fertigem Dokument zeigen: ein dickes Gutachten hält die anderen nicht auf.
@@ -364,7 +397,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       alive = false;
       window.clearTimeout(timer);
     };
-  }, [needle, docs, pageText]);
+  }, [needle, docs, pageLines]);
   const searchHits = needle !== '' && found.needle === needle ? found.hits : NO_SEARCH_HITS;
 
   // Vorschläge: einmal je LV ein Verzeichnis, dann je Dokument alle Seiten im Worker.

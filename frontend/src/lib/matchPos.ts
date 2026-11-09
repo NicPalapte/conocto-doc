@@ -10,6 +10,7 @@
 // Tastendruck 10k Arrays und 10k `toLowerCase` über den Langtext entstehen.
 // `matchPos` bleibt die öffentliche Hülle für Aufrufer ohne Index.
 
+import { searchKeyOf, searchNeedleOf } from '@core';
 import { attrString } from './attributes';
 import { FACETS } from './facets';
 import type { PositionSummary } from '../types/lvNode';
@@ -34,7 +35,10 @@ export interface PositionFacts {
   readonly facetValues: ReadonlyArray<readonly string[]>;
   /** Menge; `null` zählt wie bisher als 0. */
   readonly quantity: number;
-  /** Kleingeschriebener Suchtext: Kurztext, OZ, Druckfestigkeit, Langtext. */
+  /**
+   * Suchschlüssel aus Kurztext, OZ, Druckfestigkeit, Langtext: klein, ohne Leerraum und
+   * Trennstrich am Zeilenende, wie in den PDFs (Entscheidung 0103).
+   */
   readonly haystack: string;
 }
 
@@ -43,7 +47,7 @@ export interface ActiveFilters {
   /** Nur die tatsächlich einschränkenden Facetten, mit ihrem `FACETS`-Index. */
   readonly facets: ReadonlyArray<{ slot: number; values: ReadonlySet<string> }>;
   readonly menge: Range | null;
-  /** Getrimmte, kleingeschriebene Suchanfrage; leer = keine Suche. */
+  /** Suchanfrage als Suchschlüssel (`searchNeedleOf`); leer = keine Suche. */
   readonly query: string;
   /**
    * Knoten-IDs, die der Filter „Markiert"/„Mit Kommentar" zulässt; `null` = aus.
@@ -65,7 +69,8 @@ export function positionFacts(position: PositionSummary): PositionFacts {
   return {
     facetValues: FACETS.map((facet) => facet.get(position)),
     quantity: position.quantity ?? 0,
-    haystack: [position.shortText, position.oz, beton, position.longText].join('\n').toLowerCase(),
+    haystack: searchKeyOf([position.shortText, position.oz, beton, position.longText].join('\n'))
+      .key,
   };
 }
 
@@ -79,7 +84,7 @@ export function prepareFilters(
     const values = filters.facets[facet.id];
     if (values !== undefined && values.size > 0) facets.push({ slot, values });
   });
-  const query = search.trim().toLowerCase();
+  const query = searchNeedleOf(search);
   return {
     facets,
     menge: filters.menge,

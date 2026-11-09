@@ -32,3 +32,10 @@ describe('searchSnippet', () => {
     expect(flat('sicht\nbeton')).toBe('sicht beton');
   });
 });
+
+describe('searchSnippet mit Suchschlüssel', () => {
+  it('findet über Leerraum und Trennstrich am Zeilenende hinweg', () => {
+    expect(searchSnippet('Matten aus Stahl-\nbeton', 'Stahlbeton')).toBe('Matten aus Stahlbeton');
+    expect(searchSnippet('Beton C 25/30', 'c25/30')).toBe('Beton C 25/30');
+  });
+});
