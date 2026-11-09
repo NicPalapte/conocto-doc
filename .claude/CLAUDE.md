@@ -171,8 +171,9 @@ bei exakt passender OZ oder eindeutiger Menge+Einheit (gleiche Menge: eigene Kur
 Satzteil, bei Aufzählung/„je“ mehrere Positionen), Übernahme erst per Klick, „Nein“ gemerkt,
 kein inhaltliches Matching (`lib/docs/docSuggest.ts`, `docs/decisions/0080`; an/aus und Werte nur
 über Grundstock-Regeln `pdf-oz`/`pdf-menge`, `lib/docs/suggestRules.ts`, 0087);
-Suchleiste nur fürs LV, eigenes Suchfeld im Dokument nur fürs PDF, filtert das LV nie
-(`docs/decisions/0084`). Eigene Matrix-Ansicht und
+eine Suchleiste für LV und alle PDFs mit Treffer-Navigator, PDF-Treffer filtern das LV nie,
+Suchregel nur über `searchKeyOf` im Kern (`docs/decisions/0103`); ganzer Kopf auch in
+ausgelagerten Fenstern (`docs/decisions/0102`). Eigene Matrix-Ansicht und
 Ähnlichkeit sind entfernt (`docs/decisions/0031-drei-ansichten.md`); die Matrix lebt als
 Graph-Gliederung weiter (`docs/decisions/0035`, `docs/decisions/0059`); keine
 Befehlspalette (`docs/decisions/0038-keine-befehlspalette.md`).

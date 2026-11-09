@@ -6,8 +6,8 @@
 // Mehrere Dokumente können nacheinander offen sein, eines ist vorn. Ein neues LV
 // schließt alle: ihre Notizen gehören zum alten LV.
 //
-// Die PDFs haben eine eigene Suche (Entscheidung 0084): Der Begriff liegt hier, nicht im
-// Viewer-Zustand, und filtert das LV nie.
+// Die PDFs durchsucht die eine Suchleiste (Entscheidung 0103): Treffer je Dokument und der
+// gezeigte Treffer liegen hier; PDF-Treffer filtern das LV nie.
 //
 // Vorschläge zum Verknüpfen (OZ und Mengen, Entscheidung 0080) rechnet ein Worker Seite
 // für Seite; hier liegen sie roh, ohne Abgleich mit Notizen — den macht die Anzeige.
@@ -28,7 +28,8 @@ import {
   type ReactNode,
 } from 'react';
 import { shownSuggestions, type DocSpot } from '../../lib/docs/docNotes';
-import { docNeedleOf, hitsInPage, type DocHit } from '../../lib/docs/docSearch';
+import { aroundOf, docNeedleOf, hitsInKey, type DocHit } from '../../lib/docs/docSearch';
+import { searchKeyOf, type SearchKey } from '@core';
 import {
   suggestIndexOf,
   type DocSuggestion,
@@ -72,14 +73,17 @@ export interface DocumentsApi {
   jumpTo: (spot: DocSpot) => void;
   /** Der Sprung ist angekommen; ein neu geöffneter Bereich springt nicht noch einmal hin. */
   doneJump: (nonce: number) => void;
-  /** Suchbegriff fürs PDF, für alle offenen PDFs derselbe; leert sich mit neuem LV. */
-  readonly docSearch: string;
-  setDocSearch: (value: string) => void;
   /**
-   * Fundstellen von `docSearch` je offenem Dokument (Entscheidung 0084).
+   * Fundstellen der einen Suche (`filter.search`) je offenem Dokument (Entscheidung 0103).
    * Fehlt ein Dokument, läuft die Suche darin noch.
    */
   readonly searchHits: ReadonlyMap<string, readonly DocHit[]>;
+  /** Gezeigter Treffer je Dokument (ab 0); fehlt er, ist es der erste. */
+  hitIndexOf: (id: string) => number;
+  /** Setzt den gezeigten Treffer; `nonce` lässt das Dokument dorthin blättern. */
+  setHitIndex: (id: string, index: number) => void;
+  /** Zählt bei jedem `setHitIndex` hoch: das Dokument blättert dann zum Treffer. */
+  readonly hitNonce: number;
   /** Textinhalt einer Seite (ab 1), wie die Textebene ihn zeigt; zwischengespeichert. */
   pageText: (doc: OpenedPdf, page: number) => Promise<string>;
   /** Vorschläge je offenem Dokument (Entscheidung 0080), noch ohne Notizen abgeglichen. */
@@ -126,11 +130,38 @@ function* suggestPositions(index: PositionIndex): Generator<SuggestPosition> {
 const DocumentsContext = createContext<DocumentsApi | null>(null);
 
 const NO_SEARCH_HITS: ReadonlyMap<string, readonly DocHit[]> = new Map();
+
+/** Seitentext wie die Textebene, dazu sein Suchschlüssel (Entscheidung 0103). */
+interface PageLines {
+  readonly text: string;
+  readonly key: SearchKey;
+  /** Stellen im Text, an denen eine Zeile endet (für lesbare Ausschnitte). */
+  readonly lineEnds: ReadonlySet<number>;
+}
+
+const NO_LINES: PageLines = { text: '', key: { key: '', at: [] }, lineEnds: new Set() };
+
+/**
+ * Die Stücke von PDF.js ohne Trennzeichen aneinander, wie die Textebene sie zeigt — an
+ * diesen Zeichenstellen hängen gespeicherte Stellen. Wo ein Stück eine Zeile beendet
+ * (`hasEOL`), merkt sich der Suchschlüssel das Zeilenende, damit ein Trennstrich dort nicht
+ * zählt.
+ */
+function linesOf(items: ReadonlyArray<object>): PageLines {
+  let text = '';
+  const lineEnds = new Set<number>();
+  for (const item of items) {
+    if (!('str' in item) || typeof item.str !== 'string') continue;
+    text += item.str;
+    if ('hasEOL' in item && item.hasEOL === true) lineEnds.add(text.length);
+  }
+  return { text, key: searchKeyOf(text, lineEnds), lineEnds };
+}
 const NO_FOUND = { needle: '', hits: NO_SEARCH_HITS };
 const NO_SUGGESTIONS: ReadonlyMap<string, readonly DocSuggestion[]> = new Map();
 
 export function DocumentsProvider({ children }: { children: ReactNode }) {
-  const { lv, index, annotations } = useViewer();
+  const { lv, index, annotations, filter } = useViewer();
   const { rules } = useAdmin();
   const dispatch = useViewerDispatch();
   const [docs, setDocs] = useState<OpenedPdf[]>([]);
@@ -139,7 +170,6 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [jump, setJump] = useState<DocJump | null>(null);
   const jumpCount = useRef(0);
-  const [docSearch, setDocSearch] = useState('');
   const [ansatzFor, setAnsatzState] = useState<string | null>(null);
   const [planWanted, setPlanWanted] = useState(false);
   const setAnsatzFor = useCallback(
@@ -154,7 +184,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const [overview, setOverview] = useState(false);
   const [docSort, setDocSort] = useState<DocSort>('art');
   const [guesses, setGuesses] = useState<ReadonlyMap<string, DocKindGuess>>(new Map());
-  const texts = useRef(new Map<string, Promise<string>>());
+  const texts = useRef(new Map<string, Promise<PageLines>>());
   // Kennungen der angemeldeten Dokumente, sofort gesetzt: `docsRef` folgt erst nach dem
   // Rendern, zwei kurz nacheinander abgeworfene gleiche PDFs kämen sonst beide durch.
   const openIds = useRef(new Set<string>());
@@ -178,7 +208,6 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     setActiveId(null);
     setJump(null);
     setError(null);
-    setDocSearch('');
     setAnsatzState(null);
     setPlanWanted(false);
     setOverview(false);
@@ -311,28 +340,35 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     setJump((current) => (current?.nonce === nonce ? null : current));
   }, []);
 
-  const pageText = useCallback((doc: OpenedPdf, page: number): Promise<string> => {
+  // Seitentext samt Zeilenenden und Suchschlüssel, je Seite einmal gelesen.
+  const pageLines = useCallback((doc: OpenedPdf, page: number): Promise<PageLines> => {
     const key = `${doc.id}:${page}`;
-    let text = texts.current.get(key);
-    if (text === undefined) {
-      text = doc.pdf
+    let lines = texts.current.get(key);
+    if (lines === undefined) {
+      lines = doc.pdf
         .getPage(page)
         .then((proxy) => proxy.getTextContent())
-        .then((content) => content.items.map((item) => ('str' in item ? item.str : '')).join(''))
+        .then((content) => linesOf(content.items))
         .catch(() => {
           // Defekte Seite oder Dokument geschlossen: ohne Text weiter, später neu versuchen.
           texts.current.delete(key);
-          return '';
+          return NO_LINES;
         });
-      texts.current.set(key, text);
+      texts.current.set(key, lines);
     }
-    return text;
+    return lines;
   }, []);
+
+  const pageText = useCallback(
+    (doc: OpenedPdf, page: number): Promise<string> =>
+      pageLines(doc, page).then((lines) => lines.text),
+    [pageLines],
+  );
 
   // Die PDF-Suche läuft durch alle offenen PDFs — Seite für Seite, abbrechbar, kurz
   // gesammelt, damit nicht jeder Tastendruck sofort alle Seiten liest. Die anderen PDFs
   // braucht die Zählung neben dem Suchfeld.
-  const needle = docNeedleOf(docSearch);
+  const needle = docNeedleOf(filter.search);
   const [found, setFound] = useState<{
     needle: string;
     hits: ReadonlyMap<string, readonly DocHit[]>;
@@ -346,9 +382,11 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
         for (const doc of docs) {
           const list: DocHit[] = [];
           for (let page = 1; page <= doc.pdf.numPages; page++) {
-            const text = await pageText(doc, page);
+            const lines = await pageLines(doc, page);
             if (!alive) return;
-            list.push(...hitsInPage(text, needle, page));
+            for (const hit of hitsInKey(lines.key, lines.text, needle, page)) {
+              list.push({ ...hit, around: aroundOf(lines.text, hit, lines.lineEnds) });
+            }
           }
           hits.set(doc.id, list);
           // Je fertigem Dokument zeigen: ein dickes Gutachten hält die anderen nicht auf.
@@ -364,8 +402,29 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       alive = false;
       window.clearTimeout(timer);
     };
-  }, [needle, docs, pageText]);
+  }, [needle, docs, pageLines]);
   const searchHits = needle !== '' && found.needle === needle ? found.hits : NO_SEARCH_HITS;
+
+  // Gezeigter Treffer je Dokument; ein neuer Begriff fängt überall beim ersten an.
+  const [cursor, setCursor] = useState<{ needle: string; at: ReadonlyMap<string, number> }>({
+    needle: '',
+    at: new Map(),
+  });
+  const [hitNonce, setHitNonce] = useState(0);
+  const hitIndexOf = useCallback(
+    (id: string): number => (cursor.needle === needle ? (cursor.at.get(id) ?? 0) : 0),
+    [cursor, needle],
+  );
+  const setHitIndex = useCallback(
+    (id: string, at: number): void => {
+      setCursor((prev) => ({
+        needle,
+        at: new Map([...(prev.needle === needle ? prev.at : []), [id, at]]),
+      }));
+      setHitNonce((value) => value + 1);
+    },
+    [needle],
+  );
 
   // Vorschläge: einmal je LV ein Verzeichnis, dann je Dokument alle Seiten im Worker.
   const { oz: ozShown, menge: mengeShown } = shownSuggestions(annotations.documents);
@@ -466,9 +525,10 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       setOverview,
       jumpTo,
       doneJump,
-      docSearch,
-      setDocSearch,
       searchHits,
+      hitIndexOf,
+      setHitIndex,
+      hitNonce,
       pageText,
       suggestions,
       suggest,
@@ -496,9 +556,10 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       setOverview,
       jumpTo,
       doneJump,
-      docSearch,
-      setDocSearch,
       searchHits,
+      hitIndexOf,
+      setHitIndex,
+      hitNonce,
       pageText,
       suggestions,
       suggest,

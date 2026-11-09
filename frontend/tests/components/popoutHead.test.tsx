@@ -1,10 +1,13 @@
-// Graph und Tabelle im eigenen Browserfenster haben die Suchleiste mit (PopoutSearch):
-// dieselbe Suche und dieselben Filter wie die Kopfleiste, aber eine eigene Filterleiste.
+// Graph, Tabelle und Dokument im eigenen Browserfenster haben die ganze Kopfleiste
+// (PopoutHead, Entscheidung 0102): dieselbe Suche und dieselben Filter wie das
+// Hauptfenster, aber eine eigene Filterleiste; sehr schmal nur eine Lupe.
 
 import { readFileSync } from 'node:fs';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PopoutSearch } from '../../src/components/shell/PopoutSearch';
+import { PopoutHead } from '../../src/components/shell/PopoutHead';
+import { WorkspaceProvider } from '../../src/components/shell/WorkspaceProvider';
+import { SearchPill } from '../../src/components/layout/SearchPill';
 import { GraphHeader } from '../../src/components/graph/GraphHeader';
 import { runPipeline } from '../../src/lib/pipeline/runPipeline';
 import { ViewerProvider } from '../../src/state/ViewerProvider';
@@ -30,7 +33,7 @@ function Steuerung() {
   );
 }
 
-describe('Suchleiste im eigenen Fenster', () => {
+describe('Kopfleiste im eigenen Fenster', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -41,8 +44,10 @@ describe('Suchleiste im eigenen Fenster', () => {
   it('sucht im gemeinsamen Filter und öffnet nur die eigene Filterleiste', () => {
     render(
       <ViewerProvider>
-        <Steuerung />
-        <PopoutSearch />
+        <WorkspaceProvider>
+          <Steuerung />
+          <PopoutHead />
+        </WorkspaceProvider>
       </ViewerProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'laden' }));
@@ -66,13 +71,85 @@ describe('Suchleiste im eigenen Fenster', () => {
   it('nimmt mit "/" den Fokus ins Suchfeld', () => {
     render(
       <ViewerProvider>
-        <Steuerung />
-        <PopoutSearch />
+        <WorkspaceProvider>
+          <Steuerung />
+          <PopoutHead />
+        </WorkspaceProvider>
       </ViewerProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'laden' }));
     fireEvent.keyDown(window, { key: '/' });
     expect(screen.getByRole('textbox', { name: 'Suche' })).toHaveFocus();
+  });
+
+  it('hat Logo-Menü und Suche, aber kein „LV schließen“', () => {
+    render(
+      <ViewerProvider>
+        <WorkspaceProvider>
+          <Steuerung />
+          <PopoutHead />
+        </WorkspaceProvider>
+      </ViewerProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'laden' }));
+    expect(screen.getByRole('button', { name: 'Über diese App' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Suche' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'LV schließen' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Ansicht/ })).toBeNull();
+  });
+
+  describe('sehr schmal', () => {
+    const breite = window.innerWidth;
+    beforeEach(() => {
+      window.innerWidth = 400;
+    });
+    afterEach(() => {
+      window.innerWidth = breite;
+    });
+
+    function schmal() {
+      render(
+        <ViewerProvider>
+          <WorkspaceProvider>
+            <Steuerung />
+            <PopoutHead />
+          </WorkspaceProvider>
+        </ViewerProvider>,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'laden' }));
+    }
+
+    it('zeigt nur die Lupe; Antippen fährt die Suche aus und setzt den Fokus', () => {
+      schmal();
+      expect(screen.queryByRole('textbox', { name: 'Suche' })).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Suche aufklappen' }));
+      expect(screen.getByRole('textbox', { name: 'Suche' })).toHaveFocus();
+      fireEvent.blur(screen.getByRole('textbox', { name: 'Suche' }));
+      expect(screen.getByRole('button', { name: 'Suche aufklappen' })).toBeInTheDocument();
+    });
+
+    it('fährt beim Darüberfahren mit der Maus aus und wieder ein', () => {
+      schmal();
+      fireEvent.pointerEnter(screen.getByRole('button', { name: 'Suche aufklappen' }), {
+        pointerType: 'mouse',
+      });
+      const feld = screen.getByRole('textbox', { name: 'Suche' });
+      fireEvent.pointerLeave(feld.parentElement as HTMLElement, { pointerType: 'mouse' });
+      expect(screen.queryByRole('textbox', { name: 'Suche' })).toBeNull();
+    });
+
+    it('klappt im Hauptfenster nie ein', () => {
+      render(
+        <ViewerProvider>
+          <WorkspaceProvider>
+            <Steuerung />
+            <SearchPill filterOpen={false} onFilterOpen={() => undefined} />
+          </WorkspaceProvider>
+        </ViewerProvider>,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'laden' }));
+      expect(screen.getByRole('textbox', { name: 'Suche' })).toBeInTheDocument();
+    });
   });
 });
 

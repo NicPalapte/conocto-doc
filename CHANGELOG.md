@@ -9,6 +9,29 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.56.0 — 09.11.2026 · Eine Suche für LV und PDFs
+
+- **Eine Suche für alles:** Die Suchleiste sucht im LV und in allen offenen PDFs. Das eigene
+  Suchfeld im Dokument ist weg. Treffer im PDF filtern das LV nicht.
+- **Vor und zurück:** In der Suchleiste stehen „4 / 9“ und ▲ ▼ (auch ↓ ↑ und Enter /
+  Umschalt + Enter). Im LV springt die Suche von Position zu Position, im PDF genau zur Fundstelle.
+- **Trefferliste:** Unter der Suchleiste klappen alle Treffer auf, je Dokument ein Abschnitt
+  mit OZ bzw. Seite und Ausschnitt. Oben steht das Dokument, in dem du gerade arbeitest.
+  Antippen springt hin, ein PDF öffnet sich.
+- **Eine lange Liste:** ▲ ▼ springen am Ende eines Dokuments direkt ins nächste. Zuletzt ins
+  Dokument geklickt ⇒ es geht im PDF los, sonst im LV. Ausgelagerte Fenster springen für sich:
+  im Dokument-Fenster durch die PDFs, in Graph und Tabelle im LV.
+- **Besser finden:** Leerzeichen, Zeilenumbrüche und Trennstriche am Zeilenende zählen nicht
+  mehr. „Stahl-“ / „beton“ im PDF wird als „Stahlbeton“ gefunden, „C 25/30“ findet „C25/30“.
+- **Eigenes Fenster:** Graph, Tabelle und Dokument haben dort jetzt den ganzen Kopf: Logo-Menü,
+  Suchleiste mit Filtern. „Ansicht“ und „LV schließen“ bleiben im Hauptfenster. Vorher gab es nur die Suchleiste,
+  beim Dokument gar keine.
+- **Treffer gut sichtbar:** Ein Suchtreffer bleibt auch auf eigenen Farbmarkierungen
+  erkennbar (Rahmen im Langtext, im PDF obenauf).
+- **Sehr schmales Fenster:** Die Suche ist nur eine Lupe und fährt beim Darüberfahren oder
+  Antippen aus.
+- **Dialoge** wie „Fehler melden“ öffnen im Fenster, in dem man klickt.
+
 ## 0.55.1 — 09.11.2026 · Arbeitsstand statt Notizen
 
 - **Neuer Name:** „Notizen sichern“ und „Notizen laden…“ heißen jetzt „Arbeitsstand sichern“

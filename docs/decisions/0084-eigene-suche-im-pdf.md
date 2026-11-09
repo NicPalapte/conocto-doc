@@ -1,6 +1,6 @@
 # 0084 – Eigene Suche im PDF
 
-- **Status:** akzeptiert
+- **Status:** ersetzt durch 0103
 - **Datum:** 2026-10-28
 - **Betrifft:** Suchleiste (`frontend/src/components/layout/SearchPill.tsx`), Suchfeld im
   Bereich „Dokument“ (`frontend/src/components/docs/DocSearchField.tsx`,

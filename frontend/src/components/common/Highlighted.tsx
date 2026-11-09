@@ -13,7 +13,7 @@
 import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import { categoryOf } from '../../lib/spanCategories';
 import type { Span } from '../../lib/classify';
-import { escapeRegExp } from '../../lib/escapeRegExp';
+import { findInKey, searchKeyOf, searchNeedleOf } from '@core';
 import { visibleSpans } from './shownText';
 
 interface HighlightedProps {
@@ -29,6 +29,18 @@ interface HighlightedProps {
 function Mark({ children }: { children: ReactNode }) {
   return (
     <mark className="rounded-none border-b border-accent bg-accent-soft px-[3px] font-medium text-accent-ink">
+      {children}
+    </mark>
+  );
+}
+
+/**
+ * Suchtreffer: dazu ein Rahmen im Akzent. Eigene Anstreichungen (CSS Highlight API) malen
+ * Fläche und Schrift über das `<mark>` — der Rahmen bleibt darüber sichtbar.
+ */
+function QueryMark({ children }: { children: ReactNode }) {
+  return (
+    <mark className="rounded-[2px] bg-accent-soft px-[1px] font-medium text-accent-ink outline outline-[1.5px] outline-accent">
       {children}
     </mark>
   );
@@ -57,26 +69,24 @@ function SpanMark({ span, children }: { span: Span; children: ReactNode }) {
 }
 
 function highlightQuery(text: string, query: string, keyPrefix: string): ReactNode[] {
-  const ohne = [<Fragment key={`${keyPrefix}-0`}>{text}</Fragment>];
-  // Länger als der Text kann der Begriff nicht vorkommen. Die Abkürzung ist
-  // nötig: ab rund 32.000 Zeichen wirft `new RegExp` „Regular expression too
-  // large", und die Hervorhebung würde die ganze Ansicht abstürzen lassen.
-  if (query === '' || query.length > text.length) return ohne;
-  let parts: string[];
-  try {
-    // V8 übersetzt das Muster erst beim ersten Lauf — der Fehler kommt aus `split`.
-    parts = text.split(new RegExp(`(${escapeRegExp(query)})`, 'gi'));
-  } catch {
-    // Text noch länger als der Begriff: dann eben ohne Hervorhebung.
-    return ohne;
-  }
-  return parts.map((part, index) =>
-    part.toLowerCase() === query.toLowerCase() ? (
-      <Mark key={`${keyPrefix}-${index}`}>{part}</Mark>
-    ) : (
-      <Fragment key={`${keyPrefix}-${index}`}>{part}</Fragment>
-    ),
-  );
+  // Gleiche Regel wie die Suche (Entscheidung 0103): ohne Groß/klein, Leerraum und
+  // Trennstrich am Zeilenende — sonst stünde ein Treffer ohne Hervorhebung da.
+  const needle = searchNeedleOf(query);
+  const ranges = findInKey(searchKeyOf(text), needle);
+  if (ranges.length === 0) return [<Fragment key={`${keyPrefix}-0`}>{text}</Fragment>];
+  const parts: ReactNode[] = [];
+  let cursor = 0;
+  ranges.forEach(({ start, end }, index) => {
+    // Überlappende Vorkommen („aa“ in „aaa“): nur das erste markieren.
+    if (start < cursor) return;
+    if (start > cursor)
+      parts.push(<Fragment key={`${keyPrefix}-t${index}`}>{text.slice(cursor, start)}</Fragment>);
+    parts.push(<QueryMark key={`${keyPrefix}-m${index}`}>{text.slice(start, end)}</QueryMark>);
+    cursor = end;
+  });
+  if (cursor < text.length)
+    parts.push(<Fragment key={`${keyPrefix}-tail`}>{text.slice(cursor)}</Fragment>);
+  return parts;
 }
 
 /** Ein Stück Text zwischen zwei Fundstellen: `**…**` und Suchbegriff wie bisher. */

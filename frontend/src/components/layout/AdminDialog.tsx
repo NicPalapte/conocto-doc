@@ -9,6 +9,7 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDismiss } from '../common/useDismiss';
+import { useHostWindow } from '../common/hostWindow';
 import { SegmentedControl } from '@conocto/design';
 import { useAdmin } from '../../state/admin';
 import { RulesTab } from '../admin/RulesTab';
@@ -76,6 +77,8 @@ export function AdminDialog({ onClose, onTrefferProtokoll }: AdminDialogProps) {
   const { unlocked, lock } = useAdmin();
   const [tab, setTab] = useState<Tab>('regeln');
   const dialogRef = useRef<HTMLDivElement>(null);
+  // Im ausgelagerten Fenster öffnet der Dialog dort, wo geklickt wurde.
+  const host = useHostWindow();
   useDismiss(dialogRef, true, onClose);
 
   return createPortal(
@@ -142,6 +145,6 @@ export function AdminDialog({ onClose, onTrefferProtokoll }: AdminDialogProps) {
         )}
       </div>
     </div>,
-    document.body,
+    host.document.body,
   );
 }

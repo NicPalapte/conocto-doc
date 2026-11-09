@@ -16,6 +16,7 @@ import { useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Chip } from '@conocto/design';
 import { useDismiss } from '../common/useDismiss';
+import { useHostWindow } from '../common/hostWindow';
 import {
   issueBody,
   issueUrl,
@@ -53,6 +54,8 @@ export function ReportDialog({ context, vorbelegung = '', onClose }: ReportDialo
   // Handler hängt in der Capture-Phase und stoppt die Weitergabe. Sonst
   // schlösse Escape nicht nur dieses Fenster, sondern räumte nebenbei die
   // Auswahl im Baum ab (ViewerPage hört ebenfalls auf Escape).
+  // Im ausgelagerten Fenster öffnet der Dialog dort, wo geklickt wurde.
+  const host = useHostWindow();
   useDismiss(dialogRef, true, onClose);
 
   const fokussiere = useCallback((element: HTMLTextAreaElement | null): void => {
@@ -248,6 +251,6 @@ export function ReportDialog({ context, vorbelegung = '', onClose }: ReportDialo
         </div>
       </div>
     </div>,
-    document.body,
+    host.document.body,
   );
 }

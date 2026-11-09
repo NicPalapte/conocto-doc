@@ -615,6 +615,8 @@ export function SplitView({ root }: { root: LVNode }) {
             aria-label={`${PANE_LABEL[pane]} — Bereich`}
             aria-hidden={front ? undefined : true}
             data-pane={pane}
+            // Wo zuletzt gearbeitet wurde, sucht der Navigator zuerst (Entscheidung 0103).
+            data-search-source={pane === 'doc' ? 'doc' : 'lv'}
             className={`absolute z-[1] flex flex-col overflow-hidden bg-surface ${front ? '' : 'invisible'}`}
             style={rectStyle(rect, HEAD)}
           >

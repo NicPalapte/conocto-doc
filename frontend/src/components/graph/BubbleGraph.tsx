@@ -789,6 +789,14 @@ export function BubbleGraph({ root }: { root: LVNode }) {
     [map, w, h],
   );
 
+  // Neu gewählte Position aus dem Sichtfeld (Sprung mit der Suche, Entscheidung 0103): in
+  // die Mitte holen. Liegt sie schon sichtbar, bleibt die Ansicht stehen.
+  const [centered, setCentered] = useState(selectedSlot);
+  if (centered !== selectedSlot) {
+    setCentered(selectedSlot);
+    if (selectedSlot >= 0) centerOn(selectedSlot);
+  }
+
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
     if (order.length === 0) return;
     // Tippen im Kommentarfeld der Karte (sie liegt im Graphen) ist keine Navigation.

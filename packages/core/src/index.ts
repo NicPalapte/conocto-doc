@@ -21,6 +21,13 @@ export {
 } from './export/lvExport';
 export { compileStichworte, stichwortQuelle, stichwortSource, WORD_CHAR } from './text/stichwort';
 export { SENTENCE_REACH, sentenceAround } from './text/sentence';
+export {
+  findInKey,
+  searchKeyOf,
+  searchNeedleOf,
+  type SearchKey,
+  type SearchRange,
+} from './text/searchKey';
 export * from './rules/rule';
 export * from './rules/evaluate';
 export { blocksFromSelection } from './rules/fromSelection';

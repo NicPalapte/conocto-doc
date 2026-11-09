@@ -1,5 +1,6 @@
-// Eigene Suche im PDF (Entscheidung 0084, ersetzt 0077): Das Suchfeld im Bereich
-// „Dokument“ sucht nur in PDFs, die Suchleiste oben nur im LV.
+// Eine Suche für LV und PDFs (Entscheidung 0103, ersetzt 0084): Die Suchleiste sucht im LV
+// und in allen offenen PDFs; alle Treffer bilden eine lange Liste, je Quelle ein Abschnitt,
+// die Quelle, in der zuletzt gearbeitet wurde, oben.
 //
 // PDF.js läuft in jsdom nicht: `openPdf` liefert ein Schein-PDF mit festem Seitentext,
 // und die Seiten selbst werden nicht gezeichnet.
@@ -56,109 +57,117 @@ async function oeffnePdf(name: string, id?: string): Promise<void> {
   fireEvent.change(screen.getByLabelText('PDF auswählen'), {
     target: { files: [new File(['%PDF'], name, { type: 'application/pdf' })] },
   });
-  await screen.findByRole('textbox', { name: 'Im PDF suchen' }, { timeout: 3000 });
-}
-
-/** Wählt den ersten Punkt mit Langtext und gibt den Langtext zurück. */
-function langtext(): HTMLElement {
-  for (const punkt of document.querySelectorAll('[data-slot]')) {
-    fireEvent.click(punkt);
-    const block = screen.queryByRole('region', { name: 'Langtext' });
-    const text = block?.querySelector<HTMLElement>('.whitespace-pre-wrap');
-    if (text !== null && text !== undefined) return text;
-  }
-  throw new Error('Keine Position mit Langtext in der Musterdatei');
-}
-
-/** Wählt das erste längere Wort aus und klickt rechts darauf. */
-function waehleWort(text: HTMLElement): string {
-  const walker = document.createTreeWalker(text, NodeFilter.SHOW_TEXT);
-  for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
-    const match = /\p{L}{5,}/u.exec(node.textContent ?? '');
-    if (match === null) continue;
-    const range = document.createRange();
-    range.setStart(node, match.index);
-    range.setEnd(node, match.index + match[0].length);
-    window.getSelection()?.removeAllRanges();
-    window.getSelection()?.addRange(range);
-    fireEvent.mouseUp(node.parentElement ?? text);
-    fireEvent.contextMenu(node.parentElement ?? text);
-    return match[0];
-  }
-  throw new Error('Kein Wort im Langtext');
-}
-
-describe('Eigene Suche im PDF', () => {
-  it('sucht im PDF, ohne die Suche im LV zu ändern', async () => {
-    await ladeApp();
-    await oeffnePdf('baubeschreibung.pdf');
-
-    fireEvent.change(screen.getByRole('textbox', { name: 'Im PDF suchen' }), {
-      target: { value: 'bitumendick' },
-    });
-    expect(await screen.findByText('1/2')).toBeInTheDocument();
-    await new Promise((done) => setTimeout(done, 400));
-    expect(screen.getByRole('textbox', { name: 'Suche' })).toHaveValue('');
+  await waitFor(() => expect(screen.getAllByTitle(name).length).toBeGreaterThan(0), {
+    timeout: 3000,
   });
+}
 
-  it('durchsucht mit der Suchleiste oben nur das LV', async () => {
-    await ladeApp();
-    await oeffnePdf('baubeschreibung.pdf');
-    const suche = screen.getByRole('textbox', { name: 'Suche' });
-    fireEvent.focus(suche);
-    fireEvent.change(suche, { target: { value: 'bitumendick' } });
-    await new Promise((done) => setTimeout(done, 400));
-    expect(screen.getByRole('textbox', { name: 'Im PDF suchen' })).toHaveValue('');
-    expect(screen.queryByText('1/2')).toBeNull();
-    expect(screen.queryByRole('group', { name: 'Treffer je Quelle' })).toBeNull();
-  });
+async function suche(begriff: string): Promise<HTMLElement> {
+  const feld = screen.getByRole('textbox', { name: 'Suche' });
+  fireEvent.focus(feld);
+  fireEvent.change(feld, { target: { value: begriff } });
+  return screen.findByRole('group', { name: 'Treffer je Quelle' }, { timeout: 3000 });
+}
 
-  it('zählt Treffer in den anderen offenen PDFs und wechselt per Klick', async () => {
+/** Klick ins Dokument: dort sucht der Navigator ab jetzt. */
+function insDokument(): void {
+  const bereich = document.querySelector('[data-search-source="doc"]');
+  if (bereich === null) throw new Error('Bereich „Dokument“ fehlt');
+  fireEvent.pointerDown(bereich);
+}
+
+describe('Eine Suche für LV und PDFs', () => {
+  it('listet alle Treffer, je Quelle ein Abschnitt, die aktive oben', async () => {
     await ladeApp();
     await oeffnePdf('baubeschreibung.pdf');
     await oeffnePdf('vorbemerkungen.pdf', 'fff000fff000');
 
-    const feld = screen.getByRole('textbox', { name: 'Im PDF suchen' });
-    fireEvent.focus(feld);
-    fireEvent.change(feld, { target: { value: 'WU-Beton' } });
-    const liste = await screen.findByRole('group', { name: 'Treffer in offenen PDFs' });
-    await waitFor(() => expect(within(liste).getAllByText('2')).toHaveLength(2));
+    const liste = await suche('WU-Beton');
+    const abschnitte = () => within(liste).getAllByRole('region');
+    expect(abschnitte()[0]).toHaveAccessibleName('LV');
+    const pdf = () => within(liste).getByRole('region', { name: 'vorbemerkungen.pdf' });
+    await waitFor(() => expect(within(pdf()).getAllByRole('button')).toHaveLength(2));
+    expect(within(pdf()).getAllByRole('button')[0]).toHaveTextContent(
+      'S. 2Bodenplatte aus WU-Beton.',
+    );
 
-    fireEvent.click(within(liste).getByRole('button', { name: /baubeschreibung\.pdf/ }));
+    // Zuletzt im Dokument gearbeitet: sein Abschnitt steht oben.
+    insDokument();
+    await waitFor(() => expect(abschnitte()[0]).toHaveAccessibleName('vorbemerkungen.pdf'));
+  });
+
+  it('springt am Ende eines Dokuments direkt ins nächste', async () => {
+    await ladeApp();
+    await oeffnePdf('baubeschreibung.pdf');
+    await oeffnePdf('vorbemerkungen.pdf', 'fff000fff000');
+    await suche('WU-Beton');
+    insDokument();
+
+    const zaehler = () => screen.getByRole('button', { name: /^Treffer in / });
+    await waitFor(() => expect(zaehler()).toHaveAccessibleName(/vorbemerkungen\.pdf: 1 \/ 2/));
+    fireEvent.click(screen.getByRole('button', { name: 'Nächster Treffer' }));
+    expect(zaehler()).toHaveAccessibleName(/2 \/ 2/);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nächster Treffer' }));
+    await waitFor(() => expect(zaehler()).not.toHaveAccessibleName(/vorbemerkungen/));
+    expect(screen.queryByText(/Ende von/)).toBeNull();
+
+    // Blättern sortiert die Liste nicht um: das Dokument, in dem man war, bleibt oben.
+    const liste = screen.getByRole('group', { name: 'Treffer je Quelle' });
+    expect(within(liste).getAllByRole('region')[0]).toHaveAccessibleName('vorbemerkungen.pdf');
+
+    // Erst ein Klick in einen anderen Bereich holt dessen Abschnitt nach oben.
+    fireEvent.pointerDown(document.querySelector('[data-search-source="lv"]') as Element);
+    await waitFor(() => expect(within(liste).getAllByRole('region')[0]).toHaveAccessibleName('LV'));
+  });
+
+  it('öffnet per Klick auf einen Treffer das Dokument an dieser Stelle', async () => {
+    await ladeApp();
+    await oeffnePdf('baubeschreibung.pdf');
+    await oeffnePdf('vorbemerkungen.pdf', 'fff000fff000');
+    const liste = await suche('WU-Beton');
+    const pdf = within(liste).getByRole('region', { name: 'baubeschreibung.pdf' });
+    await waitFor(() => expect(within(pdf).getAllByRole('button')).toHaveLength(2));
+    fireEvent.click(within(pdf).getAllByRole('button')[1]);
+    // Stelle gewählt: die Liste klappt zu.
+    expect(screen.queryByRole('group', { name: 'Treffer je Quelle' })).toBeNull();
     expect(
       screen.getByRole('button', { name: 'Dokument wählen: baubeschreibung.pdf' }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /^Treffer in baubeschreibung\.pdf: 2 \/ 2/ }),
+    ).toBeVisible();
   });
 
-  it('holt das Suchfeld mit Strg F, wenn zuletzt ins Dokument geklickt wurde', async () => {
+  it('springt im LV von Position zu Position', async () => {
+    await ladeApp();
+    await suche('a');
+    const zaehler = screen.getByRole('button', { name: /^Treffer in LV/ });
+    expect(zaehler).toHaveAccessibleName(/– \//);
+    fireEvent.click(screen.getByRole('button', { name: 'Nächster Treffer' }));
+    expect(zaehler).toHaveAccessibleName(/LV: 1 \//);
+    // Die Zählung folgt der Auswahl: Position 1 der Treffer ist gewählt.
+
+    // ↓ und ↑ im Suchfeld springen ebenso.
+    const feld = screen.getByRole('textbox', { name: 'Suche' });
+    fireEvent.keyDown(feld, { key: 'ArrowDown' });
+    expect(zaehler).toHaveAccessibleName(/LV: 2 \//);
+    fireEvent.keyDown(feld, { key: 'ArrowUp' });
+    expect(zaehler).toHaveAccessibleName(/LV: 1 \//);
+  });
+
+  it('holt die Suchleiste mit Strg F, wenn zuletzt ins Dokument geklickt wurde', async () => {
     await ladeApp();
     await oeffnePdf('baubeschreibung.pdf');
-    const feld = screen.getByRole('textbox', { name: 'Im PDF suchen' });
+    const feld = screen.getByRole('textbox', { name: 'Suche' });
 
-    // Klick woanders: Strg F bleibt beim Browser.
-    fireEvent.pointerDown(document.body);
+    // Zuletzt im LV gearbeitet: Strg F bleibt beim Browser.
+    fireEvent.pointerDown(document.querySelector('[data-search-source="lv"]') as Element);
     fireEvent.keyDown(document.body, { key: 'f', ctrlKey: true });
     expect(feld).not.toHaveFocus();
 
-    fireEvent.pointerDown(screen.getByTitle('baubeschreibung.pdf'));
+    insDokument();
     fireEvent.keyDown(document.body, { key: 'f', ctrlKey: true });
     expect(feld).toHaveFocus();
-
-    // Danach per Tab in die Suchleiste oben: Strg F gehört wieder dem Browser.
-    const suche = screen.getByRole('textbox', { name: 'Suche' });
-    suche.focus();
-    fireEvent.keyDown(suche, { key: 'f', ctrlKey: true });
-    expect(suche).toHaveFocus();
-  });
-
-  it('sucht einen markierten Begriff aus dem Langtext im PDF', async () => {
-    await ladeApp();
-    await oeffnePdf('baubeschreibung.pdf');
-    const wort = waehleWort(langtext());
-    const menue = await screen.findByRole('toolbar', { name: 'Textmarkierung' });
-    fireEvent.click(within(menue).getByRole('button', { name: 'Im PDF suchen' }));
-    expect(screen.getByRole('textbox', { name: 'Im PDF suchen' })).toHaveValue(wort);
-    await new Promise((done) => setTimeout(done, 400));
-    expect(screen.getByRole('textbox', { name: 'Suche' })).toHaveValue('');
   });
 });
