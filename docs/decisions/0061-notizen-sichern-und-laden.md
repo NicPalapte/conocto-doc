@@ -1,6 +1,6 @@
 # 0061 – Notizen als Datei sichern und laden
 
-- **Status:** akzeptiert
+- **Status:** teilweise ersetzt durch 0101 (Name „Arbeitsstand“)
 - **Datum:** 2026-10-21
 - **Betrifft:** `frontend/src/lib/notesFile.ts`, Startseite (`FileDropzone`), Logo-Menü;
   ergänzt 0047 und 0057

@@ -57,7 +57,7 @@ function gesichert(): string {
 describe('notesFileText und parseNotesFile', () => {
   it('schreibt lesbares JSON und liest es verlustfrei zurück', () => {
     const text = gesichert();
-    expect(text).toContain('"art": "conocto-notizen"');
+    expect(text).toContain('"art": "conocto-arbeitsstand"');
     expect(text).toContain('"kurztext": "Kurztext 01.0010"');
     const file = parseNotesFile(text);
     expect(file.datei).toBe('rohbau.x83');
@@ -134,10 +134,18 @@ describe('notesFileText und parseNotesFile', () => {
 
   it('meldet fremde, kaputte und zu neue Dateien verständlich', () => {
     expect(() => parseNotesFile('kein json')).toThrow(NotesFileError);
-    expect(() => parseNotesFile('{"art":"etwas"}')).toThrow('keine Notiz-Datei');
+    expect(() => parseNotesFile('{"art":"etwas"}')).toThrow('keine Arbeitsstand-Datei');
     expect(() => parseNotesFile('{"art":"conocto-notizen","version":5,"positionen":[]}')).toThrow(
       'neueren Conocto-Version',
     );
+    expect(() =>
+      parseNotesFile('{"art":"conocto-arbeitsstand","version":6,"positionen":[]}'),
+    ).toThrow('neueren Conocto-Version');
+  });
+
+  it('liest alte Notiz-Dateien (conocto-notizen, Version 4) weiter (Entscheidung 0101)', () => {
+    const alt = parseNotesFile('{"art":"conocto-notizen","version":4,"positionen":[]}');
+    expect(alt.positionen).toEqual([]);
   });
 });
 

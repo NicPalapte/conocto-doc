@@ -247,7 +247,7 @@ export function FileDropzone() {
       const knoten = [...indexNodes(lv.tree).values()];
       const annotations = rekey(gespeichert.annotations, storageKeys(knoten).toNode);
       downloadText(
-        exportFileName(lv.fileName, 'notizen', 'json'),
+        exportFileName(lv.fileName, 'arbeitsstand', 'json'),
         notesFileText(annotations, knoten, lv, Date.now(), names),
         'json',
       );
@@ -255,7 +255,7 @@ export function FileDropzone() {
       return true;
     } catch (fehler) {
       console.error(fehler);
-      dispatch({ type: 'error', message: exportFehler('Die Notiz-Datei') });
+      dispatch({ type: 'error', message: exportFehler('Die Arbeitsstand-Datei') });
       return false;
     }
   };
@@ -506,7 +506,7 @@ function LetzteDatei({
         aria-label="Gespeichertes Projekt löschen"
       >
         <span className="start-recent-q">
-          <b>Notiz-Datei heruntergeladen.</b>
+          <b>Arbeitsstand heruntergeladen.</b>
           <br />
           Gespeicherte Datei jetzt löschen?
         </span>
@@ -540,7 +540,7 @@ function LetzteDatei({
             className="start-btn primary"
             onClick={() => void onSaveNotes().then(setGesichert)}
           >
-            Notizen sichern + löschen
+            Arbeitsstand sichern + löschen
           </button>
           <button type="button" className="start-btn danger" onClick={onForget}>
             Löschen

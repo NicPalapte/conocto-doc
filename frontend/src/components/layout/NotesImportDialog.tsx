@@ -1,4 +1,4 @@
-// „Notizen laden…" aus dem Logo-Menü (Entscheidung 0061): zeigt, welche Einträge der
+// „Arbeitsstand laden…" aus dem Logo-Menü (Entscheidung 0061): zeigt, welche Einträge der
 // Notiz-Datei zu welchen Positionen passen, und übernimmt sie erst auf Klick.
 
 import { useMemo, useRef, useState } from 'react';
@@ -110,7 +110,7 @@ export function NotesImportDialog({ file, fileName, onClose }: Props) {
     countEvent('notizen-geladen');
     dispatch({
       type: 'notice',
-      message: `Notizen zu ${auswahl.length} ${auswahl.length === 1 ? 'Position' : 'Positionen'} übernommen.`,
+      message: `Arbeitsstand zu ${auswahl.length} ${auswahl.length === 1 ? 'Position' : 'Positionen'} übernommen.`,
     });
     onClose();
   };
@@ -132,15 +132,17 @@ export function NotesImportDialog({ file, fileName, onClose }: Props) {
       <div
         ref={dialogRef}
         role="dialog"
-        aria-label="Notizen laden"
+        aria-label="Arbeitsstand laden"
         className="ov-window flex max-h-[84vh] w-[min(560px,calc(100vw-32px))] flex-col"
       >
         <div className="flex h-[44px] shrink-0 items-center border-b border-line pl-[16px] pr-[6px]">
-          <b className="flex-1 font-display text-[14px] font-semibold text-ink">Notizen laden</b>
+          <b className="flex-1 font-display text-[14px] font-semibold text-ink">
+            Arbeitsstand laden
+          </b>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Notizen laden schließen"
+            aria-label="Arbeitsstand laden schließen"
             className="inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-[var(--r-sm)] border-none bg-transparent text-mute hover:bg-sunken hover:text-ink"
           >
             ✕

@@ -156,7 +156,7 @@ describe('Speichern', () => {
       0,
     );
     const roh = JSON.parse(text) as { version: number; positionen: Array<Record<string, unknown>> };
-    expect(roh.version).toBe(4);
+    expect(roh.version).toBe(5);
     expect(roh.positionen[0].dokumentstellen).toMatchObject([{ quelle: 'oz' }]);
     expect(roh.positionen[0].abgelehnt).toMatchObject([{ text: MENGE.text, seite: 2 }]);
 
