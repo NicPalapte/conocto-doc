@@ -41,7 +41,7 @@ export function TopBar() {
   const { unlocked: adminFrei, ruleRequest, requestRule } = useAdmin();
   // „Als Regel…" im Langtext öffnet den Regeleditor (Entscheidung 0081).
   if (ruleRequest !== null && !adminOffen) setAdminOffen(true);
-  /** „Notizen laden…": versteckter Dateidialog, danach das Ergebnisfenster (0061). */
+  /** „Arbeitsstand laden…": versteckter Dateidialog, danach das Ergebnisfenster (0061). */
   const notizDateiRef = useRef<HTMLInputElement>(null);
   const pdfDateiRef = useRef<HTMLInputElement>(null);
   const documents = useOptionalDocuments();
@@ -56,7 +56,7 @@ export function TopBar() {
         message:
           fehler instanceof NotesFileError
             ? fehler.message
-            : 'Die Notiz-Datei konnte nicht gelesen werden.',
+            : 'Die Arbeitsstand-Datei konnte nicht gelesen werden.',
       });
     }
   };
@@ -81,7 +81,7 @@ export function TopBar() {
   return (
     <>
       <div className="relative z-[5] flex h-[54px] shrink-0 items-center gap-[10px] border-b border-line bg-surface pr-[12px]">
-        {/* Das Logo öffnet „Über diese App": Öffnen, Export, Notizen, Hilfe, Design
+        {/* Das Logo öffnet „Über diese App": Öffnen, Export, Arbeitsstand, Hilfe, Design
             (Issue #71, Entscheidung 0079). */}
         <AboutMenu
           onFehlerMelden={() => setMelden(true)}
@@ -102,7 +102,7 @@ export function TopBar() {
           type="file"
           accept=".json,application/json"
           className="hidden"
-          aria-label="Notiz-Datei auswählen"
+          aria-label="Arbeitsstand-Datei auswählen"
           onChange={(event) => {
             void notizenLesen(event.target.files?.[0]);
             // Zurücksetzen, damit dieselbe Datei erneut gewählt werden kann.

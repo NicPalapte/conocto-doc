@@ -7,7 +7,7 @@
 // dem Nutzer so etwas suchen.
 //
 // Seit Entscheidung 0079 gruppiert: oben Öffnen, dann aufklappbare Gruppen „Exportieren“,
-// „Meine Notizen“, „Hilfe & Feedback“, unten Design und eine Fußzeile.
+// „Mein Arbeitsstand“, „Hilfe & Feedback“, unten Design und eine Fußzeile.
 //
 // „Fehler melden" sitzt ebenfalls hier und nicht mehr im Menü „Mitnehmen":
 // eine Meldung ist kein Export.
@@ -53,11 +53,11 @@ export interface AboutMenuProps {
   /** Export und Druck der gefilterten Menge. Fehlt, solange kein LV geladen ist. */
   mitnehmen?: Mitnehmen;
   /**
-   * „Notizen laden…" gewählt (Entscheidung 0061); Dateidialog und Fenster hängen in der
+   * „Arbeitsstand laden…" gewählt (Entscheidung 0061); Dateidialog und Fenster hängen in der
    * Kopfleiste. Fehlt, solange kein LV geladen ist.
    */
   onNotizenLaden?: () => void;
-  /** Positionen mit eigener Notiz; „Notizen sichern" erscheint nur, wenn es welche gibt. */
+  /** Positionen mit eigener Notiz; „Arbeitsstand sichern" erscheint nur, wenn es welche gibt. */
   notizen?: number;
   /** „Admin-Werkzeuge" gewählt (Entscheidung 0053); Fenster hängt in der Kopfleiste. */
   onAdmin: () => void;
@@ -72,7 +72,7 @@ function Trenner() {
   return <hr className="mx-[4px] my-[4px] border-0 border-t border-line" />;
 }
 
-type GruppenName = 'Exportieren' | 'Meine Notizen' | 'Hilfe & Feedback';
+type GruppenName = 'Exportieren' | 'Mein Arbeitsstand' | 'Hilfe & Feedback';
 
 /**
  * Aufklappbare Gruppe im Menü. Klappt an Ort und Stelle auf statt seitlich — ein
@@ -203,7 +203,7 @@ export function AboutMenu({
         // niemandem, was sie tut, weder am Bildschirmleser noch im Test.
         aria-label="Über diese App"
         data-tour="menu"
-        title="Über diese App: Export, Notizen, Hilfe"
+        title="Über diese App: Export, Arbeitsstand, Hilfe"
         className="mx-[8px] flex cursor-pointer items-center gap-[6px] rounded-[var(--r-sm)] border-none bg-transparent px-[8px] py-[5px] hover:bg-sunken aria-expanded:bg-sunken"
       >
         <ConoctoLogo size={22} />
@@ -261,14 +261,14 @@ export function AboutMenu({
                 Drucken / als PDF
               </PopoverRow>
             </Gruppe>
-            <Gruppe name="Meine Notizen" offen={offen} umschalten={umschalten}>
+            <Gruppe name="Mein Arbeitsstand" offen={offen} umschalten={umschalten}>
               {notizen !== undefined && notizen > 0 && (
                 <PopoverRow
                   onClick={() => nimmMit(mitnehmen.notizenSichern)}
                   title="Alle eigenen Marker und Kommentare als Datei — zum Aufheben oder Weitergeben"
                   trailing={<span className="font-mono text-[11px] text-mute">{notizen}</span>}
                 >
-                  Notizen sichern
+                  Arbeitsstand sichern
                 </PopoverRow>
               )}
               {onNotizenLaden !== undefined && (
@@ -277,9 +277,9 @@ export function AboutMenu({
                     setOpen(false);
                     onNotizenLaden();
                   }}
-                  title="Gesicherte Notizen zu diesem LV übernehmen"
+                  title="Gesicherten Arbeitsstand zu diesem LV übernehmen"
                 >
-                  Notizen laden…
+                  Arbeitsstand laden…
                 </PopoverRow>
               )}
             </Gruppe>

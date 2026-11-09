@@ -1,5 +1,5 @@
 // Notizen sichern und laden (Entscheidung 0061): Rückfrage auf der Startseite,
-// „Notizen sichern" und „Notizen laden…" im Logo-Menü.
+// „Arbeitsstand sichern" und „Arbeitsstand laden…" im Logo-Menü.
 
 import 'fake-indexeddb/auto';
 import { readFileSync } from 'node:fs';
@@ -125,9 +125,9 @@ describe('Startseite', () => {
     render(<App />);
     await screen.findByText('⚑ 1 mit Marker');
     fireEvent.click(screen.getByRole('button', { name: 'Gespeicherte Datei löschen' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Notizen sichern + löschen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Arbeitsstand sichern + löschen' }));
     // Erst nach zweiter Bestätigung: ob der Browser gespeichert hat, weiß die Seite nicht.
-    await screen.findByText('Notiz-Datei heruntergeladen.');
+    await screen.findByText('Arbeitsstand heruntergeladen.');
     expect(await readLastLvMeta()).not.toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Löschen' }));
     await waitFor(async () => expect(await readLastLvMeta()).toBeNull());
@@ -135,7 +135,7 @@ describe('Startseite', () => {
       expect(screen.queryByRole('group', { name: 'Gespeichertes Projekt löschen' })).toBeNull(),
     );
     const datei = downloads.find((d) => d.name.endsWith('.json'));
-    expect(datei?.name).toMatch(/^gaeb-xml-beispiel-notizen-.*\.json$/);
+    expect(datei?.name).toMatch(/^gaeb-xml-beispiel-arbeitsstand-.*\.json$/);
     expect(datei?.text).toContain('"wichtig": true');
   });
 });
@@ -151,10 +151,10 @@ describe('Logo-Menü', () => {
     await speichere(true);
     await oeffneGespeicherte();
     fireEvent.click(screen.getByRole('button', { name: 'Über diese App' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Meine Notizen' }));
-    fireEvent.click(screen.getByRole('button', { name: /Notizen sichern/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mein Arbeitsstand' }));
+    fireEvent.click(screen.getByRole('button', { name: /Arbeitsstand sichern/ }));
     const datei = downloads.find((d) => d.name.endsWith('.json'));
-    expect(datei?.text).toContain('"art": "conocto-notizen"');
+    expect(datei?.text).toContain('"art": "conocto-arbeitsstand"');
   });
 
   it('lädt eine Notiz-Datei und übernimmt sie nach Bestätigung', async () => {
@@ -169,14 +169,14 @@ describe('Logo-Menü', () => {
     );
     const text = notesFileText(notizen, knoten, { fileName: NAME, fileId: null }, 3000);
 
-    fireEvent.change(screen.getByLabelText('Notiz-Datei auswählen'), {
+    fireEvent.change(screen.getByLabelText('Arbeitsstand-Datei auswählen'), {
       target: { files: [new File([text], 'sicherung.json')] },
     });
-    const fenster = await screen.findByRole('dialog', { name: 'Notizen laden' });
+    const fenster = await screen.findByRole('dialog', { name: 'Arbeitsstand laden' });
     expect(within(fenster).getByText('sicherung.json')).toBeInTheDocument();
     fireEvent.click(within(fenster).getByRole('button', { name: '2 übernehmen' }));
 
-    expect(screen.queryByRole('dialog', { name: 'Notizen laden' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Arbeitsstand laden' })).toBeNull();
     expect(document.querySelectorAll('[data-note="fertig"]')).toHaveLength(1);
     expect(document.querySelectorAll('[data-note="note"]')).toHaveLength(1);
     await waitFor(async () =>
@@ -194,10 +194,10 @@ describe('Logo-Menü', () => {
       datei: 'anderes.x83',
       positionen: [{ hash: 'fremd', text: 'fremd', oz, marker: 'wichtig', verlauf: [] }],
     });
-    fireEvent.change(screen.getByLabelText('Notiz-Datei auswählen'), {
+    fireEvent.change(screen.getByLabelText('Arbeitsstand-Datei auswählen'), {
       target: { files: [new File([fremd], 'anderes.json')] },
     });
-    const fenster = await screen.findByRole('dialog', { name: 'Notizen laden' });
+    const fenster = await screen.findByRole('dialog', { name: 'Arbeitsstand laden' });
     expect(within(fenster).getByRole('note')).toHaveTextContent('anderen LV');
     expect(
       within(fenster).getByRole('checkbox', { name: 'Geänderte übernehmen' }),
@@ -208,11 +208,11 @@ describe('Logo-Menü', () => {
   it('meldet eine Datei, die keine Notiz-Datei ist', async () => {
     await speichere(false);
     await oeffneGespeicherte();
-    fireEvent.change(screen.getByLabelText('Notiz-Datei auswählen'), {
+    fireEvent.change(screen.getByLabelText('Arbeitsstand-Datei auswählen'), {
       target: { files: [new File(['{}'], 'falsch.json')] },
     });
     expect(
-      await screen.findByText('Die Datei ist keine Notiz-Datei von Conocto.'),
+      await screen.findByText('Die Datei ist keine Arbeitsstand-Datei von Conocto.'),
     ).toBeInTheDocument();
   });
 });

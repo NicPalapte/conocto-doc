@@ -9,6 +9,13 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.55.1 — 09.11.2026 · Arbeitsstand statt Notizen
+
+- **Neuer Name:** „Notizen sichern“ und „Notizen laden…“ heißen jetzt „Arbeitsstand sichern“
+  und „Arbeitsstand laden…“. Die Datei enthält Marker, Kommentare, Textmarkierungen,
+  PDF-Verknüpfungen und Messungen – mehr als Notizen.
+- **Dateiname:** `…-arbeitsstand-<Datum>.json`. Alte Notiz-Dateien lassen sich weiter laden.
+
 ## 0.55.0 — 08.11.2026 · Ein Demo-Projekt
 
 - **Demo-Projekt:** Statt zwei Demo-LVs gibt es ein Projekt zum Ausprobieren: LV mit Preisen,

@@ -52,17 +52,20 @@ import {
   type PlanNotes,
 } from './docs/planNotes';
 
-// Kennung aus der Zeit vor dem Namen Conocto — bleibt, sonst ließen sich
-// gesicherte Notiz-Dateien nicht mehr laden (Entscheidung 0069).
-export const NOTES_FILE_KIND = 'conocto-notizen';
+/** Kennung der Arbeitsstand-Datei (Entscheidung 0101). */
+export const NOTES_FILE_KIND = 'conocto-arbeitsstand';
+/** Kennung bis Version 4 („Notizen“); solche Dateien werden weiter gelesen (0101). */
+const OLD_NOTES_FILE_KIND = 'conocto-notizen';
 /**
+ * Version 5: neue Kennung `conocto-arbeitsstand`, Inhalt wie Version 4 (0101).
+ *
  * Seit 0080 dazu je Position `quelle` an Dokumentstellen und `abgelehnt` — nur ergänzt,
  * deshalb weiter Version 4: ältere Fassungen lesen die Datei und übergehen die Felder.
  * Version 4: dazu Stellen in Begleitdokumenten (0072). Version 3: dazu Anstreichungen (0063).
  * Version 2: Fortschritt + Wichtig (0062).
  * Ältere Versionen werden gelesen, Version 1 (drei Marker) umgedeutet.
  */
-const NOTES_FILE_VERSION = 4;
+const NOTES_FILE_VERSION = 5;
 
 interface FilePaint {
   readonly farbe: Paint;
@@ -423,7 +426,9 @@ export const MAX_NOTES_FILE_BYTES = 20 * 1024 * 1024;
 /** Liest eine Notiz-Datei aus dem Dateidialog. Wirft `NotesFileError` bei zu großer Datei. */
 export async function readNotesFile(file: Blob): Promise<NotesFile> {
   if (file.size > MAX_NOTES_FILE_BYTES) {
-    throw new NotesFileError('Die Datei ist zu groß für eine Notiz-Datei (höchstens 20 MB).');
+    throw new NotesFileError(
+      'Die Datei ist zu groß für eine Arbeitsstand-Datei (höchstens 20 MB).',
+    );
   }
   return parseNotesFile(await file.text());
 }
@@ -434,18 +439,20 @@ export function parseNotesFile(content: string): NotesFile {
   try {
     raw = JSON.parse(content);
   } catch {
-    throw new NotesFileError('Die Datei ist keine Notiz-Datei von Conocto.');
+    throw new NotesFileError('Die Datei ist keine Arbeitsstand-Datei von Conocto.');
   }
   if (typeof raw !== 'object' || raw === null) {
-    throw new NotesFileError('Die Datei ist keine Notiz-Datei von Conocto.');
+    throw new NotesFileError('Die Datei ist keine Arbeitsstand-Datei von Conocto.');
   }
   const file = raw as Record<string, unknown>;
-  if (file.art !== NOTES_FILE_KIND || !Array.isArray(file.positionen)) {
-    throw new NotesFileError('Die Datei ist keine Notiz-Datei von Conocto.');
+  const isNew = file.art === NOTES_FILE_KIND;
+  if ((!isNew && file.art !== OLD_NOTES_FILE_KIND) || !Array.isArray(file.positionen)) {
+    throw new NotesFileError('Die Datei ist keine Arbeitsstand-Datei von Conocto.');
   }
   const version = file.version;
-  if (version !== 1 && version !== 2 && version !== 3 && version !== NOTES_FILE_VERSION) {
-    throw new NotesFileError('Die Notiz-Datei stammt aus einer neueren Conocto-Version.');
+  const known = isNew ? [NOTES_FILE_VERSION] : [1, 2, 3, 4];
+  if (typeof version !== 'number' || !known.includes(version)) {
+    throw new NotesFileError('Die Arbeitsstand-Datei stammt aus einer neueren Conocto-Version.');
   }
   const plaene = fromStoredPlanNotes(file.plaene);
   const planned = positionsWithVa(plaene);

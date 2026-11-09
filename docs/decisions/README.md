@@ -67,7 +67,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0058 | [Schalter „Nicht-Treffer" sitzt in der Suche](0058-nicht-treffer-in-der-suche.md)                              | ergänzt durch 0077                 | 2026-10-19 |
 | 0059 | [Matrix als Kacheln, Gliederungswechsel gleitet](0059-matrix-kacheln.md)                                       | akzeptiert                         | 2026-10-19 |
 | 0060 | [Wissensgraph als Datenmodell, keine Graph-Datenbank](0060-wissensgraph-als-datenmodell.md)                    | vorgeschlagen                      | 2026-10-21 |
-| 0061 | [Notizen als Datei sichern und laden](0061-notizen-sichern-und-laden.md)                                       | akzeptiert                         | 2026-10-21 |
+| 0061 | [Notizen als Datei sichern und laden](0061-notizen-sichern-und-laden.md)                                       | teilweise ersetzt durch 0101       | 2026-10-21 |
 | 0062 | [Fortschritt und „Wichtig" statt drei Marker](0062-fortschritt-und-wichtig.md)                                 | akzeptiert                         | 2026-10-21 |
 | 0063 | [Eigene Textmarkierungen im Langtext](0063-anstreichen-im-langtext.md)                                         | ergänzt durch 0077                 | 2026-10-21 |
 | 0064 | [Splitscreen neben den Fenstern](0064-splitscreen.md)                                                          | teilweise ersetzt durch 0070, 0074 | 2026-10-22 |
@@ -107,6 +107,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0098 | [„Kurze Tour“: gesehen merken](0098-tour-gesehen-merken.md)                                                    | akzeptiert                         | 2026-11-07 |
 | 0099 | [Ganzes Dokument mit Positionen verknüpfen](0099-ganzes-dokument-verknuepfen.md)                               | akzeptiert                         | 2026-11-07 |
 | 0100 | [Ein Demo-Projekt mit PDFs, Verknüpfungen und Plan](0100-ein-demo-projekt.md)                                  | akzeptiert                         | 2026-11-08 |
+| 0101 | [„Arbeitsstand“ statt „Notizen“ für die gesicherte Datei](0101-arbeitsstand-statt-notizen.md)                  | akzeptiert                         | 2026-11-09 |
 
 ## Wann schreibe ich eine neue Datei?
 

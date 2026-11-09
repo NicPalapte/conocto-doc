@@ -109,7 +109,7 @@ _Linting/Formatierung laufen automatisch via Claude Code Hook nach jedem Edit/Wr
 ## Code-Style
 - Produktname **Conocto** (`docs/decisions/0069-conocto-look.md`). Kennungen heißen `conocto-…`
   (Entscheidung 0091): `conocto-pos-v1`, `conocto-graph-v1`, `conocto-lv-export-v1`,
-  `conocto-rule-v1`, `conocto-notizen`, `@conocto/core`, IndexedDB `conocto`. Keine neuen
+  `conocto-rule-v1`, `conocto-arbeitsstand` (alt `conocto-notizen`), `@conocto/core`, IndexedDB `conocto`. Keine neuen
   Kennungen mit `bubble`. Ausnahmen: GoatCounter-Code `bubble` (externes Konto), Repo-Name,
   „Bubble" als Blase im Graphen (`BubbleGraph`).
 - Farben nur über CSS-Variablen aus dem Paket `@conocto/design` (`tokens.css`, Entscheidung
@@ -161,7 +161,7 @@ ein Format für alle Regelarten, Wortlisten/Einheiten-Gruppen liefert die App, `
 jede Regel an/aus, Grundstock nur abschalten oder kopieren, eigene Prüfhinweise,
 `docs/decisions/0089`; Wortlisten: Grundstock-Wörter nur abschalten, eigene Wörter/Listen,
 Regeln suchen nur über `useAdmin().context`, `docs/decisions/0090`) · lokaler Export/Druck über das
-Logo-Menü · Notizen als Datei sichern/laden (`lib/notesFile.ts`, 0061) · freiwillige Kurzumfrage
+Logo-Menü · Arbeitsstand als Datei sichern/laden (`lib/notesFile.ts`, `conocto-arbeitsstand`, 0061, 0101) · freiwillige Kurzumfrage
 zum Produkt (Owner-Wunsch, `docs/decisions/0071-kurzumfrage.md`). · Begleit-PDF im
 Fenster „Dokument“ lesen, anstreichen, Stellen oder das ganze Dokument (Seite 0, 0099) von Hand
 mit Positionen verknüpfen, keine

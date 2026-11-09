@@ -125,9 +125,9 @@ export function useMitnehmen(): Mitnehmen {
   const notizenSichern = useCallback((): void => {
     if (lv === null) return;
     countEvent('notizen-gesichert');
-    absichern('Die Notiz-Datei', () => {
+    absichern('Die Arbeitsstand-Datei', () => {
       downloadText(
-        exportFileName(lv.fileName, 'notizen', 'json'),
+        exportFileName(lv.fileName, 'arbeitsstand', 'json'),
         notesFileText(annotations, index.nodes, lv, Date.now(), names),
         'json',
       );
