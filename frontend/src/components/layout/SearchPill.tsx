@@ -406,7 +406,19 @@ export function SearchPill({
           + Filter
         </button>
       </div>
-      {searching && <SearchSources nav={nav} open={listOpen} />}
+      {searching && (
+        <SearchSources
+          nav={nav}
+          open={listOpen}
+          onPick={() => {
+            // Stelle gewählt: Liste zu, schmal auch die Leiste — der Fokus verlässt sie.
+            (host.document.activeElement as HTMLElement | null)?.blur();
+            setListWanted(null);
+            setTyping(false);
+            setHover(false);
+          }}
+        />
+      )}
     </div>
   );
   if (!narrow) return pill;

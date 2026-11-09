@@ -87,19 +87,21 @@ function windowOf(count: number, index: number): { from: number; to: number } {
 function Section({
   nav,
   source,
-  first,
   open,
+  onPick,
 }: {
   nav: SearchNav;
   source: SearchSource;
-  first: boolean;
   open: boolean;
+  onPick: () => void;
 }) {
+  /** Quelle, in der ▲ ▼ gerade stehen — steht nicht immer oben. */
+  const first = source.id === nav.current.id;
   const count = source.count;
   const { from, to } = windowOf(count ?? 0, source.index);
   const items = count === null || count === 0 ? [] : nav.itemsOf(source.id, from, to);
   const shown = useRef<HTMLButtonElement>(null);
-  // Der gezeigte Treffer des obersten Abschnitts steht beim Öffnen und Blättern im Blick.
+  // Der gezeigte Treffer der aktuellen Quelle steht beim Öffnen und Blättern im Blick.
   useEffect(() => {
     if (open && first) shown.current?.scrollIntoView?.({ block: 'nearest' });
   }, [open, first, source.index]);
@@ -138,7 +140,10 @@ function Section({
             aria-current={on && first ? 'true' : undefined}
             // Kein Blur vor dem Klick: sonst klappt die Liste unter dem Zeiger zu.
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() => nav.goTo(source.id, item.at)}
+            onClick={() => {
+              nav.goTo(source.id, item.at);
+              onPick();
+            }}
             className={`${ITEM} ${
               on && first
                 ? 'bg-accent-soft text-accent-ink shadow-[inset_2px_0_0_var(--accent)]'
@@ -163,8 +168,20 @@ function Section({
   );
 }
 
-/** Alle Treffer unter der Suchleiste, je Quelle ein Abschnitt; die des Fensters oben. */
-export function SearchSources({ nav, open }: { nav: SearchNav; open: boolean }) {
+/**
+ * Alle Treffer unter der Suchleiste, je Quelle ein Abschnitt; oben der Bereich, in den
+ * zuletzt geklickt wurde. Blättern sortiert nicht um.
+ */
+export function SearchSources({
+  nav,
+  open,
+  onPick,
+}: {
+  nav: SearchNav;
+  open: boolean;
+  /** Ein Treffer wurde angeklickt: die Suche klappt ein. */
+  onPick: () => void;
+}) {
   if (!open) return null;
   return (
     <div
@@ -172,8 +189,8 @@ export function SearchSources({ nav, open }: { nav: SearchNav; open: boolean }) 
       aria-label="Treffer je Quelle"
       className="ov-window absolute inset-x-0 top-[42px] z-[30] flex max-h-[min(60vh,520px)] flex-col gap-[4px] overflow-y-auto p-[6px]"
     >
-      {nav.sources.map((source, k) => (
-        <Section key={source.id} nav={nav} source={source} first={k === 0} open={open} />
+      {nav.sources.map((source) => (
+        <Section key={source.id} nav={nav} source={source} open={open} onPick={onPick} />
       ))}
     </div>
   );

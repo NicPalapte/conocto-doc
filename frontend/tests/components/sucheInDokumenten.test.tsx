@@ -111,6 +111,14 @@ describe('Eine Suche für LV und PDFs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Nächster Treffer' }));
     await waitFor(() => expect(zaehler()).not.toHaveAccessibleName(/vorbemerkungen/));
     expect(screen.queryByText(/Ende von/)).toBeNull();
+
+    // Blättern sortiert die Liste nicht um: das Dokument, in dem man war, bleibt oben.
+    const liste = screen.getByRole('group', { name: 'Treffer je Quelle' });
+    expect(within(liste).getAllByRole('region')[0]).toHaveAccessibleName('vorbemerkungen.pdf');
+
+    // Erst ein Klick in einen anderen Bereich holt dessen Abschnitt nach oben.
+    fireEvent.pointerDown(document.querySelector('[data-search-source="lv"]') as Element);
+    await waitFor(() => expect(within(liste).getAllByRole('region')[0]).toHaveAccessibleName('LV'));
   });
 
   it('öffnet per Klick auf einen Treffer das Dokument an dieser Stelle', async () => {
@@ -121,6 +129,8 @@ describe('Eine Suche für LV und PDFs', () => {
     const pdf = within(liste).getByRole('region', { name: 'baubeschreibung.pdf' });
     await waitFor(() => expect(within(pdf).getAllByRole('button')).toHaveLength(2));
     fireEvent.click(within(pdf).getAllByRole('button')[1]);
+    // Stelle gewählt: die Liste klappt zu.
+    expect(screen.queryByRole('group', { name: 'Treffer je Quelle' })).toBeNull();
     expect(
       screen.getByRole('button', { name: 'Dokument wählen: baubeschreibung.pdf' }),
     ).toBeInTheDocument();

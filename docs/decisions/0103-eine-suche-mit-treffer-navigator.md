@@ -31,8 +31,10 @@
   Abschnitt (Name gekürzt, ganz im Tooltip, mit Trefferzahl). Je Treffer OZ bzw. Seite und ein
   Ausschnitt; je Abschnitt bis zu 100 rund um den gezeigten. Oben steht der Abschnitt der
   Quelle, in der zuletzt gearbeitet wurde bzw. die das Fenster zeigt, danach reihum die
-  übrigen. Klappt beim Tippen oder Antippen der Zählung auf, zu mit Esc oder Klick daneben.
-  Antippen eines Treffers springt hin und öffnet bei einem PDF das Dokument (Nico, 09.11.).
+  übrigen. Blättern mit ▲ ▼ sortiert die Abschnitte nicht um; erst ein Klick in einen anderen
+  Bereich oder ein anderes Fenster holt dessen Abschnitt nach oben. Klappt beim Tippen oder
+  Antippen der Zählung auf, zu mit Esc oder Klick daneben. Antippen eines Treffers springt
+  hin, öffnet bei einem PDF das Dokument und klappt die Suche ein (Nico, 09.11.).
 - **Standard-Quelle = zuletzt bearbeiteter Bereich.** Klick oder Fokus im Dokument ⇒ das
   gezeigte PDF; in Graph, Tabelle, Position, Überblick, Prüfung ⇒ LV. Wird nicht gespeichert.
 - **Jedes ausgelagerte Fenster hat seine feste Quelle:** im Dokument-Fenster das PDF, in

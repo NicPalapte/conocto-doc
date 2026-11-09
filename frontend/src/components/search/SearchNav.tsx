@@ -62,6 +62,20 @@ export interface SearchNav {
   readonly area: SearchArea;
 }
 
+/** Fenster mit eigenem Navigator: Hauptfenster, ausgelagertes Dokument, ausgelagertes LV. */
+type NavWindow = 'main' | 'doc' | 'lv';
+
+/**
+ * Stand des Blätterns in einem Fenster: `id` = Quelle, in der ▲ ▼ gerade stehen; `anchor` =
+ * Quelle, deren Abschnitt oben steht. Blättern über das Ende einer Quelle ändert nur `id`,
+ * damit die Liste nicht umsortiert. Ein Klick in einen Bereich verwirft den Stand.
+ */
+interface NavCursor {
+  readonly needle: string;
+  readonly anchor: string;
+  readonly id: string;
+}
+
 /** Gemeinsamer Stand aller Fenster; `useSearchNav` bindet ihn an das eigene Fenster. */
 interface SearchNavShared {
   readonly needle: string;
@@ -70,7 +84,8 @@ interface SearchNavShared {
   readonly mainArea: SearchArea;
   readonly docWindow: Window | null;
   readonly activeDocId: string | null;
-  goTo: (id: string, at: number, inMain: boolean) => void;
+  readonly cursors: Readonly<Partial<Record<NavWindow, NavCursor>>>;
+  goTo: (id: string, at: number, win: NavWindow, anchor: string) => void;
   itemsOf: (id: string, from: number, to: number) => readonly SearchItem[];
 }
 
@@ -127,21 +142,42 @@ export function SearchNavProvider({ children }: { children: ReactNode }) {
   const documents = useOptionalDocuments();
   const workspace = useOptionalWorkspace();
   const [area, setArea] = useState<SearchArea>('lv');
+  const [cursors, setCursors] = useState<Partial<Record<NavWindow, NavCursor>>>({});
+  const docWindow = workspace?.hosts.doc?.win ?? null;
 
-  // Aktivität nur im Hauptfenster verfolgen: ein ausgelagertes Fenster zeigt nur einen
-  // Bereich, dort steht die Quelle fest (Dokument-Fenster ⇒ PDF, sonst LV).
+  // Bereich im Hauptfenster verfolgen; ein ausgelagertes Fenster zeigt nur einen Bereich,
+  // dort steht die Quelle fest (Dokument-Fenster ⇒ PDF, sonst LV). Ein Klick in einen
+  // Bereich — in jedem Fenster — setzt dort den Stand des Blätterns zurück: dann steht der
+  // Abschnitt dieses Bereichs wieder oben.
+  const hostWindows = useMemo(() => {
+    const list: Window[] = [window];
+    if (workspace !== null) {
+      for (const host of Object.values(workspace.hosts)) if (host !== null) list.push(host.win);
+    }
+    return list;
+  }, [workspace]);
   useEffect(() => {
-    const onActivity = (event: Event): void => {
-      const next = areaOf(event.target);
-      if (next !== null) setArea(next);
-    };
-    window.addEventListener('pointerdown', onActivity, true);
-    window.addEventListener('focusin', onActivity, true);
-    return () => {
-      window.removeEventListener('pointerdown', onActivity, true);
-      window.removeEventListener('focusin', onActivity, true);
-    };
-  }, []);
+    const cleanups = hostWindows.map((host) => {
+      const win: NavWindow = host === window ? 'main' : host === docWindow ? 'doc' : 'lv';
+      const onPointer = (event: Event): void => {
+        const next = areaOf(event.target);
+        if (next === null) return;
+        if (win === 'main') setArea(next);
+        setCursors((prev) => (prev[win] === undefined ? prev : { ...prev, [win]: undefined }));
+      };
+      const onFocus = (event: Event): void => {
+        const next = areaOf(event.target);
+        if (win === 'main' && next !== null) setArea(next);
+      };
+      host.addEventListener('pointerdown', onPointer, true);
+      host.addEventListener('focusin', onFocus, true);
+      return () => {
+        host.removeEventListener('pointerdown', onPointer, true);
+        host.removeEventListener('focusin', onFocus, true);
+      };
+    });
+    return () => cleanups.forEach((cleanup) => cleanup());
+  }, [hostWindows, docWindow]);
 
   const needle = searchNeedleOf(filter.search);
 
@@ -207,26 +243,24 @@ export function SearchNavProvider({ children }: { children: ReactNode }) {
   );
 
   const goTo = useCallback(
-    (id: string, at: number, inMain: boolean): void => {
+    (id: string, at: number, win: NavWindow, anchor: string): void => {
+      setCursors((prev) => ({ ...prev, [win]: { needle, anchor, id } }));
       if (id === LV_SOURCE) {
-        if (inMain) setArea('lv');
         const slot = lvSlots[at];
         if (slot !== undefined) selectSlot(slot);
         return;
       }
-      if (inMain) setArea('doc');
       if (documents?.active?.id !== id) documents?.activate(id);
       documents?.setHitIndex(id, at);
       dispatch({ type: 'showPane', pane: 'doc' });
     },
-    [lvSlots, selectSlot, documents, dispatch],
+    [needle, lvSlots, selectSlot, documents, dispatch],
   );
 
-  const docWindow = workspace?.hosts.doc?.win ?? null;
   const activeDocId = documents?.active?.id ?? null;
   const value = useMemo<SearchNavShared>(
-    () => ({ needle, sources, mainArea: area, docWindow, activeDocId, goTo, itemsOf }),
-    [needle, sources, area, docWindow, activeDocId, goTo, itemsOf],
+    () => ({ needle, sources, mainArea: area, docWindow, activeDocId, cursors, goTo, itemsOf }),
+    [needle, sources, area, docWindow, activeDocId, cursors, goTo, itemsOf],
   );
   return <SearchNavContext.Provider value={value}>{children}</SearchNavContext.Provider>;
 }
@@ -245,10 +279,19 @@ export function useSearchNav(): SearchNav | null {
     // Ist das Dokument ausgelagert, zeigt das Hauptfenster nur noch das LV.
     const mainArea = shared.docWindow === null ? shared.mainArea : 'lv';
     const area: SearchArea = inMain ? mainArea : host === shared.docWindow ? 'doc' : 'lv';
-    const currentId =
-      area === 'doc' && shared.activeDocId !== null ? shared.activeDocId : LV_SOURCE;
-    const sources = inListOrder(shared.sources, currentId);
-    const current = sources[0];
+    const win: NavWindow = inMain ? 'main' : area;
+    const fallback = area === 'doc' && shared.activeDocId !== null ? shared.activeDocId : LV_SOURCE;
+    const known = (id: string): boolean => shared.sources.some((source) => source.id === id);
+    const cursor = shared.cursors[win];
+    const valid =
+      cursor !== undefined &&
+      cursor.needle === shared.needle &&
+      known(cursor.id) &&
+      known(cursor.anchor);
+    const anchor = valid ? cursor.anchor : fallback;
+    const currentId = valid ? cursor.id : fallback;
+    const sources = inListOrder(shared.sources, anchor);
+    const current = sources.find((source) => source.id === currentId) ?? sources[0];
     // ▲ ▼ laufen nur in Quellen weiter, die dieses Fenster zeigt: ausgelagert nur die eigene
     // Art, im Hauptfenster PDFs nur, solange das Dokument nicht ausgelagert ist.
     const allowed = (source: SearchSource): boolean => {
@@ -261,10 +304,10 @@ export function useSearchNav(): SearchNav | null {
       sources,
       current,
       step: (direction: 1 | -1) => {
-        const next = nextHit(sources, direction, allowed);
-        if (next !== null) shared.goTo(next.id, next.at, inMain);
+        const next = nextHit(inListOrder(shared.sources, current.id), direction, allowed);
+        if (next !== null) shared.goTo(next.id, next.at, win, anchor);
       },
-      goTo: (id: string, at: number) => shared.goTo(id, at, inMain),
+      goTo: (id: string, at: number) => shared.goTo(id, at, win, anchor),
       itemsOf: shared.itemsOf,
       area,
     };
