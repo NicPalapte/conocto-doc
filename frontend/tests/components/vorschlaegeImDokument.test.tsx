@@ -57,7 +57,7 @@ function scheinPdf(): OpenedPdf {
 }
 
 /** So lange dürfen PDF und Vorschläge auf langsamen CI-Rechnern brauchen. */
-const PDF_MS = 25_000;
+const PDF_MS = 5_000;
 
 const FIXTURE_DIR = resolve(process.cwd(), '../packages/core/tests/fixtures');
 
@@ -72,13 +72,12 @@ async function ladeAppMitPdf(): Promise<void> {
   fireEvent.change(screen.getByLabelText('PDF auswählen'), {
     target: { files: [new File(['%PDF'], 'baubeschreibung.pdf', { type: 'application/pdf' })] },
   });
-  // Langsame CI-Rechner: Bereich und Vorschläge brauchen dort mehrere Sekunden. Lokal
-  // ~1 s; unter Last (mehrere Läufe parallel) etwa jeder 15. bis 20. Lauf über 8 s, in CI
-  // einmal über 15 s (PR #220).
+  // Lokal ~1 s. Frühere Ausreißer über 15 s waren kein Zeitproblem: Ein PDF direkt nach
+  // dem LV-Laden wurde verworfen (behoben in `DocumentsProvider`, Layout-Effekt).
   await screen.findByRole('group', { name: 'Vorschläge' }, { timeout: PDF_MS });
 }
 
-describe('Vorschläge im Dokument', { timeout: 40_000 }, () => {
+describe('Vorschläge im Dokument', { timeout: 15_000 }, () => {
   it('OZ mit Menge zum Vergleich, verknüpft erst nach Klick', async () => {
     await ladeAppMitPdf();
     const schalter = screen.getByRole('group', { name: 'Vorschläge' });

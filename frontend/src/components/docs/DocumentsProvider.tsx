@@ -21,6 +21,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -163,9 +164,11 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     docsRef.current = docs;
   }, [docs]);
 
-  // Neues LV oder Startseite: alle Dokumente zu.
+  // Neues LV oder Startseite: alle Dokumente zu. Als Layout-Effekt, damit `lvRef` schon
+  // beim Anzeigen des neuen LV stimmt: Ein sofort gewähltes PDF galt sonst als „während
+  // des Lesens anderes LV geladen“ und verschwand still.
   const lvRef = useRef(lv);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (lvRef.current === lv) return;
     lvRef.current = lv;
     for (const doc of docsRef.current) void doc.pdf.loadingTask.destroy();
