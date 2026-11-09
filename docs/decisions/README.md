@@ -90,7 +90,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0081 | [Regeleditor und Regelformat `bubble-rule-v1`](0081-regeleditor-und-regelformat.md)                            | akzeptiert, ergänzt durch 0085     | 2026-10-28 |
 | 0082 | [Eigene Domain conocto.app](0082-eigene-domain.md)                                                             | akzeptiert                         | 2026-10-28 |
 | 0083 | [Nicht in Suchmaschinen, keine KI-Crawler](0083-nicht-in-suchmaschinen.md)                                     | akzeptiert                         | 2026-10-28 |
-| 0084 | [Eigene Suche im PDF](0084-eigene-suche-im-pdf.md)                                                             | akzeptiert                         | 2026-10-28 |
+| 0084 | [Eigene Suche im PDF](0084-eigene-suche-im-pdf.md)                                                             | ersetzt durch 0103                 | 2026-10-28 |
 | 0085 | [Ein Regelformat für alles](0085-ein-regelformat-fuer-alles.md)                                                | akzeptiert (Schritt 4 von 5)       | 2026-10-29 |
 | 0086 | [Prüfregeln als Regeln](0086-pruefregeln-als-regeln.md)                                                        | akzeptiert                         | 2026-10-30 |
 | 0087 | [PDF-Vorschläge als Regeln](0087-pdf-vorschlaege-als-regeln.md)                                                | akzeptiert                         | 2026-10-30 |
@@ -109,6 +109,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0100 | [Ein Demo-Projekt mit PDFs, Verknüpfungen und Plan](0100-ein-demo-projekt.md)                                  | akzeptiert                         | 2026-11-08 |
 | 0101 | [„Arbeitsstand“ statt „Notizen“ für die gesicherte Datei](0101-arbeitsstand-statt-notizen.md)                  | akzeptiert                         | 2026-11-09 |
 | 0102 | [Ganze Kopfleiste im eigenen Fenster](0102-kopfleiste-im-eigenen-fenster.md)                                   | akzeptiert                         | 2026-11-09 |
+| 0103 | [Eine Suche für LV und PDFs mit Treffer-Navigator](0103-eine-suche-mit-treffer-navigator.md)                   | akzeptiert                         | 2026-11-09 |
 
 ## Wann schreibe ich eine neue Datei?
 

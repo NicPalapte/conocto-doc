@@ -1,11 +1,15 @@
 // Die eine Suchleiste: Suchfeld, aktive Filter als entfernbare Chips, „Nicht-Treffer"
 // dimmen/ausblenden und „+ Filter". Steht in der Kopfleiste und in Graph und Tabelle im
 // eigenen Browserfenster (Entscheidung 0039) — immer auf demselben Filterzustand.
-// Sie durchsucht nur das LV; PDFs haben ihre eigene Suche (Entscheidung 0084).
+// Sie durchsucht LV und alle PDFs; Zählung, ▲ ▼ und Quellen-Liste kommen aus dem
+// Treffer-Navigator (`components/search/SearchNav.tsx`, Entscheidung 0103).
 // Der Schalter „Nicht-Treffer" sitzt hier, weil er für Suche und alle Filter gilt
 // (docs/decisions/0058-nicht-treffer-in-der-suche.md). Er regelt auch, ob ein
 // hervorgehobener Abschnitt die übrigen blass zeigt oder ausblendet, und erscheint
 // deshalb auch dann (Entscheidung 0078).
+// Steht ein Begriff da, zeigt die Leiste den Treffer-Navigator der einen Suche über LV und
+// PDFs („4 / 9 ▾“, ▲ ▼); die Quellen mit Trefferzahl klappen darunter aus (Entscheidung 0103,
+// Mockup E).
 // Im sehr schmalen ausgelagerten Fenster (`collapsible`) steht nur eine Lupe; die Leiste
 // fährt beim Darüberfahren oder Antippen über die Kopfleiste aus (Entscheidung 0102).
 
@@ -19,6 +23,8 @@ import {
 } from 'react';
 import { useHostWindow } from '../common/hostWindow';
 import { useSearchDraft } from '../common/useSearchDraft';
+import { countLabel, NavCount, NavSteps, SearchSources } from '../search/SearchSources';
+import { useSearchNav } from '../search/SearchNav';
 import { PROGRESS_INFO } from '../../lib/annotations';
 import { FACETS, facetOptionLabel } from '../../lib/facets';
 import { formatCount } from '../../lib/format';
@@ -199,6 +205,13 @@ export function SearchPill({
   /** Schmal: Maus darüber bzw. Fokus im Feld fährt die Leiste aus. */
   const [hover, setHover] = useState(false);
   const [focused, setFocused] = useState(false);
+  /** Quellen-Liste von Hand auf- oder zugeklappt (Zählung angetippt, Esc). */
+  const [listWanted, setListWanted] = useState<boolean | null>(null);
+  const nav = useSearchNav();
+  const searching = nav !== null && nav.needle !== '';
+  /** Fokus im Suchfeld selbst: dann klappt die Liste von allein auf, nicht bei ▲ ▼. */
+  const [typing, setTyping] = useState(false);
+  const listOpen = searching && (listWanted ?? typing);
   /** Antippen der Lupe: sobald das Feld steht, bekommt es den Fokus. */
   const focusOnMount = useRef(false);
   const expanded = !narrow || hover || focused;
@@ -210,11 +223,21 @@ export function SearchPill({
     }
   }, []);
 
+  const navArea = useRef(nav?.area);
+  useEffect(() => {
+    navArea.current = nav?.area;
+  }, [nav?.area]);
+
   // "/" und Strg/Cmd + K holen die Suche — im Fenster, in dem sie steht. Strg K greift
   // auch in Eingabefeldern: wer es drückt, will suchen; "/" dagegen ist dort ein Zeichen.
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
-      const strgK = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k';
+      const strg = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
+      // Strg F gehört dem Browser, außer im ausgelagerten Fenster oder wenn zuletzt im
+      // Dokument gearbeitet wurde — dort sucht man mit dieser Leiste (Entscheidung 0103).
+      const strgF = strg && key === 'f' && (host !== window || navArea.current === 'doc');
+      const strgK = (strg && key === 'k') || strgF;
       // Kein `instanceof`: im ausgelagerten Fenster sind das andere Klassen.
       const tag = (event.target as Element | null)?.tagName;
       const imFeld = tag === 'INPUT' || tag === 'TEXTAREA';
@@ -251,15 +274,14 @@ export function SearchPill({
         <span className="text-[14px] text-mute" aria-hidden="true">
           ⌕
         </span>
-        <span className="truncate">{draft}</span>
+        <span className="truncate">{searching ? countLabel(nav.current) : draft}</span>
       </button>
     );
   }
 
   // Schmal und ausgefahren: über die ganze Kopfleiste, bis Maus und Fokus gehen.
-  const overlay = narrow
-    ? 'absolute inset-x-[8px] top-[8px] z-[30] !border-accent !shadow-[0_0_0_3px_var(--accent-soft)]'
-    : '';
+  const place = narrow ? 'absolute inset-x-[8px] top-[8px] z-[30]' : `relative ${className}`;
+  const ring = narrow ? '!border-accent !shadow-[0_0_0_3px_var(--accent-soft)]' : '';
 
   const pill = (
     <div
@@ -269,84 +291,114 @@ export function SearchPill({
       }}
       onFocus={() => setFocused(true)}
       onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);
+        if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+        setFocused(false);
+        setTyping(false);
+        setListWanted(null);
       }}
       onKeyDown={(event) => {
-        if (narrow && event.key === 'Escape') {
+        if (event.key !== 'Escape') return;
+        if (listOpen) {
+          // Nur die Liste zu — die Auswahl bleibt (Escape hebt sie sonst auf).
+          event.stopPropagation();
+          setListWanted(false);
+          return;
+        }
+        if (narrow) {
           (event.target as HTMLElement).blur();
           setHover(false);
         }
       }}
-      className={`flex h-[36px] min-w-0 items-center gap-[6px] overflow-hidden rounded-[var(--r-pill)] border border-line bg-surface pl-[12px] pr-[6px] shadow-[var(--shadow-sm)] focus-within:border-accent focus-within:shadow-[0_0_0_3px_var(--accent-soft)] ${narrow ? overlay : className}`}
+      className={`min-w-0 ${place}`}
     >
-      <span className="text-[14px] text-mute" aria-hidden="true">
-        ⌕
-      </span>
-      {chips.slice(0, MAX_CHIPS).map((chip) => (
-        <span
-          key={chip.key}
-          className="inline-flex h-[24px] max-w-[160px] shrink-0 items-center gap-[6px] rounded-[var(--r-pill)] bg-accent-soft pl-[9px] pr-[6px] font-mono text-[11.5px] text-accent-ink"
-        >
-          <span className="truncate">{chip.label}</span>
+      <div
+        className={`flex h-[36px] min-w-0 items-center gap-[6px] overflow-hidden rounded-[var(--r-pill)] border border-line bg-surface pl-[12px] pr-[6px] shadow-[var(--shadow-sm)] focus-within:border-accent focus-within:shadow-[0_0_0_3px_var(--accent-soft)] ${ring}`}
+      >
+        <span className="text-[14px] text-mute" aria-hidden="true">
+          ⌕
+        </span>
+        {chips.slice(0, MAX_CHIPS).map((chip) => (
+          <span
+            key={chip.key}
+            className="inline-flex h-[24px] max-w-[160px] shrink-0 items-center gap-[6px] rounded-[var(--r-pill)] bg-accent-soft pl-[9px] pr-[6px] font-mono text-[11.5px] text-accent-ink"
+          >
+            <span className="truncate">{chip.label}</span>
+            <button
+              type="button"
+              className="cursor-pointer border-none bg-transparent px-[3px] py-0 text-[11px] leading-none text-accent-ink opacity-70 hover:opacity-100"
+              onClick={chip.remove}
+              aria-label={`${chip.label} entfernen`}
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+        {chips.length > MAX_CHIPS && (
           <button
             type="button"
-            className="cursor-pointer border-none bg-transparent px-[3px] py-0 text-[11px] leading-none text-accent-ink opacity-70 hover:opacity-100"
-            onClick={chip.remove}
-            aria-label={`${chip.label} entfernen`}
+            onClick={() => onFilterOpen(true)}
+            className="shrink-0 cursor-pointer whitespace-nowrap border-none bg-transparent p-0 font-mono text-[10px] text-accent"
+          >
+            +{formatCount(chips.length - MAX_CHIPS)} weitere
+          </button>
+        )}
+        <input
+          ref={setInput}
+          value={draft}
+          onChange={(event) => {
+            changeSearch(event.target.value);
+            setListWanted(null);
+          }}
+          onFocus={() => setTyping(true)}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' || !searching) return;
+            event.preventDefault();
+            nav.step(event.shiftKey ? -1 : 1);
+          }}
+          placeholder="Positionen, OZ, Langtext durchsuchen"
+          aria-label="Suche"
+          className="min-w-[60px] flex-1 border-none bg-transparent font-mono text-[13px] text-ink outline-none placeholder:text-mute"
+        />
+        {draft === '' ? (
+          <span className="hidden rounded-[5px] border border-line bg-sunken px-[5px] py-[1px] font-mono text-[11px] text-mute [@media(pointer:fine)]:inline">
+            /
+          </span>
+        ) : (
+          <button
+            type="button"
+            aria-label="Suchtext löschen"
+            title="Suchtext löschen"
+            onClick={() => {
+              changeSearch('');
+              inputRef.current?.focus();
+            }}
+            className="inline-flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-transparent p-0 text-[12px] text-mute hover:bg-sunken hover:text-ink"
           >
             ✕
           </button>
-        </span>
-      ))}
-      {chips.length > MAX_CHIPS && (
+        )}
+        {searching && (
+          <>
+            <NavCount nav={nav} open={listOpen} onToggle={() => setListWanted(!listOpen)} />
+            <NavSteps nav={nav} />
+          </>
+        )}
+        {(active.filtering || spotlighted) && <HideModeToggle />}
         <button
           type="button"
-          onClick={() => onFilterOpen(true)}
-          className="shrink-0 cursor-pointer whitespace-nowrap border-none bg-transparent p-0 font-mono text-[10px] text-accent"
+          aria-expanded={filterOpen}
+          data-tour={tour ? 'filter' : undefined}
+          onClick={() => onFilterOpen(!filterOpen)}
+          className={`inline-flex h-[26px] shrink-0 cursor-pointer items-center whitespace-nowrap rounded-[var(--r-pill)] border px-[10px] font-mono text-[10.5px] ${
+            filterOpen
+              ? 'border-solid border-accent bg-accent-soft text-accent-ink'
+              : 'border-dashed border-line2 bg-transparent text-dim hover:border-solid hover:border-accent hover:bg-accent-soft hover:text-accent-ink'
+          }`}
         >
-          +{formatCount(chips.length - MAX_CHIPS)} weitere
+          + Filter
         </button>
-      )}
-      <input
-        ref={setInput}
-        value={draft}
-        onChange={(event) => changeSearch(event.target.value)}
-        placeholder="Positionen, OZ, Langtext durchsuchen"
-        aria-label="Suche"
-        className="min-w-[60px] flex-1 border-none bg-transparent font-mono text-[13px] text-ink outline-none placeholder:text-mute"
-      />
-      {draft === '' ? (
-        <span className="hidden rounded-[5px] border border-line bg-sunken px-[5px] py-[1px] font-mono text-[11px] text-mute [@media(pointer:fine)]:inline">
-          /
-        </span>
-      ) : (
-        <button
-          type="button"
-          aria-label="Suchtext löschen"
-          title="Suchtext löschen"
-          onClick={() => {
-            changeSearch('');
-            inputRef.current?.focus();
-          }}
-          className="inline-flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-transparent p-0 text-[12px] text-mute hover:bg-sunken hover:text-ink"
-        >
-          ✕
-        </button>
-      )}
-      {(active.filtering || spotlighted) && <HideModeToggle />}
-      <button
-        type="button"
-        aria-expanded={filterOpen}
-        data-tour={tour ? 'filter' : undefined}
-        onClick={() => onFilterOpen(!filterOpen)}
-        className={`inline-flex h-[26px] shrink-0 cursor-pointer items-center whitespace-nowrap rounded-[var(--r-pill)] border px-[10px] font-mono text-[10.5px] ${
-          filterOpen
-            ? 'border-solid border-accent bg-accent-soft text-accent-ink'
-            : 'border-dashed border-line2 bg-transparent text-dim hover:border-solid hover:border-accent hover:bg-accent-soft hover:text-accent-ink'
-        }`}
-      >
-        + Filter
-      </button>
+      </div>
+      {searching && <SearchSources nav={nav} open={listOpen} />}
     </div>
   );
   if (!narrow) return pill;

@@ -21,7 +21,6 @@ import {
 import { DocKindChip } from './DocKindChip';
 import { DocOverview } from './DocOverview';
 import { DocPicker } from './DocPicker';
-import { DocSearchField } from './DocSearchField';
 import { useDocuments } from './DocumentsProvider';
 import { LinkBadge } from './LinkBadge';
 import { LinkDialog } from './LinkDialog';
@@ -56,7 +55,7 @@ import {
 } from '../../lib/docs/docNotes';
 import type { DocSuggestion, LinkSource } from '../../lib/docs/docSuggest';
 import type { OpenedPdf } from '../../lib/docs/pdf';
-import { docNeedleOf, type DocHit } from '../../lib/docs/docSearch';
+import type { DocHit } from '../../lib/docs/docSearch';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
 import {
   polylineLength,
@@ -185,9 +184,9 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     jump,
     jumpTo,
     doneJump,
-    docSearch,
-    setDocSearch,
     searchHits,
+    hitIndexOf,
+    hitNonce,
     suggestions,
     suggest,
     setSuggest,
@@ -204,7 +203,6 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
   const [zoom, setZoom] = useState(1);
   const [sizes, setSizes] = useState<ReadonlyMap<number, PageSize>>(new Map());
   const [scrolled, setCurrent] = useState(1);
-  const [hitIndex, setHitIndex] = useState(0);
   const [picked, setPicked] = useState<Picked | null>(null);
   const [linking, setLinking] = useState<{ spot: DocSpot; left: number; top: number } | null>(null);
   const [naming, setNaming] = useState<{ left: number; top: number } | null>(null);
@@ -953,30 +951,32 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     };
   }, [scroller, host]);
 
-  // Fundstellen rechnet der DocumentsProvider für alle offenen PDFs; hier nur zeigen.
-  const needle = docNeedleOf(docSearch);
+  // Fundstellen und gezeigten Treffer führt der DocumentsProvider für alle offenen PDFs
+  // (Entscheidung 0103); vor/zurück sitzt in der Suchleiste. Hier nur zeigen und blättern.
   const hits = searchHits.get(doc.id) ?? NO_HIT_LIST;
-  const [seenHits, setSeenHits] = useState(hits);
-  if (seenHits !== hits) {
-    setSeenHits(hits);
-    setHitIndex(0);
-  }
-  // Neuer Begriff mit Treffern: zur ersten Fundstelle, einmal je Begriff und Dokument.
-  const scrolledFor = useRef('');
+  const currentHit = hits[Math.min(hitIndexOf(doc.id), hits.length - 1)] ?? null;
+  // Zum gezeigten Treffer: bei neuem Begriff zur Seite des ersten, bei einem Schritt mit
+  // ▲ ▼ genau an die Fundstelle (wie ein Sprung zu einer Stelle) — je Treffer einmal.
+  const shownHit = useRef<string>('');
+  const stepped = useRef(hitNonce);
   useEffect(() => {
-    const key = `${doc.id}:${needle}`;
-    if (hits.length === 0 || scrolledFor.current === key) return;
-    scrolledFor.current = key;
-    // Ein Sprung zu einer Stelle geht vor; sonst holt die Suche das PDF an den ersten Treffer.
-    if (target === null) scrollToPage(hits[0].page);
-  }, [hits, needle, doc.id, scrollToPage, target]);
-  const stepHit = (step: number): void => {
-    if (hits.length === 0) return;
-    const next = (hitIndex + step + hits.length) % hits.length;
-    setHitIndex(next);
-    scrollToPage(hits[next].page);
-  };
-  const currentHit = hits[hitIndex] ?? null;
+    if (currentHit === null) return;
+    const key = `${doc.id}:${hitNonce}:${currentHit.page}:${currentHit.start}`;
+    if (shownHit.current === key) return;
+    shownHit.current = key;
+    if (stepped.current !== hitNonce) {
+      stepped.current = hitNonce;
+      jumpTo({
+        doc: doc.id,
+        page: currentHit.page,
+        start: currentHit.start,
+        text: currentHit.text,
+      });
+      return;
+    }
+    // Ein Sprung zu einer Stelle geht vor.
+    if (target === null) scrollToPage(currentHit.page);
+  }, [currentHit, hitNonce, doc.id, scrollToPage, target, jumpTo]);
 
   const extraFor = useCallback(
     (page: number): DocHighlightItem[] => {
@@ -1077,31 +1077,6 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     counts.oz + counts.menge > 0 ? (
       <SuggestToggles counts={counts} suggest={suggest} setSuggest={setSuggest} />
     ) : null;
-  const searchEl = (
-    <DocSearchField rootRef={rootRef} hitCount={hits.length} hitIndex={hitIndex} onStep={stepHit} />
-  );
-  const stepEls = (
-    <>
-      <button
-        type="button"
-        aria-label="Vorheriger Treffer"
-        disabled={hits.length === 0}
-        onClick={() => stepHit(-1)}
-        className={TOOL}
-      >
-        ▲
-      </button>
-      <button
-        type="button"
-        aria-label="Nächster Treffer"
-        disabled={hits.length === 0}
-        onClick={() => stepHit(1)}
-        className={TOOL}
-      >
-        ▼
-      </button>
-    </>
-  );
   // Vor/zurück durch die eigenen Stellen dieses PDFs (Issue #191): angestrichen oder verknüpft,
   // in Lesereihenfolge. Ohne letzte Wahl geht es von der aktuellen Seite aus.
   // `from`: Seite beim Sprung — bis der Sprung angekommen ist, gilt die Wahl weiter.
@@ -1281,14 +1256,10 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
         {!narrow && wholeEl}
         {!narrow && suggestEl}
         {markEls}
-        {!narrow && searchEl}
-        {!narrow && stepEls}
         {!narrow && zoomEls}
         {narrow && (
           <MoreMenu>
             {wholeEl}
-            {searchEl}
-            {stepEls}
             {zoomEls}
             {suggestEl}
           </MoreMenu>
@@ -1534,15 +1505,7 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
           target={picked.target}
           searches={[
             {
-              label: 'Im PDF suchen',
-              run: () => {
-                setDocSearch(searchTermOf(picked.target.text));
-                host.getSelection()?.removeAllRanges();
-                setPicked(null);
-              },
-            },
-            {
-              label: 'Im LV suchen',
+              label: 'In Suche übernehmen',
               run: () => {
                 dispatch({ type: 'search', value: searchTermOf(picked.target.text) });
                 host.getSelection()?.removeAllRanges();

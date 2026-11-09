@@ -12,6 +12,31 @@ export interface DocHit {
   readonly page: number;
   readonly start: number;
   readonly text: string;
+  /** Kurzer Ausschnitt um die Fundstelle, für die Liste unter der Suchleiste. */
+  readonly around?: string;
+}
+
+/** Zeichen links und rechts der Fundstelle im Ausschnitt. */
+const AROUND = 32;
+
+/**
+ * Ausschnitt um `hit` aus dem Seitentext, Leerraum einfach, Ränder mit „…“. An Zeilenenden
+ * (`lineEnds`) steht ein Leerzeichen — PDF.js hängt die Zeilen sonst aneinander.
+ */
+export function aroundOf(text: string, hit: DocHit, lineEnds?: ReadonlySet<number>): string {
+  let from = Math.max(0, hit.start - AROUND);
+  const to = Math.min(text.length, hit.start + hit.text.length + AROUND);
+  // Am Wortanfang beginnen, nicht mitten im Wort.
+  while (from > 0 && from < hit.start && /\S/.test(text[from - 1]) && !lineEnds?.has(from)) {
+    from += 1;
+  }
+  let middle = '';
+  for (let i = from; i < to; i++) {
+    if (i > from && lineEnds?.has(i) === true) middle += ' ';
+    middle += text[i];
+  }
+  middle = middle.replace(/\s+/g, ' ').trim();
+  return `${from > 0 ? '… ' : ''}${middle}${to < text.length ? ' …' : ''}`;
 }
 
 /** Suchbegriff fürs Dokument: Suchschlüssel (Entscheidung 0103); leer, wenn zu kurz. */

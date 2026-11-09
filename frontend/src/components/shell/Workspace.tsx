@@ -23,7 +23,11 @@ function GraphPopout({ root }: { root: LVNode }) {
   if (host === null) return null;
   return (
     <ExternalWindow host={host} onClosed={() => dock('graph')}>
-      <section aria-label="Graph — eigenes Fenster" className="flex min-h-0 flex-1 flex-col">
+      <section
+        aria-label="Graph — eigenes Fenster"
+        data-search-source="lv"
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <PopoutHead />
         <div className="flex h-[38px] shrink-0 items-center gap-[10px] border-b border-line bg-surface pl-[12px] pr-[6px]">
           <b className="font-display text-[14px] font-semibold text-ink">Graph</b>

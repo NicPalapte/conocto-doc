@@ -9,8 +9,18 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
-## 0.56.0 — 09.11.2026 · Ganzer Kopf im eigenen Fenster
+## 0.56.0 — 09.11.2026 · Eine Suche für LV und PDFs
 
+- **Eine Suche für alles:** Die Suchleiste sucht im LV und in allen offenen PDFs. Das eigene
+  Suchfeld im Dokument ist weg. Treffer im PDF filtern das LV nicht.
+- **Vor und zurück:** In der Suchleiste stehen „4 / 9“ und ▲ ▼ (auch Enter / Umschalt +
+  Enter). Im LV springt die Suche von Position zu Position, im PDF genau zur Fundstelle.
+- **Quellen:** Unter der Suchleiste klappt die Liste der Quellen auf: LV und jedes PDF mit
+  Trefferzahl und Ausschnitt. Antippen springt hinein.
+- **Wo du arbeitest, sucht es zuerst:** Zuletzt ins Dokument geklickt ⇒ ▲ ▼ springen im PDF,
+  sonst im LV. Am Ende eines Dokuments steht „Weiter in: …“.
+- **Besser finden:** Leerzeichen, Zeilenumbrüche und Trennstriche am Zeilenende zählen nicht
+  mehr. „Stahl-“ / „beton“ im PDF wird als „Stahlbeton“ gefunden, „C 25/30“ findet „C25/30“.
 - **Eigenes Fenster:** Graph, Tabelle und Dokument haben dort jetzt den ganzen Kopf: Logo-Menü,
   Suchleiste mit Filtern, „Ansicht“ und „LV schließen“. Vorher gab es nur die Suchleiste,
   beim Dokument gar keine.

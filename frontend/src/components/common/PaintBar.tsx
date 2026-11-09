@@ -1,5 +1,6 @@
 // Menü beim Rechtsklick auf eine Auswahl im Langtext (Entscheidung 0063, Issue #155):
-// Suchen (LV oder PDF, Entscheidung 0084), Kopieren, sechs Farben zum Markieren, je mit eigenem Namen, Anstreichung entfernen,
+// „In Suche übernehmen“ (eine Suche für LV und PDFs, Entscheidung 0103), Kopieren, sechs
+// Farben zum Markieren, je mit eigenem Namen, Anstreichung entfernen,
 // dazu „Farben benennen" und mit Admin-Zugang „Begriff lernen" (Entscheidung 0053).
 // Eine Auswahl allein öffnet es nicht mehr. Unter den Eigenschaften der Abschnitt
 // „Meine Textmarkierungen".
@@ -36,14 +37,14 @@ function useCloseOutside(ref: RefObject<HTMLElement | null>, onClose: () => void
 const MENU_WIDTH = 230;
 /** Grobe Höhe des Menüs, damit es unten am Fenster nicht abgeschnitten wird. */
 const MENU_HEIGHT = 380;
-/** Höhe jedes weiteren Sucheintrags („Im PDF suchen“, „Im LV suchen“). */
+/** Höhe jedes weiteren Sucheintrags. */
 const SEARCH_ROW_HEIGHT = 32;
 
 // Am Tablet größere Zeilen: ein Finger trifft 12 px hohe Einträge schlecht.
 const ROW =
   'flex w-full cursor-pointer items-center gap-[8px] rounded-[6px] border-none bg-transparent px-[8px] py-[6px] text-left font-mono text-[12px] text-ink hover:bg-sunken [@media(pointer:coarse)]:py-[10px] [@media(pointer:coarse)]:text-[14px]';
 
-/** Ein Eintrag „suchen“: im LV (Suchleiste oben) oder im PDF (eigene Suche, 0084). */
+/** Ein Eintrag „suchen“: übernimmt den Text in die eine Suchleiste (Entscheidung 0103). */
 export interface SearchAction {
   readonly label: string;
   readonly run: () => void;
@@ -227,7 +228,7 @@ export function PaintBar({
 
 /**
  * Kleines Menü für Text ohne Anstreichen, z. B. den Kurztext im Kopf der Positionskarte:
- * nur suchen und „Kopieren“ (Entscheidungen 0077, 0084).
+ * nur suchen und „Kopieren“ (Entscheidungen 0077, 0103).
  */
 export function SelectionMenu({
   target,
