@@ -35,6 +35,18 @@ function Mark({ children }: { children: ReactNode }) {
 }
 
 /**
+ * Suchtreffer: dazu ein Rahmen im Akzent. Eigene Anstreichungen (CSS Highlight API) malen
+ * Fläche und Schrift über das `<mark>` — der Rahmen bleibt darüber sichtbar.
+ */
+function QueryMark({ children }: { children: ReactNode }) {
+  return (
+    <mark className="rounded-[2px] bg-accent-soft px-[1px] font-medium text-accent-ink outline outline-[1.5px] outline-accent">
+      {children}
+    </mark>
+  );
+}
+
+/**
  * Fundstelle: getönte Fläche in der Farbe ihrer Kategorie, mit Erklärung im
  * Titel. Der Inhalt läuft weiter durch `plain()` — ein Suchbegriff, der zufällig
  * **in** einer Fundstelle liegt („din" in „DIN EN 206"), bliebe sonst als
@@ -69,7 +81,7 @@ function highlightQuery(text: string, query: string, keyPrefix: string): ReactNo
     if (start < cursor) return;
     if (start > cursor)
       parts.push(<Fragment key={`${keyPrefix}-t${index}`}>{text.slice(cursor, start)}</Fragment>);
-    parts.push(<Mark key={`${keyPrefix}-m${index}`}>{text.slice(start, end)}</Mark>);
+    parts.push(<QueryMark key={`${keyPrefix}-m${index}`}>{text.slice(start, end)}</QueryMark>);
     cursor = end;
   });
   if (cursor < text.length)

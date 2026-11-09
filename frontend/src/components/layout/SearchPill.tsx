@@ -297,6 +297,14 @@ export function SearchPill({
         setListWanted(null);
       }}
       onKeyDown={(event) => {
+        // ↑ ↓ springen durch die Treffer — im Feld und auf den Knöpfen daneben.
+        if (searching && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+          event.preventDefault();
+          // Sonst wechselt der globale Tastenhandler zusätzlich die Position.
+          event.stopPropagation();
+          nav.step(event.key === 'ArrowDown' ? 1 : -1);
+          return;
+        }
         if (event.key !== 'Escape') return;
         if (listOpen) {
           // Nur die Liste zu — die Auswahl bleibt (Escape hebt sie sonst auf).

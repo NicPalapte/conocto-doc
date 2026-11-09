@@ -22,18 +22,24 @@
 - **Eine Suchleiste für alles.** Der Begriff filtert das LV wie bisher (0058) und sucht in
   allen offenen PDFs. Das eigene Suchfeld im Dokument fällt weg. **PDF-Treffer filtern das
   LV nie.**
-- **Treffer-Navigator in der Suchleiste:** „4 / 9 ▾“ und ▲ ▼ (Enter / Umschalt + Enter).
+- **Treffer-Navigator in der Suchleiste:** „4 / 9 ▾“ und ▲ ▼ (auch ↓ ↑ und Enter /
+  Umschalt + Enter).
   - LV: ein Treffer = eine Position, in LV-Reihenfolge. Ein Schritt wählt sie; Tabelle
     scrollt hin, der Graph holt sie ins Bild, die Positionskarte zeigt sie.
   - PDF: ein Treffer = eine Fundstelle. Ein Schritt springt genau dorthin.
 - **Quellen-Liste unter der Suchleiste** (Mockup E): je Quelle Name (gekürzt, ganz im
   Tooltip), Trefferzahl und ein Ausschnitt. Klappt beim Tippen oder Antippen der Zählung auf,
-  zu mit Esc oder Klick daneben. Antippen springt in die Quelle.
+  zu mit Esc oder Klick daneben. Antippen springt in die Quelle und öffnet bei einem PDF das
+  Dokument.
 - **Standard-Quelle = zuletzt bearbeiteter Bereich.** Klick oder Fokus im Dokument ⇒ das
-  gezeigte PDF; in Graph, Tabelle, Position, Überblick, Prüfung ⇒ LV. Gilt in jedem Fenster,
-  wird nicht gespeichert.
+  gezeigte PDF; in Graph, Tabelle, Position, Überblick, Prüfung ⇒ LV. Wird nicht gespeichert.
+- **Jedes ausgelagerte Fenster hat seine feste Quelle:** im Dokument-Fenster das PDF, in
+  Graph und Tabelle das LV. So springt man in zwei Fenstern parallel (Nico, 09.11.).
 - **Ende einer Quelle:** ▼ beginnt dort wieder vorn; darunter „Weiter in: … (n)“. Nichts
-  springt von selbst ins nächste Dokument.
+  springt von selbst ins nächste Dokument. Im ausgelagerten Fenster steht der Hinweis nur dort,
+  und nur auf Quellen derselben Art (im Dokument-Fenster das nächste PDF).
+- **Treffer sichtbar über eigenen Farben:** Im Langtext rahmt der Akzent den Treffer, im PDF
+  liegt der Treffer über den Anstreichungen.
 - **Eine Suchregel überall** (Suchschlüssel im Kern): ohne Groß/klein, ohne Leerraum, ohne
   weiches Trennzeichen und ohne Trennstrich am Zeilenende. „C 25/30“ findet „C25/30“.
   Der Seitentext bleibt unverändert, gespeicherte Stellen verschieben sich nicht.
@@ -53,4 +59,5 @@
 
 - Für den Owner gibt es nichts einmalig zu tun.
 - Wer im LV „C 25“ sucht, findet jetzt mehr als vorher (Leerraum zählt nicht).
-- Später denkbar (Nico): Trefferliste im Dokument zeigen.
+- Später denkbar (Nico): Trefferliste im Dokument zeigen. Vorerst nicht: ↓ ↑ und die
+  Quellen-Liste genügen.

@@ -32,6 +32,9 @@ function highlightIn(win: HighlightWindow, name: string): Highlight | null {
   let entry = own.get(name);
   if (entry === undefined) {
     entry = new win.Highlight();
+    // Suchtreffer und Sprungziel liegen über den Anstreichfarben, sonst verdeckt die
+    // zuletzt angelegte Farbe den Treffer.
+    entry.priority = name === 'docflash' ? 2 : name.startsWith('docsearch') ? 1 : 0;
     own.set(name, entry);
     win.CSS.highlights.set(name, entry);
   }

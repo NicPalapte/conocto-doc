@@ -132,6 +132,13 @@ describe('Eine Suche für LV und PDFs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Nächster Treffer' }));
     expect(zaehler).toHaveAccessibleName(/LV: 1 \//);
     // Die Zählung folgt der Auswahl: Position 1 der Treffer ist gewählt.
+
+    // ↓ und ↑ im Suchfeld springen ebenso.
+    const feld = screen.getByRole('textbox', { name: 'Suche' });
+    fireEvent.keyDown(feld, { key: 'ArrowDown' });
+    expect(zaehler).toHaveAccessibleName(/LV: 2 \//);
+    fireEvent.keyDown(feld, { key: 'ArrowUp' });
+    expect(zaehler).toHaveAccessibleName(/LV: 1 \//);
   });
 
   it('holt die Suchleiste mit Strg F, wenn zuletzt ins Dokument geklickt wurde', async () => {

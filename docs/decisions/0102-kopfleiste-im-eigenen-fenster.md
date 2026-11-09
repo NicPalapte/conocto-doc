@@ -17,12 +17,13 @@
 
 ## Entscheidung
 
-- **Ganzer Kopf in jedem ausgelagerten Fenster:** Logo-Menü, Suchleiste mit Filter-Chips,
-  „Ansicht“, „LV schließen“. Gleicher Suchbegriff, gleiche Filter, gleiche Auswahl.
+- **Kopf in jedem ausgelagerten Fenster:** Logo-Menü und Suchleiste mit Filter-Chips.
+  Gleicher Suchbegriff, gleiche Filter, gleiche Auswahl.
 - **Nur ausgelagert:** Im Hauptfenster bleibt es bei einem Kopf über dem Splitscreen.
 - **Eigene Filterleiste je Fenster** (wie bisher): Aufklappen im einen Fenster klappt sie im
   anderen nicht mit auf.
-- **„Ansicht“ ordnet immer das Hauptfenster.**
+- **„Ansicht“, „← Graph“ und „LV schließen“ nur im Hauptfenster:** Sie wirken nur dort,
+  im ausgelagerten Fenster fehlen sie (Nico, 09.11.).
 - **Dialoge öffnen im Fenster, in dem man klickt** (Fehler melden, Tastenkürzel, Admin,
   Arbeitsstand laden). Der Regeleditor aus „Als Regel…“ öffnet nur im Hauptfenster.
 - **Tour und Kurzumfrage** stehen im ausgelagerten Logo-Menü nicht: sie laufen im
@@ -33,7 +34,7 @@
 
 ## Verworfene Alternativen
 
-- **Nur die Suchleiste im Fenster (bisher):** Menü und „Ansicht“ fehlten auf dem zweiten
+- **Nur die Suchleiste im Fenster (bisher):** das Logo-Menü fehlte auf dem zweiten
   Bildschirm.
 - **Kopf auch im Splitscreen je Bereich:** zu voll, ein Kopf genügt dort.
 

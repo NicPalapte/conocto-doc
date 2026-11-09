@@ -82,7 +82,7 @@ describe('Kopfleiste im eigenen Fenster', () => {
     expect(screen.getByRole('textbox', { name: 'Suche' })).toHaveFocus();
   });
 
-  it('hat Logo-Menü und Ansicht wie das Hauptfenster', () => {
+  it('hat Logo-Menü und Suche, aber kein „LV schließen“', () => {
     render(
       <ViewerProvider>
         <WorkspaceProvider>
@@ -94,7 +94,8 @@ describe('Kopfleiste im eigenen Fenster', () => {
     fireEvent.click(screen.getByRole('button', { name: 'laden' }));
     expect(screen.getByRole('button', { name: 'Über diese App' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Suche' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'LV schließen' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'LV schließen' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Ansicht/ })).toBeNull();
   });
 
   describe('sehr schmal', () => {

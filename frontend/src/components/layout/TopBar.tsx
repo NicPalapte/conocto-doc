@@ -8,7 +8,7 @@
 // Die Suchleiste selbst ist `SearchPill`. Die ganze Kopfleiste steht auch in Graph,
 // Tabelle und Dokument im eigenen Browserfenster (`popout`, Entscheidung 0102): gleicher
 // Zustand, eigene Filterleiste, Dialoge öffnen dort; Tour und Kurzumfrage bleiben im
-// Hauptfenster, „Ansicht“ ordnet immer das Hauptfenster.
+// Hauptfenster; „Ansicht“ und „LV schließen“ wirken nur dort und fehlen im Fenster.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ReportDialog } from '../report/ReportDialog';
@@ -179,7 +179,8 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
               className="mx-auto max-w-[620px] flex-1"
             />
 
-            {view.mode !== 'graph' && (
+            {/* Wirken nur aufs Hauptfenster — im ausgelagerten Fenster nicht anbieten. */}
+            {!popout && view.mode !== 'graph' && (
               <button
                 type="button"
                 onClick={() => dispatch({ type: 'showGraph' })}
@@ -188,15 +189,17 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
                 ← Graph
               </button>
             )}
-            <WorkspaceBar />
-            <button
-              type="button"
-              onClick={() => dispatch({ type: 'clear' })}
-              title="Datei verwerfen, zurück zur Startseite"
-              className={`${GHOST} hidden sm:inline-flex`}
-            >
-              LV schließen
-            </button>
+            {!popout && <WorkspaceBar />}
+            {!popout && (
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'clear' })}
+                title="Datei verwerfen, zurück zur Startseite"
+                className={`${GHOST} hidden sm:inline-flex`}
+              >
+                LV schließen
+              </button>
+            )}
           </>
         )}
       </div>

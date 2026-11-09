@@ -50,7 +50,7 @@ export function NavSteps({ nav }: { nav: SearchNav }) {
       <button
         type="button"
         aria-label="Voriger Treffer"
-        title="Voriger Treffer (Umschalt + Enter)"
+        title="Voriger Treffer (↑ oder Umschalt + Enter)"
         disabled={none}
         onClick={() => nav.step(-1)}
         className={NAV_BUTTON}
@@ -60,7 +60,7 @@ export function NavSteps({ nav }: { nav: SearchNav }) {
       <button
         type="button"
         aria-label="Nächster Treffer"
-        title="Nächster Treffer (Enter)"
+        title="Nächster Treffer (↓ oder Enter)"
         disabled={none}
         onClick={() => nav.step(1)}
         className={NAV_BUTTON}
