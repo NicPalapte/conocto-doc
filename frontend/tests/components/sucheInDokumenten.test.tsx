@@ -1,6 +1,6 @@
 // Eine Suche für LV und PDFs (Entscheidung 0103, ersetzt 0084): Die Suchleiste sucht im LV
-// und in allen offenen PDFs; der Navigator springt in der Quelle, in der zuletzt gearbeitet
-// wurde, die Quellen klappen unter der Suchleiste aus.
+// und in allen offenen PDFs; alle Treffer bilden eine lange Liste, je Quelle ein Abschnitt,
+// die Quelle, in der zuletzt gearbeitet wurde, oben.
 //
 // PDF.js läuft in jsdom nicht: `openPdf` liefert ein Schein-PDF mit festem Seitentext,
 // und die Seiten selbst werden nicht gezeichnet.
@@ -77,20 +77,26 @@ function insDokument(): void {
 }
 
 describe('Eine Suche für LV und PDFs', () => {
-  it('zählt Treffer im LV und in jedem offenen PDF', async () => {
+  it('listet alle Treffer, je Quelle ein Abschnitt, die aktive oben', async () => {
     await ladeApp();
     await oeffnePdf('baubeschreibung.pdf');
     await oeffnePdf('vorbemerkungen.pdf', 'fff000fff000');
 
     const liste = await suche('WU-Beton');
-    const zeile = (name: RegExp) => within(liste).getByRole('button', { name });
-    expect(zeile(/^LV/)).toBeInTheDocument();
-    await waitFor(() => expect(zeile(/baubeschreibung\.pdf/)).toHaveTextContent(/2/));
-    await waitFor(() => expect(zeile(/vorbemerkungen\.pdf/)).toHaveTextContent(/2/));
-    expect(zeile(/vorbemerkungen\.pdf/)).toHaveTextContent('S. 2 · Bodenplatte aus WU-Beton.');
+    const abschnitte = () => within(liste).getAllByRole('region');
+    expect(abschnitte()[0]).toHaveAccessibleName('LV');
+    const pdf = () => within(liste).getByRole('region', { name: 'vorbemerkungen.pdf' });
+    await waitFor(() => expect(within(pdf()).getAllByRole('button')).toHaveLength(2));
+    expect(within(pdf()).getAllByRole('button')[0]).toHaveTextContent(
+      'S. 2Bodenplatte aus WU-Beton.',
+    );
+
+    // Zuletzt im Dokument gearbeitet: sein Abschnitt steht oben.
+    insDokument();
+    await waitFor(() => expect(abschnitte()[0]).toHaveAccessibleName('vorbemerkungen.pdf'));
   });
 
-  it('springt im aktiven Dokument und weist am Ende aufs nächste hin', async () => {
+  it('springt am Ende eines Dokuments direkt ins nächste', async () => {
     await ladeApp();
     await oeffnePdf('baubeschreibung.pdf');
     await oeffnePdf('vorbemerkungen.pdf', 'fff000fff000');
@@ -101,27 +107,26 @@ describe('Eine Suche für LV und PDFs', () => {
     await waitFor(() => expect(zaehler()).toHaveAccessibleName(/vorbemerkungen\.pdf: 1 \/ 2/));
     fireEvent.click(screen.getByRole('button', { name: 'Nächster Treffer' }));
     expect(zaehler()).toHaveAccessibleName(/2 \/ 2/);
-    expect(screen.queryByRole('status', { name: '' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Nächster Treffer' }));
-    expect(zaehler()).toHaveAccessibleName(/1 \/ 2/);
-    const weiter = screen.getByRole('button', { name: /Weiter in: / });
-    expect(screen.getByText('Ende von vorbemerkungen.pdf')).toBeInTheDocument();
-
-    fireEvent.click(weiter);
     await waitFor(() => expect(zaehler()).not.toHaveAccessibleName(/vorbemerkungen/));
+    expect(screen.queryByText(/Ende von/)).toBeNull();
   });
 
-  it('wechselt per Klick in der Liste das Dokument', async () => {
+  it('öffnet per Klick auf einen Treffer das Dokument an dieser Stelle', async () => {
     await ladeApp();
     await oeffnePdf('baubeschreibung.pdf');
     await oeffnePdf('vorbemerkungen.pdf', 'fff000fff000');
     const liste = await suche('WU-Beton');
-    fireEvent.click(within(liste).getByRole('button', { name: /baubeschreibung\.pdf/ }));
+    const pdf = within(liste).getByRole('region', { name: 'baubeschreibung.pdf' });
+    await waitFor(() => expect(within(pdf).getAllByRole('button')).toHaveLength(2));
+    fireEvent.click(within(pdf).getAllByRole('button')[1]);
     expect(
       screen.getByRole('button', { name: 'Dokument wählen: baubeschreibung.pdf' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Treffer in baubeschreibung\.pdf/ })).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: /^Treffer in baubeschreibung\.pdf: 2 \/ 2/ }),
+    ).toBeVisible();
   });
 
   it('springt im LV von Position zu Position', async () => {

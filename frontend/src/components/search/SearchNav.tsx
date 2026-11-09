@@ -1,9 +1,10 @@
-// Treffer-Navigator der einen Suche über LV und PDFs (Entscheidung 0103): Quellen mit
-// Trefferzahl, gezeigter Treffer je Quelle, vor/zurück und Sprung in eine andere Quelle.
-// Im Hauptfenster gilt die Quelle, in der zuletzt gearbeitet wurde: ein Klick oder Fokus in
-// einem Bereich mit `data-search-source` („lv“ oder „doc“) setzt sie. Ausgelagerte Fenster
-// haben ihre feste Quelle; so laufen LV und PDF in zwei Fenstern parallel.
-// Ändert nie Filter oder Suchbegriff; nur die Auswahl (LV-Treffer) und das gezeigte PDF.
+// Treffer-Navigator der einen Suche über LV und PDFs (Entscheidung 0103): alle Treffer wie
+// eine lange Liste, je Quelle ein Abschnitt. ▲ ▼ laufen am Ende einer Quelle direkt in die
+// nächste mit Treffern weiter.
+// Im Hauptfenster beginnt die Liste bei der Quelle, in der zuletzt gearbeitet wurde: ein
+// Klick oder Fokus in einem Bereich mit `data-search-source` („lv“ oder „doc“) setzt sie.
+// Ausgelagerte Fenster haben ihre feste Quelle; so laufen LV und PDF in zwei Fenstern
+// parallel. Ändert nie Filter oder Suchbegriff; nur die Auswahl (LV) und das gezeigte PDF.
 
 import {
   createContext,
@@ -34,25 +35,29 @@ export interface SearchSource {
   readonly count: number | null;
   /** Gezeigter Treffer (ab 0); `-1`, wenn im LV keine Trefferposition gewählt ist. */
   readonly index: number;
-  /** Ausschnitt um den gezeigten (oder ersten) Treffer. */
-  readonly preview: string | null;
 }
 
-/** Ende einer Quelle erreicht: Hinweis auf die nächste mit Treffern. */
-export interface SearchEndHint {
-  readonly from: string;
-  readonly next: SearchSource;
+/** Ein Treffer in der Liste unter der Suchleiste. */
+export interface SearchItem {
+  /** Stelle in der Quelle (ab 0). */
+  readonly at: number;
+  /** OZ im LV, „S. 3“ im PDF. */
+  readonly lead: string;
+  readonly text: string;
 }
 
 export interface SearchNav {
   /** Suchbegriff als Schlüssel; leer = keine Suche, kein Navigator. */
   readonly needle: string;
+  /** Quellen in Listenfolge: die dieses Fensters zuerst, dann reihum. */
   readonly sources: readonly SearchSource[];
-  /** Quelle, in der ▲ ▼ in diesem Fenster springen. */
+  /** Quelle, in der ▲ ▼ in diesem Fenster gerade stehen. */
   readonly current: SearchSource;
   step: (direction: 1 | -1) => void;
-  choose: (id: string) => void;
-  readonly hint: SearchEndHint | null;
+  /** Springt zum Treffer `at` der Quelle `id`. */
+  goTo: (id: string, at: number) => void;
+  /** Treffer `from` bis vor `to` einer Quelle für die Liste. */
+  itemsOf: (id: string, from: number, to: number) => readonly SearchItem[];
   /** Bereich dieses Fensters, in dem zuletzt gearbeitet wurde — Strg F holt dann die Suche. */
   readonly area: SearchArea;
 }
@@ -65,29 +70,47 @@ interface SearchNavShared {
   readonly mainArea: SearchArea;
   readonly docWindow: Window | null;
   readonly activeDocId: string | null;
-  readonly hint: { needle: string; from: string } | null;
-  stepIn: (source: SearchSource, direction: 1 | -1) => void;
-  choose: (id: string, inMain: boolean) => void;
+  goTo: (id: string, at: number, inMain: boolean) => void;
+  itemsOf: (id: string, from: number, to: number) => readonly SearchItem[];
 }
 
 const SearchNavContext = createContext<SearchNavShared | null>(null);
 
-/** Nächste Quelle mit Treffern nach der, deren Ende erreicht ist. */
-function endHintOf(
-  hint: { needle: string; from: string } | null,
-  needle: string,
-  currentId: string,
+/** Quellen ab `currentId` reihum — so liest man die lange Trefferliste. */
+export function inListOrder(
   sources: readonly SearchSource[],
-  /** Quellen, die dieses Fenster zeigen kann; ausgelagert nur die eigene Art. */
-  allowed: (source: SearchSource) => boolean = () => true,
-): SearchEndHint | null {
-  if (hint === null || hint.needle !== needle || hint.from !== currentId) return null;
-  const at = sources.findIndex((source) => source.id === hint.from);
-  for (let k = 1; k < sources.length; k++) {
-    const next = sources[(at + k) % sources.length];
-    if ((next.count ?? 0) > 0 && allowed(next)) return { from: hint.from, next };
+  currentId: string,
+): readonly SearchSource[] {
+  const at = Math.max(
+    0,
+    sources.findIndex((source) => source.id === currentId),
+  );
+  return [...sources.slice(at), ...sources.slice(0, at)];
+}
+
+/**
+ * Nächster Treffer der langen Liste: in der Quelle weiter, am Ende in die nächste Quelle mit
+ * Treffern (erster Treffer, rückwärts der letzte). Gibt es keine andere, beginnt die Quelle
+ * von vorn. `null`, wenn es nirgends Treffer gibt.
+ */
+export function nextHit(
+  ordered: readonly SearchSource[],
+  direction: 1 | -1,
+  allowed: (source: SearchSource) => boolean,
+): { id: string; at: number } | null {
+  const current = ordered[0];
+  const count = current.count ?? 0;
+  const from = current.index;
+  if (count > 0 && from < 0) return { id: current.id, at: direction > 0 ? 0 : count - 1 };
+  const inside = from + direction;
+  if (count > 0 && inside >= 0 && inside < count) return { id: current.id, at: inside };
+  const others = direction > 0 ? ordered.slice(1) : [...ordered.slice(1)].reverse();
+  for (const source of others) {
+    const n = source.count ?? 0;
+    if (n > 0 && allowed(source)) return { id: source.id, at: direction > 0 ? 0 : n - 1 };
   }
-  return null;
+  if (count === 0) return null;
+  return { id: current.id, at: direction > 0 ? 0 : count - 1 };
 }
 
 /** Bereich eines Ereignisses: das nächste Element mit `data-search-source`. */
@@ -104,7 +127,6 @@ export function SearchNavProvider({ children }: { children: ReactNode }) {
   const documents = useOptionalDocuments();
   const workspace = useOptionalWorkspace();
   const [area, setArea] = useState<SearchArea>('lv');
-  const [hint, setHint] = useState<{ needle: string; from: string } | null>(null);
 
   // Aktivität nur im Hauptfenster verfolgen: ein ausgelagertes Fenster zeigt nur einen
   // Bereich, dort steht die Quelle fest (Dokument-Fenster ⇒ PDF, sonst LV).
@@ -135,39 +157,42 @@ export function SearchNavProvider({ children }: { children: ReactNode }) {
   const lvIndex = selectedSlot < 0 ? -1 : lvSlots.indexOf(selectedSlot);
 
   const sources = useMemo<SearchSource[]>(() => {
-    const previewSlot = lvSlots[Math.max(0, lvIndex)];
-    const position = previewSlot === undefined ? null : index.positions[previewSlot];
-    const lv: SearchSource = {
-      id: LV_SOURCE,
-      label: 'LV',
-      count: lvSlots.length,
-      index: lvIndex,
-      preview:
-        position === null
-          ? null
-          : `${position.oz} ${
-              searchSnippet(position.shortText, filter.search) ??
-              searchSnippet(position.longText, filter.search) ??
-              position.shortText
-            }`,
-    };
+    const lv: SearchSource = { id: LV_SOURCE, label: 'LV', count: lvSlots.length, index: lvIndex };
     if (documents === null) return [lv];
     return [
       lv,
       ...documents.docs.map((doc) => {
         const hits = documents.searchHits.get(doc.id);
-        const at = hits === undefined ? 0 : Math.min(documents.hitIndexOf(doc.id), hits.length - 1);
-        const hit = hits?.[at] ?? null;
-        return {
-          id: doc.id,
-          label: doc.name,
-          count: hits?.length ?? null,
-          index: hit === null ? -1 : at,
-          preview: hit === null ? null : `S. ${hit.page} · ${hit.around ?? hit.text}`,
-        };
+        const count = hits?.length ?? null;
+        const at =
+          count === null || count === 0 ? -1 : Math.min(documents.hitIndexOf(doc.id), count - 1);
+        return { id: doc.id, label: doc.name, count, index: at };
       }),
     ];
-  }, [lvSlots, lvIndex, index, filter.search, documents]);
+  }, [lvSlots, lvIndex, documents]);
+
+  const itemsOf = useCallback(
+    (id: string, from: number, to: number): readonly SearchItem[] => {
+      if (id === LV_SOURCE) {
+        return lvSlots.slice(from, to).map((slot, k) => {
+          const position = index.positions[slot];
+          return {
+            at: from + k,
+            lead: position.oz,
+            text:
+              searchSnippet(position.shortText, filter.search) ??
+              searchSnippet(position.longText, filter.search) ??
+              position.shortText,
+          };
+        });
+      }
+      const hits = documents?.searchHits.get(id) ?? [];
+      return hits
+        .slice(from, to)
+        .map((hit, k) => ({ at: from + k, lead: `S. ${hit.page}`, text: hit.around ?? hit.text }));
+    },
+    [lvSlots, index, filter.search, documents],
+  );
 
   const selectSlot = useCallback(
     (slot: number): void => {
@@ -181,46 +206,27 @@ export function SearchNavProvider({ children }: { children: ReactNode }) {
     [index, parents, dispatch],
   );
 
-  const stepIn = useCallback(
-    (source: SearchSource, direction: 1 | -1): void => {
-      const count = source.count ?? 0;
-      if (count === 0) return;
-      const from = source.index;
-      const next = from < 0 ? (direction > 0 ? 0 : count - 1) : (from + direction + count) % count;
-      const wrapped = from >= 0 && (direction > 0 ? next < from : next > from);
-      setHint(wrapped ? { needle, from: source.id } : null);
-      if (source.id === LV_SOURCE) {
-        selectSlot(lvSlots[next]);
-        return;
-      }
-      documents?.setHitIndex(source.id, next);
-      dispatch({ type: 'showPane', pane: 'doc' });
-    },
-    [needle, lvSlots, selectSlot, documents, dispatch],
-  );
-
-  const choose = useCallback(
-    (id: string, inMain: boolean): void => {
-      setHint(null);
+  const goTo = useCallback(
+    (id: string, at: number, inMain: boolean): void => {
       if (id === LV_SOURCE) {
         if (inMain) setArea('lv');
-        if (lvIndex < 0 && lvSlots.length > 0) selectSlot(lvSlots[0]);
+        const slot = lvSlots[at];
+        if (slot !== undefined) selectSlot(slot);
         return;
       }
       if (inMain) setArea('doc');
-      documents?.activate(id);
-      // Gleicher Treffer nochmal: das PDF blättert dorthin.
-      documents?.setHitIndex(id, documents.hitIndexOf(id));
+      if (documents?.active?.id !== id) documents?.activate(id);
+      documents?.setHitIndex(id, at);
       dispatch({ type: 'showPane', pane: 'doc' });
     },
-    [lvIndex, lvSlots, selectSlot, documents, dispatch],
+    [lvSlots, selectSlot, documents, dispatch],
   );
 
   const docWindow = workspace?.hosts.doc?.win ?? null;
   const activeDocId = documents?.active?.id ?? null;
   const value = useMemo<SearchNavShared>(
-    () => ({ needle, sources, mainArea: area, docWindow, activeDocId, hint, stepIn, choose }),
-    [needle, sources, area, docWindow, activeDocId, hint, stepIn, choose],
+    () => ({ needle, sources, mainArea: area, docWindow, activeDocId, goTo, itemsOf }),
+    [needle, sources, area, docWindow, activeDocId, goTo, itemsOf],
   );
   return <SearchNavContext.Provider value={value}>{children}</SearchNavContext.Provider>;
 }
@@ -236,20 +242,30 @@ export function useSearchNav(): SearchNav | null {
   return useMemo(() => {
     if (shared === null) return null;
     const inMain = host === window;
-    const area: SearchArea = inMain ? shared.mainArea : host === shared.docWindow ? 'doc' : 'lv';
+    // Ist das Dokument ausgelagert, zeigt das Hauptfenster nur noch das LV.
+    const mainArea = shared.docWindow === null ? shared.mainArea : 'lv';
+    const area: SearchArea = inMain ? mainArea : host === shared.docWindow ? 'doc' : 'lv';
     const currentId =
       area === 'doc' && shared.activeDocId !== null ? shared.activeDocId : LV_SOURCE;
-    const current = shared.sources.find((source) => source.id === currentId) ?? shared.sources[0];
+    const sources = inListOrder(shared.sources, currentId);
+    const current = sources[0];
+    // ▲ ▼ laufen nur in Quellen weiter, die dieses Fenster zeigt: ausgelagert nur die eigene
+    // Art, im Hauptfenster PDFs nur, solange das Dokument nicht ausgelagert ist.
+    const allowed = (source: SearchSource): boolean => {
+      const isLv = source.id === LV_SOURCE;
+      if (!inMain) return isLv === (area === 'lv');
+      return isLv || shared.docWindow === null;
+    };
     return {
       needle: shared.needle,
-      sources: shared.sources,
+      sources,
       current,
-      step: (direction: 1 | -1) => shared.stepIn(current, direction),
-      choose: (id: string) => shared.choose(id, inMain),
-      // Ausgelagert bleibt der Hinweis bei der eigenen Art: im Dokument-Fenster nur PDFs.
-      hint: endHintOf(shared.hint, shared.needle, current.id, shared.sources, (source) =>
-        inMain ? true : (source.id === LV_SOURCE) === (area === 'lv'),
-      ),
+      step: (direction: 1 | -1) => {
+        const next = nextHit(sources, direction, allowed);
+        if (next !== null) shared.goTo(next.id, next.at, inMain);
+      },
+      goTo: (id: string, at: number) => shared.goTo(id, at, inMain),
+      itemsOf: shared.itemsOf,
       area,
     };
   }, [shared, host]);

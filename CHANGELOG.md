@@ -15,11 +15,12 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
   Suchfeld im Dokument ist weg. Treffer im PDF filtern das LV nicht.
 - **Vor und zurück:** In der Suchleiste stehen „4 / 9“ und ▲ ▼ (auch ↓ ↑ und Enter /
   Umschalt + Enter). Im LV springt die Suche von Position zu Position, im PDF genau zur Fundstelle.
-- **Quellen:** Unter der Suchleiste klappt die Liste der Quellen auf: LV und jedes PDF mit
-  Trefferzahl und Ausschnitt. Antippen springt hinein, ein PDF öffnet sich.
-- **Wo du arbeitest, sucht es zuerst:** Zuletzt ins Dokument geklickt ⇒ ▲ ▼ springen im PDF,
-  sonst im LV. Am Ende eines Dokuments steht „Weiter in: …“. Ausgelagerte Fenster springen
-  für sich: im Dokument-Fenster im PDF, in Graph und Tabelle im LV.
+- **Trefferliste:** Unter der Suchleiste klappen alle Treffer auf, je Dokument ein Abschnitt
+  mit OZ bzw. Seite und Ausschnitt. Oben steht das Dokument, in dem du gerade arbeitest.
+  Antippen springt hin, ein PDF öffnet sich.
+- **Eine lange Liste:** ▲ ▼ springen am Ende eines Dokuments direkt ins nächste. Zuletzt ins
+  Dokument geklickt ⇒ es geht im PDF los, sonst im LV. Ausgelagerte Fenster springen für sich:
+  im Dokument-Fenster durch die PDFs, in Graph und Tabelle im LV.
 - **Besser finden:** Leerzeichen, Zeilenumbrüche und Trennstriche am Zeilenende zählen nicht
   mehr. „Stahl-“ / „beton“ im PDF wird als „Stahlbeton“ gefunden, „C 25/30“ findet „C25/30“.
 - **Eigenes Fenster:** Graph, Tabelle und Dokument haben dort jetzt den ganzen Kopf: Logo-Menü,
