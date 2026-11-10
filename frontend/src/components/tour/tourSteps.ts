@@ -66,12 +66,6 @@ export const TOUR_STEPS: readonly TourStep[] = [
     prepare: ['openSettings'],
   },
   {
-    target: '[data-tour="kpis"]',
-    title: 'Kennzahlen',
-    text: 'Öffnen Überblick und Prüfung.',
-    prepare: ['closeFilter'],
-  },
-  {
     target: '[data-tour="hints"]',
     title: 'Hinweise',
     text: 'Ringe und Schilder im Graphen ein- und ausblenden.',
@@ -79,7 +73,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     target: '[data-tour="workspace"]',
     title: 'Ansicht',
-    text: 'Bereiche ein- und ausblenden. Einen Bereich am Kopf ziehen: stapeln, tauschen oder teilen.',
+    text: 'Bereiche wie Überblick und Prüfung ein- und ausblenden. Einen Bereich am Kopf ziehen: stapeln, tauschen oder teilen.',
   },
   {
     target: '[data-tour="table"]',

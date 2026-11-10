@@ -22,6 +22,8 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 - **Positionskarte:** Bei Betonpositionen steht unter den Eigenschaften, welche Angaben im LV
   fehlen.
 - **CSV:** Die Liste lässt sich als CSV für Excel speichern: Logo-Menü → „Exportieren“.
+- **Aufgeräumt:** Die Kennzahlen-Karte oben links auf dem Graphen ist weg. Die Zahlen stehen
+  im Überblick (Entscheidung 0105).
 - **Mehr erkannt:** Chloridgehaltsklasse („Cl 0,40“), Konsistenz („F3“, „SF2“) und Größtkorn
   („Größtkorn 16 mm“, „Dmax 22“) werden jetzt gelesen, wenn eine Betonklasse daneben steht.
 

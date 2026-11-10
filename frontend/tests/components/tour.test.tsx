@@ -75,7 +75,6 @@ function Harness({ without = [] }: { without?: readonly string[] }) {
         + Filter
       </button>
       {view.graphSettings && <div data-tour="layout">gliederung</div>}
-      <div data-tour="kpis">kennzahlen</div>
       {has('hints') && <div data-tour="hints">hinweise</div>}
       <div data-tour="workspace">anordnung</div>
       {!view.workspace.closed.table && <div data-tour="table">tabelle</div>}

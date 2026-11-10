@@ -110,7 +110,8 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0101 | [„Arbeitsstand“ statt „Notizen“ für die gesicherte Datei](0101-arbeitsstand-statt-notizen.md)                  | akzeptiert                         | 2026-11-09 |
 | 0102 | [Ganze Kopfleiste im eigenen Fenster](0102-kopfleiste-im-eigenen-fenster.md)                                   | akzeptiert                         | 2026-11-09 |
 | 0103 | [Eine Suche für LV und PDFs mit Treffer-Navigator](0103-eine-suche-mit-treffer-navigator.md)                   | akzeptiert                         | 2026-11-09 |
-| 0104 | [Betonsortenliste im Überblick](0104-betonsortenliste.md)                                                     | akzeptiert                         | 2026-11-10 |
+| 0104 | [Betonsortenliste im Überblick](0104-betonsortenliste.md)                                                      | akzeptiert                         | 2026-11-10 |
+| 0105 | [Keine Kennzahlen-Karte am Graphen](0105-keine-kennzahlen-am-graphen.md)                                       | akzeptiert                         | 2026-11-10 |
 
 ## Wann schreibe ich eine neue Datei?
 

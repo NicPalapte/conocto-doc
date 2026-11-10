@@ -29,9 +29,6 @@ export const LEGEND_FULL_MIN_WIDTH = 720;
 /** Unter dieser Graph-Breite (px) steht „Keine Treffer" unter den Kennzahlen statt mittig. */
 const HEADER_NARROW_WIDTH = 800;
 
-/** Abstand von oben für Hinweise unter den Kennzahlen (16 + ~62 Höhe + Luft). */
-const BELOW_KPIS = 'top-[88px]';
-
 function Dot({ shape }: { shape: 'normal' | 'bedarf' | 'wahl' | 'zulage' }) {
   return (
     <svg width="12" height="12" aria-hidden="true">
@@ -84,7 +81,7 @@ export function GraphHeader({ root, width, controls }: GraphHeaderProps) {
       {keineTreffer && (
         <div
           className={`pointer-events-none absolute z-[7] flex gap-[8px] ${
-            narrow ? `left-[16px] ${BELOW_KPIS}` : 'left-1/2 top-[16px] -translate-x-1/2'
+            narrow ? 'left-[16px] top-[16px]' : 'left-1/2 top-[16px] -translate-x-1/2'
           }`}
         >
           <span className="ov-pill inline-flex h-[32px] items-center px-[14px] font-mono text-[12px] text-dim">

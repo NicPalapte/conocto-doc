@@ -342,11 +342,8 @@ describe('Drucken', () => {
   it('druckt nach einer Suche nur die Treffer', async () => {
     await ladeApp();
     fireEvent.change(screen.getByLabelText('Suche'), { target: { value: 'Beton' } });
-    // Die Suche ist entprellt: erst wenn die Kennzahlen „Treffer" statt
-    // „Positionen" zählen, ist der Filter wirklich aktiv.
-    await within(screen.getByRole('group', { name: 'Kennzahlen' })).findByRole('button', {
-      name: /Treffer/,
-    });
+    // Die Suche ist entprellt: erst danach ist der Filter wirklich aktiv.
+    await warteAufFilter();
 
     act(() => {
       window.dispatchEvent(new Event('beforeprint'));

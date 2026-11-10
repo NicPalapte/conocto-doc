@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import App from '../src/App';
 import { giveGraphASize } from './support/graphSize';
@@ -53,11 +53,18 @@ function cardPane(): HTMLElement {
   return screen.getByRole('region', { name: 'Position — Bereich' });
 }
 
-/** Kennzahl über dem Graphen anklicken — sie öffnet ihren Bereich im Splitscreen. */
-function kpi(name: RegExp): void {
-  fireEvent.click(
-    within(screen.getByRole('group', { name: 'Kennzahlen' })).getByRole('button', { name }),
-  );
+/** Den Überblick über „Ansicht" öffnen bzw. schließen (früher: Kennzahl über dem Graphen). */
+function oeffneUeberblick(): void {
+  fireEvent.click(screen.getByRole('button', { name: /^Ansicht/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Überblick$/ }));
+  fireEvent.click(screen.getByRole('button', { name: /^Ansicht/ }));
+}
+
+/** Die Suche ist entprellt (SEARCH_DEBOUNCE_MS in TopBar.tsx): warten, bis sie greift. */
+async function warteAufFilter(): Promise<void> {
+  await act(async () => {
+    await new Promise((fertig) => setTimeout(fertig, 300));
+  });
 }
 
 /**
@@ -79,10 +86,9 @@ describe('Viewer', () => {
   it('zeigt vor dem Import die Datei-Ablage und keine Fachdaten', () => {
     render(<App />);
     expect(screen.getByText('GAEB-Datei hierher ziehen')).toBeInTheDocument();
-    // Suche, Filter und Kennzahlen gibt es erst mit einer Datei.
+    // Suche und Filter gibt es erst mit einer Datei.
     expect(screen.queryByLabelText('Suche')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '+ Filter' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: 'Kennzahlen' })).not.toBeInTheDocument();
   });
 
   it('bietet genau ein Demo-Projekt zum Ausprobieren an', () => {
@@ -122,8 +128,8 @@ describe('Viewer', () => {
     expect(cardPane()).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Überblick — Bereich' })).toBeNull();
 
-    // Die Kennzahl „Positionen" öffnet den Überblick als Bereich.
-    kpi(/Positionen/);
+    // „Ansicht" öffnet den Überblick als Bereich.
+    oeffneUeberblick();
     const panel = screen.getByRole('region', { name: 'Überblick — Bereich' });
     expect(within(panel).getByText('28 Positionen')).toBeInTheDocument();
   });
@@ -134,13 +140,10 @@ describe('Viewer', () => {
     await loadAndWait();
 
     fireEvent.change(screen.getByLabelText('Suche'), { target: { value: 'Beton' } });
-    // Die Suche ist entprellt — die Kennzahlen zählen „Treffer", sobald sie greift.
-    await within(screen.getByRole('group', { name: 'Kennzahlen' })).findByRole('button', {
-      name: /Treffer/,
-    });
+    await warteAufFilter();
 
     // Im Überblick ein Stück scrollen …
-    kpi(/Treffer/);
+    oeffneUeberblick();
     const ueberblick = (): HTMLElement =>
       screen
         .getByRole('region', { name: 'Überblick — Bereich' })
@@ -160,7 +163,7 @@ describe('Viewer', () => {
     // … Bereiche schließen und wieder öffnen: Suche, Sortierung und
     // Scrollposition stehen unverändert da.
     fireEvent.click(screen.getByRole('button', { name: 'Überblick schließen' }));
-    kpi(/Treffer/);
+    oeffneUeberblick();
     expect(ueberblick().scrollTop).toBe(240);
     expect(screen.getByLabelText('Suche')).toHaveValue('Beton');
 
