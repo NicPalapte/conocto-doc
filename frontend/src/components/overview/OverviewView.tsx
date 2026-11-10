@@ -20,13 +20,11 @@ import { Treemap } from './Treemap';
 import { UnitTotals } from './UnitTotals';
 import { BlockLabel } from '@conocto/design';
 import { buildBetonSorten } from '../../lib/beton/sorten';
-import { betonSortenCsv } from '../../lib/export/betonSorten';
-import { downloadText } from '../../lib/export/download';
 import { formatCount, formatPositions } from '../../lib/format';
-import { countEvent } from '../../lib/usage/count';
 import { filterMask } from '../../lib/index/positionIndex';
 import { buildOverview } from '../../lib/overview/model';
 import { matchCount } from '../../lib/tree/matchCounts';
+import { useMitnehmen } from '../common/useMitnehmen';
 import { useScrollMemory } from '../common/useScrollMemory';
 import { toggleFacetValue } from '../../state/filterState';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
@@ -54,6 +52,7 @@ export function OverviewView() {
   const { lv, index, active, matches, nodes, filter, parents, selection } = useViewer();
   const dispatch = useViewerDispatch();
   const [attachScroll, onScroll] = useScrollMemory('overview');
+  const mitnehmen = useMitnehmen();
 
   const mask = useMemo(
     () => (active.filtering ? filterMask(index, active) : null),
@@ -61,8 +60,6 @@ export function OverviewView() {
   );
   const model = useMemo(() => buildOverview({ index, mask, parents }), [index, mask, parents]);
   const betonSorten = useMemo(() => buildBetonSorten(index, mask), [index, mask]);
-  // Die Karte gibt es nur, wenn das LV überhaupt Beton enthält — nicht nur im Filter.
-  const hasBeton = useMemo(() => buildBetonSorten(index, null).sorten.length > 0, [index]);
 
   // Hinweiszahl wie in der Ansicht „Prüfung": abgeschaltete Regeln zählen nicht,
   // und gezählt wird nur, was der Filter durchlässt.
@@ -89,11 +86,6 @@ export function OverviewView() {
       facetId: 'betonsorte',
       values: toggleFacetValue(filter.filters, 'betonsorte', key),
     });
-
-  const exportSorten = (): void => {
-    downloadText('betonsorten.csv', betonSortenCsv(betonSorten), 'csv');
-    countEvent('export-csv');
-  };
 
   const pickUnit = (unit: string): void =>
     dispatch({
@@ -170,7 +162,7 @@ export function OverviewView() {
           )}
         </div>
 
-        {hasBeton && (
+        {mitnehmen.hatBeton && (
           <Card title="Betonsorten" note="Klick filtert">
             <BetonSortenCard
               liste={betonSorten}
@@ -178,7 +170,7 @@ export function OverviewView() {
               selectedId={selection.positionId}
               onPickSorte={pickSorte}
               onPickPosition={pickPosition}
-              onCsv={exportSorten}
+              onCsv={mitnehmen.betonsortenAlsCsv}
             />
           </Card>
         )}

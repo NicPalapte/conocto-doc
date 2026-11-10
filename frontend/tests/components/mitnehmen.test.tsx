@@ -129,6 +129,16 @@ describe('Mitnehmen', () => {
     expect(hinweis).toHaveTextContent('Die CSV-Datei konnte nicht erstellt werden');
   });
 
+  it('lädt die Betonsorten als CSV (Entscheidung 0104)', async () => {
+    await ladeApp();
+    befehl('Betonsorten als Tabelle');
+
+    expect(dateien).toHaveLength(1);
+    expect(dateien[0].name).toMatch(/-betonsorten-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(dateien[0].text).toMatch(/^\uFEFF?Sorte;Positionen;Menge;Einheit;/);
+    expect(dateien[0].text).toMatch(/\r\nC\d+\/\d+/);
+  });
+
   it('lädt die Prüfhinweise als Text', async () => {
     await ladeApp();
     befehl('Prüfhinweise als Text');

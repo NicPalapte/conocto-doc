@@ -19,7 +19,7 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
   Größtkorn, Konsistenz. Was fehlt, steht in amber, als Hinweis.
 - **Klick filtert:** Ein Klick auf eine Sorte filtert Graph und Tabelle und klappt die Sorte
   auf: Angaben und Positionen mit dem, was fehlt. Noch ein Klick hebt den Filter auf.
-- **CSV:** Die Liste lässt sich als CSV für Excel speichern.
+- **CSV:** Die Liste lässt sich als CSV für Excel speichern, in der Karte und im Logo-Menü unter „Exportieren“.
 - **Mehr erkannt:** Chloridgehaltsklasse („Cl 0,40“), Konsistenz („F3“, „SF2“) und Größtkorn
   („Größtkorn 16 mm“, „Dmax 22“) werden jetzt gelesen, wenn eine Betonklasse daneben steht.
 
