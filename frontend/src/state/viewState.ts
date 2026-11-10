@@ -65,6 +65,8 @@ export interface GraphViewState {
   rows: string;
   /** Merkmal der Spalten in „Matrix"; `null` = keine Spalten. */
   cols: string | null;
+  /** Matrix: Positionen ohne Wert auf Zeile oder Spalte ausblenden (Issue #191). Kein Filter. */
+  hideEmpty: boolean;
   /** Hinweis-Ringe und -Schilder im Graphen zeigen. */
   showHints: boolean;
   /**
@@ -204,6 +206,7 @@ export type ViewAction =
   | { type: 'graphLayout'; value: GraphLayoutId }
   | { type: 'graphRows'; value: string }
   | { type: 'graphCols'; value: string | null }
+  | { type: 'graphHideEmpty'; value: boolean }
   | { type: 'graphHints'; value: boolean }
   /** Graph-Ausschnitt sichern — beim Verlassen der Ansicht, nicht je Frame. */
   | { type: 'graphViewport'; viewport: Viewport | null }
@@ -269,6 +272,7 @@ export const INITIAL_VIEW_STATE: ViewState = {
     layout: 'lv',
     rows: 'einheit',
     cols: null,
+    hideEmpty: false,
     showHints: true,
     viewport: null,
     focus: 0,
@@ -359,6 +363,8 @@ export function viewReducer(state: ViewState, action: ViewAction): ViewState {
       // Abschnitt nur als Zeile: lange Titel nebeneinander überlappen (Entscheidung 0059).
       if (action.value === SECTION_AXIS) return state;
       return { ...state, graph: { ...state.graph, cols: action.value } };
+    case 'graphHideEmpty':
+      return { ...state, graph: { ...state.graph, hideEmpty: action.value } };
     case 'graphHints':
       return { ...state, graph: { ...state.graph, showHints: action.value } };
     case 'graphViewport':

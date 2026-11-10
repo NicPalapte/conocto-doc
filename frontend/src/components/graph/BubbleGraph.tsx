@@ -27,6 +27,7 @@ import {
 import { DocCards } from './DocCards';
 import { GraphControls } from './GraphControls';
 import { GraphHeader } from './GraphHeader';
+import { HoverCard } from './HoverCard';
 import { useHostWindow } from '../common/hostWindow';
 import { usePositionMenu } from '../common/positionMenuContext';
 import {
@@ -54,7 +55,7 @@ import { graphOverlayProps, isOverlayEvent } from '../../lib/graph/overlay';
 import { placePins, type PinAnchor, type PlacedPin, type Rect } from '../../lib/graph/pins';
 import { positionRadii } from '../../lib/graph/sizes';
 import { NEUTRAL_COLOR } from '../../lib/colors';
-import { formatCount, formatNumber } from '../../lib/format';
+import { formatCount } from '../../lib/format';
 import { measure } from '../../lib/perf';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
 import type { LVNode } from '../../types/lvNode';
@@ -71,6 +72,11 @@ function clampZoom(value: number): number {
 
 /** Obergrenze beim Einpassen auf eine Auswahl — eine Position bleibt lesbar, nicht riesig. */
 const FIT_SELECTION_MAX_ZOOM = 2.5;
+/** Pause in ms, bis die Karte zur Position unter der Maus erscheint. */
+const HOVER_DELAY_MS = 150;
+/** Platz der Hover-Karte in px, damit sie am Rand nicht abgeschnitten wird. */
+const HOVER_CARD_W = 240;
+const HOVER_CARD_H = 110;
 /** So viel größer zeichnet der Graph die ausgewählte Position. */
 const PICKED_SCALE = 1.2;
 /** Fenster und Leisten über dem Graphen — Schilder weichen ihnen aus. */
@@ -224,6 +230,7 @@ export function BubbleGraph({ root }: { root: LVNode }) {
   // Im eigenen Browserfenster (Entscheidung 0039) kommen Mausereignisse dort an.
   const hostWindow = useHostWindow();
   const { layout, rows, cols, sizeMode, showHints, spotlight, showDocs, docSpotlight } = graph;
+  const hideEmpty = layout === 'matrix' && graph.hideEmpty;
   // Blass oder ausgeblendet regelt derselbe Schalter wie bei Filtern (Entscheidung 0078).
   const spotlightHide = hideMode === 'hide';
 
@@ -266,15 +273,24 @@ export function BubbleGraph({ root }: { root: LVNode }) {
   const selected = layout === 'matrix' ? selectedFacets : EMPTY_SELECTED;
   // Alles, was die Lage bestimmt, außer der Blasengröße — gleich ⇒ nicht neu einpassen.
   const lage = useMemo(
-    () => ({ index, parents, layout, rows, cols, layoutMask, hide, selected }),
-    [index, parents, layout, rows, cols, layoutMask, hide, selected],
+    () => ({ index, parents, layout, rows, cols, layoutMask, hide, hideEmpty, selected }),
+    [index, parents, layout, rows, cols, layoutMask, hide, hideEmpty, selected],
   );
   const map = useMemo(
     () =>
       measure('Graph-Layout', () =>
-        layoutMap(index, parents, { layout, rows, cols, radii, mask: layoutMask, hide, selected }),
+        layoutMap(index, parents, {
+          layout,
+          rows,
+          cols,
+          radii,
+          mask: layoutMask,
+          hide,
+          hideEmpty,
+          selected,
+        }),
       ),
-    [index, parents, layout, rows, cols, radii, layoutMask, hide, selected],
+    [index, parents, layout, rows, cols, radii, layoutMask, hide, hideEmpty, selected],
   );
 
   // ── Hervorhebung eines Abschnitts (Entscheidung 0075): nur „nach LV", nur Darstellung.
@@ -747,6 +763,12 @@ export function BubbleGraph({ root }: { root: LVNode }) {
 
   // ── Hover: Kurztext als HTML-Tooltip (SVG-Text bricht nicht um).
   const [hoverSlot, setHoverSlot] = useState(-1);
+  const [shownHover, setShownHover] = useState(-1);
+  useEffect(() => {
+    if (hoverSlot < 0) return;
+    const timer = window.setTimeout(() => setShownHover(hoverSlot), HOVER_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [hoverSlot]);
   // Kachel unter der Maus — auch über einem ihrer Punkte, sonst flackert die Hervorhebung.
   // Gemerkt samt Layout: nach einem Umbau zeigte der Index sonst auf eine andere Gruppe.
   const [hover, setHover] = useState<{ map: typeof map; group: number } | null>(null);
@@ -1010,7 +1032,9 @@ export function BubbleGraph({ root }: { root: LVNode }) {
   const labelFits = 14 * k >= LABEL_MIN_PX;
   const dimLv = layout === 'lv' && filtering && !hide;
 
-  const tooltipSlot = hoverSlot >= 0 ? hoverSlot : graphFocused ? focusSlot : -1;
+  // Maus: Karte erst nach kurzer Pause, sonst flackert sie beim Überfahren. Tastatur: sofort.
+  const tooltipSlot =
+    hoverSlot >= 0 ? (shownHover === hoverSlot ? hoverSlot : -1) : graphFocused ? focusSlot : -1;
 
   // Kacheln: Farbstufe 1–5 nach Anzahl, bezogen auf die vollste Kachel.
   const grid = map.axes?.grid ?? null;
@@ -1635,28 +1659,17 @@ export function BubbleGraph({ root }: { root: LVNode }) {
       )}
 
       {tooltipSlot >= 0 && Number.isFinite(map.px[tooltipSlot]) && (
-        <div
-          className="pointer-events-none absolute z-[11] max-w-[260px] rounded-[var(--r-sm)] bg-ink px-[8px] py-[6px] font-mono text-[11px] leading-[1.4] text-white"
-          style={{
-            left: Math.min(
-              Math.max(0, view.tx + map.px[tooltipSlot] * k + radii[tooltipSlot] * k + 10),
-              Math.max(0, w - 268),
-            ),
-            top: Math.min(Math.max(0, view.ty + map.py[tooltipSlot] * k - 14), Math.max(0, h - 40)),
-            whiteSpace: 'normal',
-            wordBreak: 'break-word',
-            boxShadow: 'var(--shadow-popover)',
-          }}
-        >
-          {index.positions[tooltipSlot].oz} · {index.positions[tooltipSlot].shortText}
-          {index.positions[tooltipSlot].quantity !== null && (
-            <span className="text-white/70">
-              {' · '}
-              {formatNumber(index.positions[tooltipSlot].quantity)}{' '}
-              {index.positions[tooltipSlot].unit ?? ''}
-            </span>
+        <HoverCard
+          position={index.positions[tooltipSlot]}
+          left={Math.min(
+            Math.max(0, view.tx + map.px[tooltipSlot] * k + radii[tooltipSlot] * k + 10),
+            Math.max(0, w - HOVER_CARD_W - 8),
           )}
-        </div>
+          top={Math.min(
+            Math.max(0, view.ty + map.py[tooltipSlot] * k - 14),
+            Math.max(0, h - HOVER_CARD_H),
+          )}
+        />
       )}
 
       {docsOn && (

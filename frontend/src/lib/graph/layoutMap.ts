@@ -78,6 +78,8 @@ export interface MapOptions {
   mask: Uint8Array | null;
   /** Nicht-Treffer fallen aus dem Layout statt gedämpft zu bleiben. */
   hide: boolean;
+  /** Matrix: Positionen ohne Wert auf Zeile oder Spalte fallen heraus (kein Filter). */
+  hideEmpty?: boolean;
   /** Gewählte Filterwerte je Facette — sie bestimmen die Achsen in „Matrix". */
   selected: Readonly<Record<string, ReadonlySet<string>>>;
 }
@@ -532,7 +534,7 @@ function axisValues(index: PositionIndex, axis: Axis, options: MapOptions): stri
   }
   const values = chosen !== undefined && chosen.size > 0 ? [...chosen] : [...present];
   const sorted = axis.sort(values.filter((value) => value !== NO_VALUE));
-  return values.includes(NO_VALUE) ? [...sorted, NO_VALUE] : sorted;
+  return values.includes(NO_VALUE) && options.hideEmpty !== true ? [...sorted, NO_VALUE] : sorted;
 }
 
 function axisLabel(axis: Axis, value: string): string {
@@ -571,6 +573,13 @@ function layoutFree(
   const rest = newGroup('rest', 'übrige', []);
   rest.rest = true;
   for (let slot = 0; slot < index.size; slot++) {
+    // „ohne Angabe ausblenden“: weder Kachel noch „übrige“ — nur der Graph, nie der Filter.
+    if (
+      options.hideEmpty === true &&
+      (rowAxis.values(slot).length === 0 || (colAxis !== null && colAxis.values(slot).length === 0))
+    ) {
+      continue;
+    }
     if (!isHit(options.mask, slot)) {
       if (!options.hide) rest.slots.push(slot);
       continue;
