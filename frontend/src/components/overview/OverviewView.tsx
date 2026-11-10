@@ -20,6 +20,7 @@ import { Treemap } from './Treemap';
 import { UnitTotals } from './UnitTotals';
 import { BlockLabel } from '@conocto/design';
 import { buildBetonSorten } from '../../lib/beton/sorten';
+import { linkedTextsOf } from '../../lib/docs/docNotes';
 import { formatCount, formatPositions } from '../../lib/format';
 import { filterMask } from '../../lib/index/positionIndex';
 import { buildOverview } from '../../lib/overview/model';
@@ -49,7 +50,8 @@ function Card({
 }
 
 export function OverviewView() {
-  const { lv, index, active, matches, nodes, filter, parents, selection } = useViewer();
+  const { lv, index, active, matches, nodes, filter, parents, selection, annotations } =
+    useViewer();
   const dispatch = useViewerDispatch();
   const [attachScroll, onScroll] = useScrollMemory('overview');
   const mitnehmen = useMitnehmen();
@@ -59,7 +61,11 @@ export function OverviewView() {
     [index, active],
   );
   const model = useMemo(() => buildOverview({ index, mask, parents }), [index, mask, parents]);
-  const betonSorten = useMemo(() => buildBetonSorten(index, mask), [index, mask]);
+  const docTexts = useMemo(() => linkedTextsOf(annotations.documents), [annotations.documents]);
+  const betonSorten = useMemo(
+    () => buildBetonSorten(index, mask, docTexts),
+    [index, mask, docTexts],
+  );
 
   // Hinweiszahl wie in der Ansicht „Prüfung": abgeschaltete Regeln zählen nicht,
   // und gezählt wird nur, was der Filter durchlässt.

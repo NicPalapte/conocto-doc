@@ -1,7 +1,7 @@
-// Vorschläge zum Verknüpfen im Begleitdokument (Entscheidung 0080): OZ und Mengen aus
-// dem geladenen LV im Seitentext wiederfinden. Ein- und ausgeschaltet und eingestellt
-// über die Grundstock-Regeln „OZ im Dokument“ und „Menge im Dokument“ (0087,
-// `suggestRules.ts`). Nur exakter Abgleich mit dem LV, keine
+// Vorschläge zum Verknüpfen im Begleitdokument (Entscheidung 0080): OZ, Mengen und
+// Betonsorten (0106) aus dem geladenen LV im Seitentext wiederfinden. Ein- und
+// ausgeschaltet und eingestellt über die Grundstock-Regeln „OZ im Dokument“, „Menge im
+// Dokument“ und „Beton im Dokument“ (0087, `suggestRules.ts`). Nur exakter Abgleich mit dem LV, keine
 // Deutung des Textes — was nicht eindeutig zu genau einer Position passt, wird kein
 // Vorschlag. Übernommen wird erst per Klick (KI/Automatik schlägt vor, Mensch entscheidet).
 //
@@ -10,16 +10,25 @@
 // (`docSearch.ts`), damit die Textebene sie mit `locateOnPage` wiederfindet.
 
 import { sentenceAround } from '@core';
+import { sorteKeyOf } from '../beton/sorteKey';
+import { extractBetonklassen } from '../classify/rulesets/normklassen';
 import { canonicalUnit } from '../units';
 import { formatNumber } from '../format';
 
 /** Woher eine Verknüpfung kam, wenn nicht von Hand. */
-export type LinkSource = 'oz' | 'menge';
+export type LinkSource = 'oz' | 'menge' | 'beton';
 
-export const LINK_SOURCES: readonly LinkSource[] = ['oz', 'menge'];
+export const LINK_SOURCES: readonly LinkSource[] = ['oz', 'menge', 'beton'];
+
+/** Farbe der gestrichelten Linie je Art (Tailwind-Klasse). */
+export const SUGGEST_BORDER: Readonly<Record<LinkSource, string>> = {
+  oz: 'border-accent',
+  menge: 'border-amber',
+  beton: 'border-cyan',
+};
 
 export function isLinkSource(value: unknown): value is LinkSource {
-  return value === 'oz' || value === 'menge';
+  return value === 'oz' || value === 'menge' || value === 'beton';
 }
 
 /** Was das Verzeichnis von einer Position braucht. `id` ist die Knoten-ID der Sitzung. */
@@ -28,8 +37,10 @@ export interface SuggestPosition {
   readonly oz: string;
   readonly quantity: number | null;
   readonly unit: string | null;
-  /** Für den Wortabgleich bei Mengen, die mehrere Positionen treffen. */
+  /** Für den Wortabgleich bei Mengen und Sorten, die mehrere Positionen treffen. */
   readonly shortText: string;
+  /** Betonsorte („C30/37 · XC4, XF1 · WF“, `betonSorteOf`); fehlt: kein Beton mit Klasse. */
+  readonly sorte?: string | null;
 }
 
 /** `null` als Wert: mehrere Positionen passen, also kein Vorschlag. */
@@ -44,6 +55,8 @@ export interface SuggestIndex {
   readonly amount: Unique;
   /** Alle Positionen je Menge und Einheit, für den Wortabgleich. */
   readonly amountIds: ReadonlyMap<string, readonly string[]>;
+  /** Alle Positionen je Betonsorte. */
+  readonly sorten: ReadonlyMap<string, readonly string[]>;
   /** Wortstämme des Kurztexts je Position. */
   readonly words: ReadonlyMap<string, readonly string[]>;
   /** Menge einer Position für die Anzeige neben einer OZ. */
@@ -54,10 +67,11 @@ export interface SuggestIndex {
   readonly rules: SuggestRules;
 }
 
-/** Einstellungen aus den Regeln „OZ im Dokument“ und „Menge im Dokument“; `null`: aus. */
+/** Einstellungen aus den Regeln „OZ/Menge/Beton im Dokument“; `null`: aus. */
 export interface SuggestRules {
   readonly oz: { readonly nearOz: number } | null;
   readonly menge: { readonly minInteger: number } | null;
+  readonly beton: { readonly maxPositions: number } | null;
 }
 
 export interface DocSuggestion {
@@ -73,8 +87,10 @@ export interface DocSuggestion {
     readonly lv: string | null;
     readonly same: boolean;
   };
-  /** Nur bei Menge: Wörter im Satz, die auch im Kurztext der Position stehen. */
+  /** Bei Menge und Beton: Wörter im Satz, die auch im Kurztext der Position stehen. */
   readonly words?: readonly string[];
+  /** Nur bei Beton: die Sorte und wie viele Positionen im LV sie haben. */
+  readonly sorte?: { readonly key: string; readonly matches: number };
 }
 
 export { SENTENCE_REACH } from '@core';
@@ -84,10 +100,13 @@ export { SENTENCE_REACH } from '@core';
 export const AMOUNT_MIN_INTEGER = 10;
 /** So viele Zeichen hinter einer OZ zählt eine Menge noch zu ihr. */
 export const AMOUNT_NEAR_OZ = 80;
-/** Beide Arten an, mit den Ersatzwerten — für Tests und ohne Regeln. */
+/** Höchstens so viele Positionen schlägt eine Betonsorte an einer Stelle vor. */
+export const BETON_MAX_POSITIONS = 3;
+/** Alle Arten an, mit den Ersatzwerten — für Tests und ohne Regeln. */
 export const DEFAULT_SUGGEST_RULES: SuggestRules = {
   oz: { nearOz: AMOUNT_NEAR_OZ },
   menge: { minInteger: AMOUNT_MIN_INTEGER },
+  beton: { maxPositions: BETON_MAX_POSITIONS },
 };
 /** Längstes Glied einer OZ; längere Ziffernfolgen sind Telefon-, Auftrags- oder Seriennummern. */
 const MAX_PART = 6;
@@ -191,6 +210,9 @@ export function suggestIndexOf(
   const words = new Map<string, readonly string[]>();
   const amountOf = new Map<string, { text: string; key: string }>();
   const units = new Set<string>();
+  const sorten = new Map<string, string[]>();
+  const stems = (position: SuggestPosition) =>
+    words.set(position.id, [...new Set(wordsIn(position.shortText).map((w) => w.stem))]);
   for (const position of positions) {
     const parts = ozParts(position.oz);
     if (parts !== null) {
@@ -212,10 +234,17 @@ export function suggestIndexOf(
       const ids = amountIds.get(key);
       if (ids === undefined) amountIds.set(key, [position.id]);
       else ids.push(position.id);
-      words.set(position.id, [...new Set(wordsIn(position.shortText).map((w) => w.stem))]);
+      stems(position);
+    }
+    const sorte = position.sorte ?? null;
+    if (sorte !== null) {
+      const ids = sorten.get(sorte);
+      if (ids === undefined) sorten.set(sorte, [position.id]);
+      else ids.push(position.id);
+      if (!words.has(position.id)) stems(position);
     }
   }
-  return { full, tail, amount, amountIds, words, amountOf, units, rules };
+  return { full, tail, amount, amountIds, sorten, words, amountOf, units, rules };
 }
 
 interface Run {
@@ -454,6 +483,96 @@ function pickAmount(
   return out;
 }
 
+// Druckfestigkeitsklasse wie in `normklassen.ts`, hier auf Text in beliebiger Schreibung.
+const FESTIGKEIT = /(?<![\p{L}\p{N}])(?:lc|c)\s?\d{1,3}\/\d{1,3}(?![\p{L}\p{N}])/giu;
+
+/**
+ * Weitere Klassen direkt hinter der Festigkeitsklasse: Exposition, Feuchtigkeit, Chlorid,
+ * Konsistenz, Größtkorn — getrennt durch Komma, Punkt in der Mitte, Schrägstrich, „und“.
+ */
+const KLASSE_DANACH =
+  /(?:[\s,;·/]|und|sowie|-)*(?:x0|x[cdsfam][1-4]|w[ofa]|cl\s?[01][,.]\d{1,2}|sf[1-3]|f[1-6]|konsistenz(?:klasse)?\s*[:=]?\s*(?:s[1-5]|c[0-4]|sf[1-3]|f[1-6])|(?:gr(?:ö|oe)(?:ß|ss)tkorn|d\s?max|gk)\s*[:=]?\s*\d{1,2}(?:\s?mm)?)(?![\p{L}\p{N}])/iuy;
+
+/** Ende der Klassen ab `from` (hinter der Festigkeitsklasse). */
+function klassenEnde(text: string, from: number): number {
+  let end = from;
+  for (;;) {
+    KLASSE_DANACH.lastIndex = end;
+    const match = KLASSE_DANACH.exec(text);
+    if (match === null) return end;
+    end = KLASSE_DANACH.lastIndex;
+  }
+}
+
+interface BetonFound {
+  readonly id: string;
+  readonly span: Span;
+  readonly words: readonly string[];
+  readonly key: string;
+  readonly matches: number;
+}
+
+/**
+ * Betonsorten im Seitentext (Entscheidung 0106). Die Klassen hinter einer Festigkeitsklasse
+ * ergeben die Sorte wie im LV (`sorteKeyOf`); nur genau gleiche Sorten zählen. Hat sie nur
+ * eine Position, ist es diese. Sonst entscheiden eigene Wörter aus dem Kurztext, zuerst
+ * davor (Tabellenzeile „Wände Tiefgarage | C30/37 | XC4, XF1, WF“), dann dahinter. Ohne
+ * eigenes Wort oder bei mehr als `max` Treffern gibt es keinen Vorschlag.
+ */
+function findBeton(text: string, index: SuggestIndex, max: number): BetonFound[] {
+  const matches = [...text.matchAll(FESTIGKEIT)];
+  const out: BetonFound[] = [];
+  let prevEnd = 0;
+  matches.forEach((match, i) => {
+    const start = match.index;
+    const end = klassenEnde(text, start + match[0].length);
+    const nextStart = matches[i + 1]?.index ?? text.length;
+    const sentence = sentenceAround(text, start, end);
+    const before = { start: Math.max(prevEnd, sentence.start), end: start };
+    const after = { start: end, end: Math.min(nextStart, sentence.end) };
+    prevEnd = end;
+    const klassen = extractBetonklassen(text.slice(start, end).toLowerCase());
+    if (klassen.beton === null) return;
+    const key = sorteKeyOf(klassen.beton, klassen.expo, klassen.feuchtigkeitsklasse);
+    const candidates = index.sorten.get(key);
+    if (candidates === undefined) return;
+    const klasse = { start, end };
+    if (candidates.length === 1) {
+      out.push({ id: candidates[0], span: klasse, words: [], key, matches: 1 });
+      return;
+    }
+    const stemsOf = (id: string) => index.words.get(id) ?? [];
+    const ownIn = (part: Span) => {
+      const found = wordsIn(text.slice(part.start, part.end), part.start);
+      return candidates
+        .map((id) => {
+          const others = candidates.filter((other) => other !== id).map(stemsOf);
+          const own = found.filter(
+            (word) =>
+              stemsMatch(stemsOf(id), word) && !others.some((stems) => stemsMatch(stems, word)),
+          );
+          return { id, own };
+        })
+        .filter((item) => item.own.length > 0);
+    };
+    const front = ownIn(before);
+    const picked = front.length > 0 ? front : ownIn(after);
+    if (picked.length === 0 || picked.length > max) return;
+    for (const { id, own } of picked) {
+      const first = Math.min(...own.map((word) => word.start));
+      const last = Math.max(...own.map((word) => word.end));
+      out.push({
+        id,
+        span: { start: Math.min(first, start), end: Math.max(last, end) },
+        words: [...new Set(own.map((word) => word.word))],
+        key,
+        matches: candidates.length,
+      });
+    }
+  });
+  return out;
+}
+
 const overlaps = (a: { start: number; end: number }, b: { start: number; end: number }) =>
   a.start < b.end && b.start < a.end;
 
@@ -532,6 +651,19 @@ export function suggestionsInPage(
         ...(pick.words.length === 0 ? {} : { words: pick.words }),
       });
     }
+  }
+  const max = index.rules.beton?.maxPositions ?? BETON_MAX_POSITIONS;
+  for (const found of findBeton(text, index, max)) {
+    if (ozs.some((oz) => overlaps(oz, found.span))) continue;
+    out.push({
+      page,
+      start: found.span.start,
+      text: text.slice(found.span.start, found.span.end),
+      id: found.id,
+      source: 'beton',
+      sorte: { key: found.key, matches: found.matches },
+      ...(found.words.length === 0 ? {} : { words: found.words }),
+    });
   }
   return out.filter((item) => index.rules[item.source] !== null).sort((a, b) => a.start - b.start);
 }

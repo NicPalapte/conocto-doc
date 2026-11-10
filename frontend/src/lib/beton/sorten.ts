@@ -6,11 +6,16 @@
 // fehlt eine Angabe, ist das ein Hinweis, kein Urteil. Bewehrung (in Position,
 // gesondert) wertet die Liste bewusst nicht aus, nur Stahl / Matten / Fasern.
 //
+// Fehlt eine Angabe im LV, steht aber in einer verknüpften Stelle eines Begleitdokuments,
+// zählt sie als „fehlt im LV“ (Entscheidung 0106): weiter fehlend, aber mit Fundstelle.
+//
 // Reine Funktionen über dem flachen Positions-Index, einmal je Filterwechsel.
 
 import { attrString, attrStrings } from '../attributes';
 import { materialKatalog } from '../classify/material/katalog';
+import { extractBetonklassen } from '../classify/rulesets/normklassen';
 import { canonicalUnit, unitLabel } from '../units';
+import { sortExpo, sorteKeyOf } from './sorteKey';
 import type { PositionIndex } from '../index/positionIndex';
 import type { PositionSummary } from '../../types/lvNode';
 
@@ -32,18 +37,7 @@ export const PFLICHTANGABEN = [
 
 export type PflichtKey = (typeof PFLICHTANGABEN)[number]['key'];
 
-const EXPO_ORDER = ['X0', 'XC', 'XD', 'XS', 'XF', 'XA', 'XM'];
-
-function expoRank(klasse: string): number {
-  const group = klasse === 'X0' ? 'X0' : klasse.slice(0, 2);
-  const rank = EXPO_ORDER.indexOf(group);
-  return (rank < 0 ? EXPO_ORDER.length : rank) * 10 + (Number(klasse.slice(2)) || 0);
-}
-
-/** Expositionsklassen in Normreihenfolge: X0, XC, XD, XS, XF, XA, XM. */
-export function sortExpo(values: readonly string[]): string[] {
-  return [...values].sort((a, b) => expoRank(a) - expoRank(b));
-}
+export { sortExpo } from './sorteKey';
 
 interface BetonKeys {
   readonly name: string;
@@ -83,11 +77,11 @@ export function betonSorteOf(position: PositionSummary): string | null {
   if (festigkeit === null) {
     return isBeton(position) && canonicalUnit(position.unit) === 'm3' ? OHNE_KLASSE : null;
   }
-  const expo = sortExpo(attrStrings(position.attributes, 'expo'));
-  const feuchte = attrStrings(position.attributes, 'feuchtigkeitsklasse');
-  return [festigkeit, expo.join(', '), feuchte.join(', ')]
-    .filter((part) => part !== '')
-    .join(' · ');
+  return sorteKeyOf(
+    festigkeit,
+    attrStrings(position.attributes, 'expo'),
+    attrStrings(position.attributes, 'feuchtigkeitsklasse'),
+  );
 }
 
 export interface Angabe {
@@ -95,8 +89,40 @@ export interface Angabe {
   readonly label: string;
   /** Gefundene Werte über alle Positionen der Sorte. */
   readonly werte: readonly string[];
-  /** Positionen der Sorte ohne diese Angabe. */
+  /** Positionen der Sorte ohne diese Angabe im LV. */
   readonly fehlt: number;
+  /** Werte aus verknüpften Dokumentstellen der Positionen, denen die Angabe im LV fehlt. */
+  readonly imDokument: readonly string[];
+  /** Davon: Positionen, bei denen die Angabe nur im Dokument steht. */
+  readonly nurImDokument: number;
+}
+
+/** Texte der verknüpften Dokumentstellen einer Position (Knoten-ID). */
+export type DocTexts = (nodeId: string) => readonly string[];
+
+const NO_DOC_TEXTS: DocTexts = () => [];
+
+/** Angaben, die in Texten aus Begleitdokumenten stehen. */
+function dokumentWerte(texts: readonly string[]): Map<PflichtKey, string[]> {
+  const out = new Map<PflichtKey, string[]>();
+  for (const text of texts) {
+    const klassen = extractBetonklassen(text.toLowerCase());
+    const found: Record<PflichtKey, readonly string[]> = {
+      beton: klassen.beton === null ? [] : [klassen.beton],
+      expo: klassen.expo,
+      feuchtigkeitsklasse: klassen.feuchtigkeitsklasse,
+      chloridklasse: klassen.chloridklasse,
+      groesstkorn: klassen.groesstkorn,
+      konsistenz: klassen.konsistenz,
+    };
+    for (const { key } of PFLICHTANGABEN) {
+      if (found[key].length === 0) continue;
+      const list = out.get(key) ?? [];
+      addAll(list, found[key]);
+      out.set(key, list);
+    }
+  }
+  return out;
 }
 
 export interface SortePosition {
@@ -170,10 +196,19 @@ interface Acc {
   stahlFasern: string[];
   werte: Map<PflichtKey, string[]>;
   fehlt: Map<PflichtKey, number>;
+  imDokument: Map<PflichtKey, string[]>;
+  nurImDokument: Map<PflichtKey, number>;
 }
 
-/** Sorten über die Positionen, die `mask` durchlässt (`null` = alle). */
-export function buildBetonSorten(index: PositionIndex, mask: Uint8Array | null): BetonSortenListe {
+/**
+ * Sorten über die Positionen, die `mask` durchlässt (`null` = alle). `docTexts` liefert die
+ * verknüpften Dokumentstellen je Position für „fehlt im LV“.
+ */
+export function buildBetonSorten(
+  index: PositionIndex,
+  mask: Uint8Array | null,
+  docTexts: DocTexts = NO_DOC_TEXTS,
+): BetonSortenListe {
   const beton = betonKeys();
   const groups = new Map<string, Acc>();
 
@@ -193,15 +228,27 @@ export function buildBetonSorten(index: PositionIndex, mask: Uint8Array | null):
         stahlFasern: [],
         werte: new Map(),
         fehlt: new Map(),
+        imDokument: new Map(),
+        nurImDokument: new Map(),
       };
       groups.set(key, acc);
     }
     const fehlt: string[] = [];
+    const nodeId = index.nodes[i].id;
+    let dokument: Map<PflichtKey, string[]> | null = null;
     for (const { key: angabe, label } of PFLICHTANGABEN) {
       const werte = angabeWerte(position, angabe);
       if (werte.length === 0) {
         fehlt.push(label);
         acc.fehlt.set(angabe, (acc.fehlt.get(angabe) ?? 0) + 1);
+        dokument ??= dokumentWerte(docTexts(nodeId));
+        const imDokument = dokument.get(angabe);
+        if (imDokument !== undefined) {
+          const list = acc.imDokument.get(angabe) ?? [];
+          addAll(list, imDokument);
+          acc.imDokument.set(angabe, list);
+          acc.nurImDokument.set(angabe, (acc.nurImDokument.get(angabe) ?? 0) + 1);
+        }
       } else {
         const list = acc.werte.get(angabe) ?? [];
         addAll(list, werte);
@@ -219,7 +266,7 @@ export function buildBetonSorten(index: PositionIndex, mask: Uint8Array | null):
     }
     acc.entries.push({
       entry: i,
-      nodeId: index.nodes[i].id,
+      nodeId,
       oz: position.oz,
       shortText: position.shortText,
       quantity: position.quantity,
@@ -239,6 +286,9 @@ export function buildBetonSorten(index: PositionIndex, mask: Uint8Array | null):
       label,
       werte: key === 'expo' ? sortExpo(acc.werte.get(key) ?? []) : (acc.werte.get(key) ?? []),
       fehlt: acc.fehlt.get(key) ?? 0,
+      imDokument:
+        key === 'expo' ? sortExpo(acc.imDokument.get(key) ?? []) : (acc.imDokument.get(key) ?? []),
+      nurImDokument: acc.nurImDokument.get(key) ?? 0,
     }));
     return {
       key: acc.key,

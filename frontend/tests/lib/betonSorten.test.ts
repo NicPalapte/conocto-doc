@@ -9,6 +9,7 @@ import {
   OHNE_KLASSE,
   sortExpo,
 } from '../../src/lib/beton/sorten';
+import { angabeStand, angabeText } from '../../src/lib/export/betonSorten';
 import { betonklassenAttributes } from '../../src/lib/classify/rulesets/normklassen';
 import { buildPositionIndex } from '../../src/lib/index/positionIndex';
 import { classifyAndBuild } from '../../src/lib/pipeline/runPipeline';
@@ -138,6 +139,20 @@ describe('buildBetonSorten', () => {
       position('01.01.10', 'Estrich', 'Beton C25/30 XC1 mit PP-Fasern', 'm3', 5),
     ]);
     expect(buildBetonSorten(faser, null).sorten[0].stahlFasern).toEqual(['Fasern']);
+  });
+
+  it('nennt Angaben aus verknüpften Dokumentstellen „fehlt im LV“', () => {
+    const wand = idx.nodes[1].id;
+    const texte = (id: string) =>
+      id === wand ? ['Wände C30/37 XC4, XF1, WF, Konsistenz F3, Größtkorn 16 mm'] : [];
+    const [haupt] = buildBetonSorten(idx, null, texte).sorten;
+    const angabe = (key: string) => haupt.angaben.find((entry) => entry.key === key);
+    expect(angabe('konsistenz')).toMatchObject({ fehlt: 1, imDokument: ['F3'], nurImDokument: 1 });
+    expect(angabe('chloridklasse')).toMatchObject({ fehlt: 1, imDokument: [], nurImDokument: 0 });
+    expect(angabeStand(angabe('konsistenz')!)).toBe('dokument');
+    expect(angabeStand(angabe('chloridklasse')!)).toBe('fehlt');
+    expect(angabeText(haupt, 'konsistenz')).toBe('F3 · im Dokument: F3 (fehlt im LV in 1 von 2)');
+    expect(angabeText(haupt, 'chloridklasse')).toBe('Cl 0,40 (fehlt in 1 von 2)');
   });
 
   it('gibt Schalung und andere Nicht-m³-Positionen ohne Klasse keine Sorte', () => {

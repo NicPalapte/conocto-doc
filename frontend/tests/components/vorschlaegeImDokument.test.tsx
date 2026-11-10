@@ -43,14 +43,14 @@ vi.mock('../../src/components/docs/PdfPage', () => ({
     )),
 }));
 
-function scheinPdf(): OpenedPdf {
+function scheinPdf(seiten: readonly string[]): OpenedPdf {
   const pdf = {
-    numPages: SEITEN.length,
+    numPages: seiten.length,
     loadingTask: { destroy: () => Promise.resolve() },
     getPage: (page: number) =>
       Promise.resolve({
         getViewport: () => ({ width: 600, height: 800 }),
-        getTextContent: () => Promise.resolve({ items: [{ str: SEITEN[page - 1] }] }),
+        getTextContent: () => Promise.resolve({ items: [{ str: seiten[page - 1] }] }),
       }),
   };
   return { id: 'abc123def456', name: 'baubeschreibung.pdf', pdf } as unknown as OpenedPdf;
@@ -61,14 +61,14 @@ const PDF_MS = 5_000;
 
 const FIXTURE_DIR = resolve(process.cwd(), '../packages/core/tests/fixtures');
 
-async function ladeAppMitPdf(): Promise<void> {
+async function ladeAppMitPdf(seiten: readonly string[] = SEITEN): Promise<void> {
   render(<App />);
   const name = 'gaeb-xml-beispiel.x83';
   fireEvent.change(screen.getByLabelText('GAEB-Datei auswählen'), {
     target: { files: [new File([readFileSync(resolve(FIXTURE_DIR, name))], name)] },
   });
   await screen.findByRole('main', { name: 'Bubble-Graph' }, { timeout: 5000 });
-  openPdf.mockResolvedValue(scheinPdf());
+  openPdf.mockResolvedValue(scheinPdf(seiten));
   fireEvent.change(screen.getByLabelText('PDF auswählen'), {
     target: { files: [new File(['%PDF'], 'baubeschreibung.pdf', { type: 'application/pdf' })] },
   });
@@ -104,6 +104,18 @@ describe('Vorschläge im Dokument', { timeout: 15_000 }, () => {
     fireEvent.click(screen.getByRole('button', { name: 'Vorschlag 783,03 m³' }));
     fireEvent.click(screen.getByRole('button', { name: 'Nein' }));
     expect(screen.queryByRole('group', { name: 'Vorschläge' })).toBeNull();
+  });
+
+  it('Betonsorte im Text: Vorschlag über Beton (0106)', async () => {
+    await ladeAppMitPdf(['Für die Außenwand gilt Beton C35/45, XM1, XA1.']);
+    const schalter = screen.getByRole('group', { name: 'Vorschläge' });
+    await waitFor(() => expect(within(schalter).getByText(/Beton 1/)).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Vorschlag C35/45, XM1, XA1' }));
+    const leiste = screen.getByRole('dialog', { name: 'Vorschlag verknüpfen' });
+    expect(within(leiste).getByText('Betonsorte passt zu')).toBeInTheDocument();
+    expect(within(leiste).getByText('C35/45 · XA1, XM1')).toBeInTheDocument();
+    fireEvent.click(within(leiste).getByRole('button', { name: 'Verknüpfen' }));
+    expect(screen.queryByRole('button', { name: 'Vorschlag C35/45, XM1, XA1' })).toBeNull();
   });
 
   it('„Nein“ blendet den Vorschlag aus, der Schalter blendet eine Art aus', async () => {

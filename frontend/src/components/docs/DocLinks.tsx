@@ -6,9 +6,16 @@
 import { useOptionalDocuments } from './DocumentsProvider';
 import { Section } from '../common/CardParts';
 import { isWholeDoc, marksOfPosition } from '../../lib/docs/docNotes';
+import type { LinkSource } from '../../lib/docs/docSuggest';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
 
 export const DOC_LINKS_SECTION = 'Im Dokument';
+
+const SOURCE_TEXT: Readonly<Record<LinkSource, string>> = {
+  oz: 'OZ',
+  menge: 'Menge',
+  beton: 'Beton',
+};
 
 export function DocLinks({ positionId }: { positionId: string }) {
   const { annotations } = useViewer();
@@ -46,7 +53,7 @@ export function DocLinks({ positionId }: { positionId: string }) {
                 <span className="block truncate font-mono text-[11px] text-mute">
                   {name} · {isWholeDoc(mark) ? 'ganzes Dokument' : `S. ${mark.page}`}
                   {mark.sources?.[positionId] !== undefined && (
-                    <span> · über {mark.sources[positionId] === 'oz' ? 'OZ' : 'Menge'}</span>
+                    <span> · über {SOURCE_TEXT[mark.sources[positionId]]}</span>
                   )}
                   {!open && <span className="text-amber"> · nicht geöffnet</span>}
                 </span>

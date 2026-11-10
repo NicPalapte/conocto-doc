@@ -242,7 +242,11 @@ export function isRejected(notes: DocNotes, spot: DocSpot, id: string): boolean 
 /** Welche Arten von Vorschlag gezeigt werden. */
 export function shownSuggestions(notes: DocNotes): Record<LinkSource, boolean> {
   const hidden = notes.hidden ?? [];
-  return { oz: !hidden.includes('oz'), menge: !hidden.includes('menge') };
+  return {
+    oz: !hidden.includes('oz'),
+    menge: !hidden.includes('menge'),
+    beton: !hidden.includes('beton'),
+  };
 }
 
 /** Eine Art von Vorschlag zeigen oder ausblenden. */
@@ -265,6 +269,20 @@ export function marksOnPage(notes: DocNotes, doc: string, page: number): DocMark
 /** Stellen, die mit einer Position verknüpft sind. */
 export function marksOfPosition(notes: DocNotes, id: string): DocMark[] {
   return notes.marks.filter((mark) => mark.links.includes(id));
+}
+
+/** Texte der verknüpften Stellen je Position (ohne „ganzes Dokument“), für die Betonsorten. */
+export function linkedTextsOf(notes: DocNotes): (id: string) => readonly string[] {
+  const byId = new Map<string, string[]>();
+  for (const mark of notes.marks) {
+    if (isWholeDoc(mark)) continue;
+    for (const id of mark.links) {
+      const list = byId.get(id);
+      if (list === undefined) byId.set(id, [mark.text]);
+      else list.push(mark.text);
+    }
+  }
+  return (id) => byId.get(id) ?? [];
 }
 
 /** Positionen mit mindestens einer verknüpften Stelle. */

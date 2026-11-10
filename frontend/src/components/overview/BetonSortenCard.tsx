@@ -5,10 +5,17 @@
 // Was einer Position fehlt, zeigt die Positionskarte (`fehlendeAngabenOf`).
 
 import { formatCount, formatNumber, formatPositions } from '../../lib/format';
-import { angabeText } from '../../lib/export/betonSorten';
+import { angabeStand, angabeText, type AngabeStand } from '../../lib/export/betonSorten';
 import type { BetonSorte, BetonSortenListe, Menge } from '../../lib/beton/sorten';
 
 const PILL = 'whitespace-nowrap rounded-full px-[8px] py-[2px] font-mono text-[11px]';
+
+/** Im LV: normal; nur im verknüpften Dokument: farbig (Entscheidung 0106); sonst amber. */
+const STAND_CLASS: Readonly<Record<AngabeStand, string>> = {
+  lv: 'text-right text-ink',
+  dokument: 'rounded-[var(--r-sm)] bg-[var(--cat-6)] px-[6px] text-right text-ink',
+  fehlt: 'text-right text-amber',
+};
 
 function mengeText(menge: Menge | undefined): string {
   return menge === undefined ? '—' : `${formatNumber(menge.sum)} ${menge.label}`.trim();
@@ -41,7 +48,7 @@ function Detail({
             className="flex items-baseline gap-[8px] border-b border-solid border-line py-[4px] text-[12px]"
           >
             <span className="min-w-0 flex-1 text-dim">{angabe.label}</span>
-            <span className={angabe.fehlt === 0 ? 'text-right text-ink' : 'text-right text-amber'}>
+            <span className={STAND_CLASS[angabeStand(angabe)]}>
               {angabeText(sorte, angabe.key)}
             </span>
           </div>
