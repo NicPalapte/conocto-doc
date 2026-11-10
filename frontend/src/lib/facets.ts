@@ -3,6 +3,7 @@
 // (docs/architecture/data-model.md).
 
 import { attrString, attrStrings } from './attributes';
+import { betonSorteOf } from './beton/sorten';
 import { materialKatalog } from './classify/material/katalog';
 import { canonicalUnit, unitLabel } from './units';
 import type { PositionSummary } from '../types/lvNode';
@@ -80,6 +81,14 @@ export const FACETS: readonly Facet[] = [
     label: 'Exposition',
     get: (p) => attrStrings(p.attributes, 'expo'),
     material: BETON,
+  },
+  // Betonsortenliste im Überblick (Entscheidung 0104): ein Klick auf eine Sorte filtert.
+  {
+    id: 'betonsorte',
+    label: 'Betonsorte',
+    get: (p) => single(betonSorteOf(p)),
+    material: BETON,
+    subLabel: 'Sorte',
   },
   // Material und seine Merkmale aus den Materialtabellen (Entscheidung 0045):
   // eine neue Tabelle bringt ihre Filter mit.

@@ -196,12 +196,13 @@ describe('Ausgelieferte Materialtabellen', () => {
     expect(materialKatalog().map((material) => material.datei)).toEqual(dateien.sort());
   });
 
-  it('bringen Beton mit Art, Bauweise und Bewehrung mit', () => {
+  it('bringen Beton mit Art, Bauweise, Bewehrung und Stahl/Fasern mit', () => {
     const beton = materialKatalog().find((entry) => entry.id === 'beton');
     expect(beton?.merkmale.map((merkmal) => merkmal.key)).toEqual([
       'betonArt',
       'betonBauweise',
       'betonBewehrung',
+      'betonStahlFasern',
     ]);
   });
 

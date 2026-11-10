@@ -148,3 +148,62 @@ describe('Überblick · Datei mit Preisen', () => {
     expect(screen.getByTestId('facets')).toHaveTextContent(/einheit=/);
   });
 });
+
+describe('Betonsorten im Überblick', () => {
+  const beton = classifyAndBuild(
+    {
+      projectName: 'Testfall',
+      client: 'Test',
+      lots: [
+        {
+          number: '01',
+          label: 'Los',
+          sections: [
+            {
+              number: '01.01',
+              label: 'Rohbau',
+              sections: [],
+              positions: [
+                {
+                  oz: '01.01.10',
+                  shortText: 'Bodenplatte',
+                  longText: 'Stahlbeton C30/37 XC4 XF1 WF, Konsistenz F3',
+                  unit: 'm3',
+                  quantity: 100,
+                  unitPrice: null,
+                  positionType: 'NORMAL',
+                  attributes: {},
+                },
+                {
+                  oz: '01.01.20',
+                  shortText: 'Sauberkeitsschicht',
+                  longText: 'Beton C12/15 X0',
+                  unit: 'm3',
+                  quantity: 10,
+                  unitPrice: null,
+                  positionType: 'NORMAL',
+                  attributes: {},
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    'beton.x83',
+  );
+
+  it('filtert per Klick nach der Sorte und klappt sie auf', () => {
+    renderOverview(beton);
+    const liste = screen.getByRole('list', { name: 'Betonsorten' });
+    expect(liste).toHaveTextContent('C30/37');
+    expect(liste).toHaveTextContent('C12/15');
+    fireEvent.click(screen.getByRole('button', { name: /C30\/37/ }));
+    expect(screen.getByTestId('facets')).toHaveTextContent('betonsorte=C30/37 · XC4, XF1 · WF');
+    expect(screen.getByText(/ANGABEN · DIN EN 206/)).toBeInTheDocument();
+    expect(screen.queryByText('C12/15')).toBeNull();
+    const positionen = screen.getByRole('list', { name: 'Positionen' });
+    fireEvent.click(positionen.querySelector('[role="listitem"]') as HTMLElement);
+    expect(screen.getByTestId('position')).toHaveTextContent('01.01.10');
+  });
+});

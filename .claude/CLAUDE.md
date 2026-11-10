@@ -173,7 +173,9 @@ kein inhaltliches Matching (`lib/docs/docSuggest.ts`, `docs/decisions/0080`; an/
 über Grundstock-Regeln `pdf-oz`/`pdf-menge`, `lib/docs/suggestRules.ts`, 0087);
 eine Suchleiste für LV und alle PDFs mit Treffer-Navigator, PDF-Treffer filtern das LV nie,
 Suchregel nur über `searchKeyOf` im Kern (`docs/decisions/0103`); ganzer Kopf auch in
-ausgelagerten Fenstern (`docs/decisions/0102`). Eigene Matrix-Ansicht und
+ausgelagerten Fenstern (`docs/decisions/0102`). Betonsortenliste im Überblick: Sorte aus
+wörtlichen Klassen, fehlende Angaben nur als Hinweis, Klick filtert über Facette `betonsorte`
+(`lib/beton/sorten.ts`, `docs/decisions/0104`). Eigene Matrix-Ansicht und
 Ähnlichkeit sind entfernt (`docs/decisions/0031-drei-ansichten.md`); die Matrix lebt als
 Graph-Gliederung weiter (`docs/decisions/0035`, `docs/decisions/0059`); keine
 Befehlspalette (`docs/decisions/0038-keine-befehlspalette.md`).
