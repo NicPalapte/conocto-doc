@@ -177,7 +177,7 @@ describe('Legende im Graph-Kopf', () => {
   }
 
   it('erklärt die Ringe, ohne die Zahl noch einmal zu nennen', () => {
-    // Issue #191: die Zahl steht schon oben links bei den Kennzahlen.
+    // Issue #191: die Zahl steht schon im Überblick.
     renderHeader();
     expect(screen.getByText('beachten')).toBeInTheDocument();
     expect(screen.queryByText(/mit Hinweis/)).toBeNull();

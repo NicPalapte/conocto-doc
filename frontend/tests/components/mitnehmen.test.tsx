@@ -129,6 +129,16 @@ describe('Mitnehmen', () => {
     expect(hinweis).toHaveTextContent('Die CSV-Datei konnte nicht erstellt werden');
   });
 
+  it('lädt die Betonsorten als CSV (Entscheidung 0104)', async () => {
+    await ladeApp();
+    befehl('Betonsorten als Tabelle');
+
+    expect(dateien).toHaveLength(1);
+    expect(dateien[0].name).toMatch(/-betonsorten-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(dateien[0].text).toMatch(/^\uFEFF?Sorte;Positionen;Menge;Einheit;/);
+    expect(dateien[0].text).toMatch(/\r\nC\d+\/\d+/);
+  });
+
   it('lädt die Prüfhinweise als Text', async () => {
     await ladeApp();
     befehl('Prüfhinweise als Text');
@@ -332,11 +342,8 @@ describe('Drucken', () => {
   it('druckt nach einer Suche nur die Treffer', async () => {
     await ladeApp();
     fireEvent.change(screen.getByLabelText('Suche'), { target: { value: 'Beton' } });
-    // Die Suche ist entprellt: erst wenn die Kennzahlen „Treffer" statt
-    // „Positionen" zählen, ist der Filter wirklich aktiv.
-    await within(screen.getByRole('group', { name: 'Kennzahlen' })).findByRole('button', {
-      name: /Treffer/,
-    });
+    // Die Suche ist entprellt: erst danach ist der Filter wirklich aktiv.
+    await warteAufFilter();
 
     act(() => {
       window.dispatchEvent(new Event('beforeprint'));

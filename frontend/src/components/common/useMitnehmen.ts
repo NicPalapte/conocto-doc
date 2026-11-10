@@ -9,7 +9,9 @@
 // Blob im Browser, der Druck läuft über `window.print()`
 // (docs/decisions/0022-export-und-druck-ohne-request.md).
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { buildBetonSorten } from '../../lib/beton/sorten';
+import { betonSortenCsv } from '../../lib/export/betonSorten';
 import { checkMarkdown } from '../../lib/export/checkReport';
 import { downloadText, exportFileName } from '../../lib/export/download';
 import { positionsCsv } from '../../lib/export/positions';
@@ -26,6 +28,10 @@ export interface Mitnehmen {
   positionenAlsCsv: () => void;
   /** Je Treffer der Materialtabellen eine Zeile — zum Prüfen der Tabellen. */
   trefferAlsCsv: () => void;
+  /** Betonsortenliste im aktuellen Filter (Entscheidung 0104). */
+  betonsortenAlsCsv: () => void;
+  /** Enthält das LV Beton? Sonst bietet das Menü die Betonsorten nicht an. */
+  hatBeton: boolean;
   /** Prüf-Hinweise im aktuellen Filter, abgeschaltete Regeln bleiben draußen. */
   hinweiseAlsMarkdown: () => void;
   /** Druckt die gefilterte Liste, nicht nur das sichtbare Fenster. */
@@ -87,6 +93,21 @@ export function useMitnehmen(): Mitnehmen {
     });
   }, [lv, index, active, absichern]);
 
+  const hatBeton = useMemo(() => buildBetonSorten(index, null).sorten.length > 0, [index]);
+
+  const betonsortenAlsCsv = useCallback((): void => {
+    if (lv === null) return;
+    countEvent('export-csv');
+    absichern('Die CSV-Datei', () => {
+      const mask = active.filtering ? filterMask(index, active) : null;
+      downloadText(
+        exportFileName(lv.fileName, 'betonsorten', 'csv'),
+        betonSortenCsv(buildBetonSorten(index, mask)),
+        'csv',
+      );
+    });
+  }, [lv, index, active, absichern]);
+
   const hinweiseAlsMarkdown = useCallback((): void => {
     if (lv === null) return;
     countEvent('export-markdown');
@@ -134,5 +155,13 @@ export function useMitnehmen(): Mitnehmen {
     });
   }, [lv, index, annotations, names, absichern]);
 
-  return { positionenAlsCsv, trefferAlsCsv, hinweiseAlsMarkdown, drucken, notizenSichern };
+  return {
+    positionenAlsCsv,
+    trefferAlsCsv,
+    betonsortenAlsCsv,
+    hatBeton,
+    hinweiseAlsMarkdown,
+    drucken,
+    notizenSichern,
+  };
 }

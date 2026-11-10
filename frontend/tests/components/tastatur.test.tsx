@@ -19,21 +19,12 @@ async function ladeApp(): Promise<void> {
   await waitFor(() => expect(screen.getByRole('button', { name: '+ Filter' })).toBeInTheDocument());
 }
 
-/**
- * Bereich öffnen, wie ein Nutzer es täte: die Tabelle über „Ansicht" (beim Start
- * zu, Entscheidung 0078), Überblick und Prüfung über die Kennzahlen.
- */
+/** Bereich öffnen, wie ein Nutzer es täte: über „Ansicht" (beim Start zu, Entscheidung 0078). */
 async function ansicht(name: 'Tabelle' | 'Prüfung' | 'Überblick'): Promise<void> {
   if (screen.queryByRole('region', { name: `${name} — Bereich` })) return;
-  if (name === 'Tabelle') {
-    fireEvent.click(screen.getByRole('button', { name: /^Ansicht/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Tabelle$/, pressed: false }));
-    fireEvent.click(screen.getByRole('button', { name: /^Ansicht/ }));
-    return;
-  }
-  const kennzahlen = screen.getByRole('group', { name: 'Kennzahlen' });
-  const zahl = name === 'Prüfung' ? /Hinweise/ : /Positionen/;
-  fireEvent.click(within(kennzahlen).getByRole('button', { name: zahl }));
+  fireEvent.click(screen.getByRole('button', { name: /^Ansicht/ }));
+  fireEvent.click(screen.getByRole('button', { name: new RegExp(`${name}$`), pressed: false }));
+  fireEvent.click(screen.getByRole('button', { name: /^Ansicht/ }));
 }
 
 function bereich(name: string): HTMLElement {

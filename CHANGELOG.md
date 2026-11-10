@@ -9,6 +9,24 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.57.0 — 10.11.2026 · Betonsortenliste
+
+- **Betonsorten im Überblick:** Neue Karte „Betonsorten“. Eine Zeile je Sorte, also je
+  Festigkeitsklasse mit Expositions- und Feuchtigkeitsklasse. Dazu Anzahl Positionen, m³,
+  Bauweise und Stahl / Matten / Fasern.
+- **Angaben prüfen:** Je Sorte steht, ob die Angaben zur Festlegung nach DIN EN 206 /
+  DIN 1045-2 im LV stehen: Festigkeits-, Expositions-, Feuchtigkeits- und Chloridgehaltsklasse,
+  Größtkorn, Konsistenz. Was fehlt, steht in amber, als Hinweis.
+- **Klick filtert:** Ein Klick auf eine Sorte filtert Graph und Tabelle und klappt die Sorte
+  auf: Angaben und Positionen. „← Alle Sorten“ führt zurück zur Liste.
+- **Positionskarte:** Bei Betonpositionen steht unter den Eigenschaften, welche Angaben im LV
+  fehlen.
+- **CSV:** Die Liste lässt sich als CSV für Excel speichern: Logo-Menü → „Exportieren“.
+- **Aufgeräumt:** Die Kennzahlen-Karte oben links auf dem Graphen ist weg. Die Zahlen stehen
+  im Überblick (Entscheidung 0105).
+- **Mehr erkannt:** Chloridgehaltsklasse („Cl 0,40“), Konsistenz („F3“, „SF2“) und Größtkorn
+  („Größtkorn 16 mm“, „Dmax 22“) werden jetzt gelesen, wenn eine Betonklasse daneben steht.
+
 ## 0.56.0 — 09.11.2026 · Eine Suche für LV und PDFs
 
 - **Eine Suche für alles:** Die Suchleiste sucht im LV und in allen offenen PDFs. Das eigene

@@ -11,6 +11,7 @@
 // nie über den Baum und nie im Render (WP-I).
 
 import { useMemo } from 'react';
+import { BetonSortenCard } from './BetonSortenCard';
 import { ImportLogCard } from './ImportLogCard';
 import { LargestQuantities } from './LargestQuantities';
 import { MetricTiles } from './MetricTiles';
@@ -18,10 +19,12 @@ import { ParetoCard } from './ParetoCard';
 import { Treemap } from './Treemap';
 import { UnitTotals } from './UnitTotals';
 import { BlockLabel } from '@conocto/design';
+import { buildBetonSorten } from '../../lib/beton/sorten';
 import { formatCount, formatPositions } from '../../lib/format';
 import { filterMask } from '../../lib/index/positionIndex';
 import { buildOverview } from '../../lib/overview/model';
 import { matchCount } from '../../lib/tree/matchCounts';
+import { useMitnehmen } from '../common/useMitnehmen';
 import { useScrollMemory } from '../common/useScrollMemory';
 import { toggleFacetValue } from '../../state/filterState';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
@@ -49,11 +52,14 @@ export function OverviewView() {
   const { lv, index, active, matches, nodes, filter, parents, selection } = useViewer();
   const dispatch = useViewerDispatch();
   const [attachScroll, onScroll] = useScrollMemory('overview');
+  const mitnehmen = useMitnehmen();
 
-  const model = useMemo(() => {
-    const mask = active.filtering ? filterMask(index, active) : null;
-    return buildOverview({ index, mask, parents });
-  }, [index, active, parents]);
+  const mask = useMemo(
+    () => (active.filtering ? filterMask(index, active) : null),
+    [index, active],
+  );
+  const model = useMemo(() => buildOverview({ index, mask, parents }), [index, mask, parents]);
+  const betonSorten = useMemo(() => buildBetonSorten(index, mask), [index, mask]);
 
   // Hinweiszahl wie in der Ansicht „Prüfung": abgeschaltete Regeln zählen nicht,
   // und gezählt wird nur, was der Filter durchlässt.
@@ -72,6 +78,14 @@ export function OverviewView() {
 
   const { metrics } = model;
   const activeUnits = filter.filters.facets.einheit ?? EMPTY_ACTIVE;
+  const activeSorten = filter.filters.facets.betonsorte ?? EMPTY_ACTIVE;
+
+  const pickSorte = (key: string): void =>
+    dispatch({
+      type: 'setFacet',
+      facetId: 'betonsorte',
+      values: toggleFacetValue(filter.filters, 'betonsorte', key),
+    });
 
   const pickUnit = (unit: string): void =>
     dispatch({
@@ -147,6 +161,18 @@ export function OverviewView() {
             </Card>
           )}
         </div>
+
+        {mitnehmen.hatBeton && (
+          <Card title="Betonsorten">
+            <BetonSortenCard
+              liste={betonSorten}
+              active={activeSorten}
+              selectedId={selection.positionId}
+              onPickSorte={pickSorte}
+              onPickPosition={pickPosition}
+            />
+          </Card>
+        )}
 
         <Card title="Import-Log" note="ganze Datei">
           <ImportLogCard />

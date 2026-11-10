@@ -29,6 +29,7 @@ import {
   attrStrings,
   displayAttributes,
 } from '../../lib/attributes';
+import { fehlendeAngabenOf } from '../../lib/beton/sorten';
 import { facetOptionLabel, FACETS_BY_ID } from '../../lib/facets';
 import { formatEuro, formatNumber } from '../../lib/format';
 import { categoryOf, keysOfLabel, presentCategories } from '../../lib/spanCategories';
@@ -153,6 +154,8 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
   const meta = attrMeta(position.attributes);
   const keywords = attrStrings(position.attributes, 'keywords');
   const attributes = displayAttributes(position);
+  // Betonsortenliste (Entscheidung 0104): was der Position zur Festlegung fehlt.
+  const fehlendeAngaben = fehlendeAngabenOf(position);
 
   // Aktive Regeln (0081), auch gelernte Begriffe (0088), kommen beim Anzeigen dazu,
   // nicht in der Klassifizierung: sie färben nur ein.
@@ -466,6 +469,11 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
 
         <Section title="Eigenschaften">
           <PropTable rows={rows} />
+          {fehlendeAngaben !== null && fehlendeAngaben.length > 0 && (
+            <p className="m-0 rounded-[var(--r-sm)] bg-amberS px-[8px] py-[4px] text-[12px] text-amber">
+              Fehlt im LV (Beton): {fehlendeAngaben.join(', ')}
+            </p>
+          )}
           {meta !== null && (
             <div className="font-mono text-[11px] text-mute">
               {meta.classifier} · Ruleset {meta.ruleset} · v{meta.version}

@@ -248,6 +248,14 @@ export function AboutMenu({
               >
                 Positionen als Tabelle (CSV)
               </PopoverRow>
+              {mitnehmen.hatBeton && (
+                <PopoverRow
+                  onClick={() => nimmMit(mitnehmen.betonsortenAlsCsv)}
+                  title="Die Betonsorten im aktuellen Filter mit Angaben als Tabelle für Excel"
+                >
+                  Betonsorten als Tabelle (CSV)
+                </PopoverRow>
+              )}
               <PopoverRow
                 onClick={() => nimmMit(mitnehmen.hinweiseAlsMarkdown)}
                 title="Die Hinweise der Prüfung im aktuellen Filter als Textdatei"
