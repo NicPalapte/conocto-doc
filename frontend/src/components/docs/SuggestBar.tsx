@@ -55,7 +55,9 @@ export function SuggestBar({
     const onKey = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') onClose();
       const target = event.target as HTMLElement | null;
-      const typing = target !== null && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+      const typing =
+        target !== null &&
+        (/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) || target.isContentEditable);
       if (onStep === undefined || typing || event.altKey || event.ctrlKey || event.metaKey) return;
       const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
       if (step === 0) return;

@@ -778,13 +778,17 @@ export function BubbleGraph({ root }: { root: LVNode }) {
     const target = (event.target as Element).closest('[data-slot],[data-group]');
     const slot = target?.getAttribute('data-slot') ?? null;
     const group = target?.getAttribute('data-group') ?? null;
-    setHoverSlot(slot === null ? -1 : Number(slot));
+    const next = slot === null ? -1 : Number(slot);
+    // Neue Blase: Karte erst nach der Pause, auch wenn diese Blase eben schon dran war.
+    if (next !== hoverSlot) setShownHover(-1);
+    setHoverSlot(next);
     setHoverGroup(
       slot !== null ? (map.groupOf[Number(slot)] ?? -1) : group === null ? -1 : Number(group),
     );
   };
   const onWorldLeave = (): void => {
     setHoverSlot(-1);
+    setShownHover(-1);
     setHoverGroup(-1);
   };
 
