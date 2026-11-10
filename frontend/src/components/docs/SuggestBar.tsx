@@ -12,6 +12,9 @@ const WIDTH = 290;
 /** Grobe Höhe, damit die Leiste unten am Fenster nicht abgeschnitten wird. */
 const HEIGHT = 150;
 
+const STEP =
+  'h-[22px] w-[22px] cursor-pointer rounded-[var(--r-sm)] border border-line bg-surface text-[12px] text-ink hover:border-line2';
+
 const BUTTON =
   'h-[30px] cursor-pointer rounded-[var(--r-sm)] px-[12px] font-mono text-[12px] [@media(pointer:coarse)]:h-[40px] [@media(pointer:coarse)]:text-[14px]';
 
@@ -25,6 +28,8 @@ export function SuggestBar({
   onReject,
   onShow,
   onClose,
+  place = null,
+  onStep,
 }: {
   suggestion: DocSuggestion;
   oz: string;
@@ -36,6 +41,10 @@ export function SuggestBar({
   /** Wählt die Position und zeigt sie; die Leiste bleibt offen zum Entscheiden. */
   onShow: () => void;
   onClose: () => void;
+  /** Stelle in der Liste der offenen Vorschläge (Issue #191); `null` = nicht darin. */
+  place?: { index: number; total: number } | null;
+  /** Voriger / nächster Vorschlag; auch mit ← und →. */
+  onStep?: (step: 1 | -1) => void;
 }) {
   const host = useHostWindow();
   const ref = useRef<HTMLDivElement>(null);
@@ -45,6 +54,14 @@ export function SuggestBar({
     };
     const onKey = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') onClose();
+      const target = event.target as HTMLElement | null;
+      const typing = target !== null && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+      if (onStep === undefined || typing || event.altKey || event.ctrlKey || event.metaKey) return;
+      const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      if (step === 0) return;
+      // Sonst blättert der Pfeil zusätzlich das PDF zur Seite.
+      event.preventDefault();
+      onStep(step);
     };
     host.document.addEventListener('mousedown', onDown);
     host.document.addEventListener('keydown', onKey);
@@ -52,7 +69,7 @@ export function SuggestBar({
       host.document.removeEventListener('mousedown', onDown);
       host.document.removeEventListener('keydown', onKey);
     };
-  }, [host, onClose]);
+  }, [host, onClose, onStep]);
 
   const { amount } = suggestion;
   return createPortal(
@@ -67,8 +84,35 @@ export function SuggestBar({
         width: WIDTH,
       }}
     >
-      <span className="font-mono text-[11px] text-mute">
-        {suggestion.source === 'oz' ? 'OZ im Text' : 'Menge passt zu'}
+      <span className="flex items-center gap-[4px] font-mono text-[11px] text-mute">
+        <span className="flex-1">
+          {suggestion.source === 'oz' ? 'OZ im Text' : 'Menge passt zu'}
+        </span>
+        {onStep !== undefined && place !== null && place.total > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label="Voriger Vorschlag"
+              title="Voriger Vorschlag (←)"
+              onClick={() => onStep(-1)}
+              className={STEP}
+            >
+              ‹
+            </button>
+            <span>
+              {place.index + 1} / {place.total}
+            </span>
+            <button
+              type="button"
+              aria-label="Nächster Vorschlag"
+              title="Nächster Vorschlag (→)"
+              onClick={() => onStep(1)}
+              className={STEP}
+            >
+              ›
+            </button>
+          </>
+        )}
       </span>
       <span className="min-w-0 font-sans text-[13px] text-ink">
         <span className="font-mono font-semibold">{oz}</span>

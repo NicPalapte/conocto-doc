@@ -96,6 +96,10 @@ describe('Vorschläge im Dokument', { timeout: 15_000 }, () => {
     expect(screen.getByRole('dialog', { name: 'Vorschlag verknüpfen' })).toBeInTheDocument();
 
     fireEvent.click(within(leiste).getByRole('button', { name: 'Verknüpfen' }));
+    // Die Leiste geht gleich zum nächsten offenen Vorschlag (Issue #191).
+    const weiter = screen.getByRole('dialog', { name: 'Vorschlag verknüpfen' });
+    expect(within(weiter).getByText('001.003.0040')).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog', { name: 'Vorschlag verknüpfen' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Vorschlag 1.2.20' })).toBeNull();
     // Alle OZ-Vorschläge erledigt: ihr Schalter verschwindet, der für Mengen bleibt.
@@ -139,5 +143,30 @@ describe('Vorschläge im Dokument', { timeout: 15_000 }, () => {
     expect(menge).toHaveAttribute('aria-pressed', 'false');
     fireEvent.click(menge);
     expect(await screen.findByRole('button', { name: 'Vorschlag 783,03 m³' })).toBeInTheDocument();
+  });
+
+  it('„Vorschläge“ springt zum ersten, dann weiter mit Pfeil und nach der Entscheidung (#191)', async () => {
+    await ladeAppMitPdf();
+    const schalter = screen.getByRole('group', { name: 'Vorschläge' });
+    await waitFor(() => expect(within(schalter).getByText(/Mengen 1/)).toBeInTheDocument());
+    fireEvent.click(within(schalter).getByRole('button', { name: 'Vorschläge' }));
+    let leiste = screen.getByRole('dialog', { name: 'Vorschlag verknüpfen' });
+    expect(within(leiste).getByText('1 / 2')).toBeInTheDocument();
+    expect(within(leiste).getByText('001.002.0020')).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: 'ArrowRight' });
+    leiste = screen.getByRole('dialog', { name: 'Vorschlag verknüpfen' });
+    expect(within(leiste).getByText('2 / 2')).toBeInTheDocument();
+    expect(within(leiste).getByText('001.003.0040')).toBeInTheDocument();
+    fireEvent.click(within(leiste).getByRole('button', { name: 'Nächster Vorschlag' }));
+    expect(within(leiste).getByText('1 / 2')).toBeInTheDocument();
+
+    // „Nein“ geht von selbst zum nächsten; beim letzten schließt die Leiste.
+    fireEvent.click(within(leiste).getByRole('button', { name: 'Nein' }));
+    leiste = screen.getByRole('dialog', { name: 'Vorschlag verknüpfen' });
+    expect(within(leiste).getByText('001.003.0040')).toBeInTheDocument();
+    expect(within(leiste).queryByText('1 / 1')).toBeNull();
+    fireEvent.click(within(leiste).getByRole('button', { name: 'Verknüpfen' }));
+    expect(screen.queryByRole('dialog', { name: 'Vorschlag verknüpfen' })).toBeNull();
   });
 });

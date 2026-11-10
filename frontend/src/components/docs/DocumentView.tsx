@@ -53,7 +53,13 @@ import {
   type DocMark,
   type DocSpot,
 } from '../../lib/docs/docNotes';
-import type { DocSuggestion, LinkSource } from '../../lib/docs/docSuggest';
+import {
+  orderSuggestions,
+  sameSuggestion,
+  stepSuggestion,
+  type DocSuggestion,
+  type LinkSource,
+} from '../../lib/docs/docSuggest';
 import type { OpenedPdf } from '../../lib/docs/pdf';
 import type { DocHit } from '../../lib/docs/docSearch';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
@@ -667,6 +673,31 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
       setOffer({ suggestion, ...at }),
     [],
   );
+  // Durch die offenen Vorschläge blättern (Issue #191): Sprung zur Stelle, Leiste bleibt.
+  const ordered = useMemo(() => orderSuggestions(pending), [pending]);
+  const offerIndex =
+    offer === null ? -1 : ordered.findIndex((item) => sameSuggestion(item, offer.suggestion));
+  const showSuggestion = (index: number, at: { left: number; top: number }): void => {
+    const suggestion = ordered[index];
+    setOffer({ suggestion, ...at });
+    jumpTo({ doc: doc.id, page: suggestion.page, start: suggestion.start, text: suggestion.text });
+  };
+  const stepOffer = (step: 1 | -1, at: { left: number; top: number }): void => {
+    const next = stepSuggestion(ordered, offer?.suggestion ?? null, step);
+    if (next !== null) showSuggestion(next, at);
+  };
+  /** Nach „Verknüpfen“ oder „Nein“ weiter zum nächsten, solange einer bleibt. */
+  const afterDecision = (done: DocSuggestion, at: { left: number; top: number }): void => {
+    const rest = ordered.filter((item) => !sameSuggestion(item, done));
+    const at0 = ordered.findIndex((item) => sameSuggestion(item, done));
+    if (rest.length === 0 || at0 < 0) {
+      setOffer(null);
+      return;
+    }
+    const next = rest[at0 % rest.length];
+    setOffer({ suggestion: next, ...at });
+    jumpTo({ doc: doc.id, page: next.page, start: next.start, text: next.text });
+  };
 
   // Andere Datei gleichen Namens: Stellen von damals hängen an der alten Kennung.
   const otherVersion = useMemo(() => {
@@ -1075,7 +1106,12 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
   const tight = width > 0 && width < (planCount > 0 ? TIGHT_BAR_PLANS : TIGHT_BAR);
   const suggestEl =
     counts.oz + counts.menge > 0 ? (
-      <SuggestToggles counts={counts} suggest={suggest} setSuggest={setSuggest} />
+      <SuggestToggles
+        counts={counts}
+        suggest={suggest}
+        setSuggest={setSuggest}
+        onFirst={ordered.length > 0 ? (at) => showSuggestion(0, at) : null}
+      />
     ) : null;
   // Vor/zurück durch die eigenen Stellen dieses PDFs (Issue #191): angestrichen oder verknüpft,
   // in Lesereihenfolge. Ohne letzte Wahl geht es von der aktuellen Seite aus.
@@ -1573,6 +1609,8 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
           shortText={positionOf(offer.suggestion.id)?.shortText ?? ''}
           left={offer.left}
           top={offer.top}
+          place={offerIndex < 0 ? null : { index: offerIndex, total: ordered.length }}
+          onStep={(step) => stepOffer(step, { left: offer.left, top: offer.top })}
           onLink={() => {
             const { suggestion } = offer;
             dispatch({
@@ -1587,7 +1625,7 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
               at: Date.now(),
               source: suggestion.source,
             });
-            setOffer(null);
+            afterDecision(suggestion, { left: offer.left, top: offer.top });
           }}
           onReject={() => {
             const { suggestion } = offer;
@@ -1602,7 +1640,7 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
               id: suggestion.id,
               at: Date.now(),
             });
-            setOffer(null);
+            afterDecision(suggestion, { left: offer.left, top: offer.top });
           }}
           onShow={() => jumpToPosition(offer.suggestion.id, { stayInView: true })}
           onClose={() => setOffer(null)}
@@ -1652,14 +1690,28 @@ function SuggestToggles({
   counts,
   suggest,
   setSuggest,
+  onFirst,
 }: {
   counts: Readonly<Record<LinkSource, number>>;
   suggest: Readonly<Record<LinkSource, boolean>>;
   setSuggest: (source: LinkSource, on: boolean) => void;
+  /** Springt zum ersten sichtbaren Vorschlag; `null`, wenn alle ausgeblendet sind. */
+  onFirst: ((at: { left: number; top: number }) => void) | null;
 }) {
   return (
     <span role="group" aria-label="Vorschläge" className="flex items-center gap-[4px]">
-      <span className="font-mono text-[11px] text-mute">Vorschläge</span>
+      <button
+        type="button"
+        disabled={onFirst === null}
+        title="Zum ersten Vorschlag, dann mit ← → weiter"
+        onClick={(event) => {
+          const box = event.currentTarget.getBoundingClientRect();
+          onFirst?.({ left: box.left, top: box.bottom + 4 });
+        }}
+        className="cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-mute hover:text-ink hover:underline disabled:cursor-default disabled:no-underline"
+      >
+        Vorschläge
+      </button>
       {(['oz', 'menge'] as const)
         .filter((source) => counts[source] > 0)
         .map((source) => (
