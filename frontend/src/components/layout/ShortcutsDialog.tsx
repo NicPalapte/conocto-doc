@@ -27,6 +27,7 @@ function groups(mod: string): readonly { title: string; items: readonly Kuerzel[
       items: [
         { keys: [`${mod} K`, '/'], label: 'Suche' },
         { keys: ['?'], label: 'Diese Übersicht' },
+        { keys: ['T'], label: 'Graph ↔ Tabelle am selben Platz' },
         { keys: ['Esc'], label: 'Auswahl zurücknehmen, Menü schließen' },
       ],
     },

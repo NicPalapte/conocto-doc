@@ -17,6 +17,8 @@ import {
   INITIAL_ARRANGEMENT,
   bringToFront,
   edgePane,
+  frontOf,
+  leafOf,
   resizeSplit,
   splitPane,
   stackPane,
@@ -155,6 +157,25 @@ export const INITIAL_WORKSPACE: WorkspaceState = {
   closed: { graph: false, table: true, card: false, overview: true, check: true, doc: true },
 };
 
+/**
+ * Graph und Tabelle am selben Platz wechseln (Issue #191): Liegen beide im selben Stapel,
+ * kommt der andere Reiter nach vorn. Ist das Ziel zu, legt es sich als Reiter auf den Platz
+ * des anderen. Sind beide an verschiedenen Plätzen offen, tauschen sie die Plätze.
+ */
+export function switchGraphTable(
+  workspace: WorkspaceState,
+  to: 'graph' | 'table' | null,
+): WorkspaceState {
+  const open = (pane: PaneId): boolean => !workspace.closed[pane];
+  const graphShown = open('graph') && frontOf(leafOf(workspace.root, 'graph'), open) === 'graph';
+  const target = to ?? (graphShown ? 'table' : 'graph');
+  const other = target === 'table' ? 'graph' : 'table';
+  const otherLeaf = leafOf(workspace.root, other);
+  if (otherLeaf.stack.includes(target)) return showPane(workspace, target);
+  if (!open(target)) return showPane(stackPane(workspace, target, otherLeaf.id), target);
+  return bringToFront(swapPanes(workspace, target, other), target);
+}
+
 /** Öffnet einen Bereich im Splitscreen und legt ihn in seinem Stapel nach vorn. */
 function showPane(workspace: WorkspaceState, pane: PaneId): WorkspaceState {
   const front = bringToFront(workspace, pane);
@@ -245,6 +266,8 @@ export type ViewAction =
   | { type: 'paneClosed'; pane: PaneId; closed: boolean }
   /** Bereich öffnen und im Stapel nach vorn holen — für Sprünge und „öffne X". */
   | { type: 'showPane'; pane: PaneId }
+  /** Graph ↔ Tabelle am selben Platz (Taste T, Issue #191); `to` fehlt = umschalten. */
+  | { type: 'switchGraphTable'; to?: 'graph' | 'table' }
   /** Gewichte einer Teilung; `null` setzt sie zurück. */
   | { type: 'splitSize'; split: string; sizes: readonly number[] | null }
   /** Anordnung wie am Anfang. */
@@ -468,6 +491,10 @@ export function viewReducer(state: ViewState, action: ViewAction): ViewState {
             }
           : showPane(state.workspace, action.pane),
       };
+    case 'switchGraphTable': {
+      const workspace = switchGraphTable(state.workspace, action.to ?? null);
+      return workspace === state.workspace ? state : { ...state, workspace };
+    }
     case 'showPane':
       return {
         ...state,

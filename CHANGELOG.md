@@ -9,6 +9,19 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.59.0 — 10.11.2026 · Funde aus dem Praxistest, Runde 3
+
+- **Graph ↔ Tabelle mit T:** Die Taste T wechselt am Platz des Graphen zur Tabelle und zurück.
+  Die gewählte Position bleibt gewählt. Per Rechtsklick: „Zur Tabelle wechseln“ bzw.
+  „Zum Graphen wechseln“.
+- **Karte beim Überfahren:** Im Graphen zeigt eine kleine Karte OZ, Kurztext, Menge und Einheit
+  der Position unter der Maus.
+- **Matrix ohne „ohne Angabe“:** In der Darstellung lässt sich „Ohne Angabe“ ausblenden. Das
+  ändert nur den Graphen, Tabelle und Überblick zählen weiter alles.
+- **Vorschläge im PDF durchgehen:** Ein Klick auf „Vorschläge“ springt zum ersten. Mit ‹ › oder
+  den Pfeiltasten geht es weiter, nach „Verknüpfen“ oder „Nein“ von selbst.
+- **Überblick:** Die Kacheln oben zeigen keine Erklärtexte mehr.
+
 ## 0.57.0 — 10.11.2026 · Betonsortenliste
 
 - **Betonsorten im Überblick:** Neue Karte „Betonsorten“. Eine Zeile je Sorte, also je

@@ -454,6 +454,7 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
     case 'paneFront':
     case 'paneClosed':
     case 'showPane':
+    case 'switchGraphTable':
     case 'splitSize':
     case 'workspaceReset':
     case 'workspaceRestore': {

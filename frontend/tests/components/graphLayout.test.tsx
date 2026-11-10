@@ -306,6 +306,7 @@ describe('Rechtsklick im Graphen (Issue #155)', () => {
     fireEvent.contextMenu(graph().querySelector('[data-group] circle') as SVGCircleElement);
     const menue = within(screen.getByRole('menu', { name: 'Abschnitt' }));
     expect(menue.getAllByRole('menuitem').map((eintrag) => eintrag.textContent)).toEqual([
+      'Zur Tabelle wechseln',
       'In der Tabelle zeigen',
     ]);
     fireEvent.click(menue.getByRole('menuitem', { name: 'In der Tabelle zeigen' }));
@@ -456,5 +457,34 @@ describe('Funde aus dem Praxistest, Runde 3 (Issue #191)', () => {
     expect(karte).toHaveAccessibleName(/^Position /);
     expect(karte.textContent ?? '').not.toBe('');
     fireEvent.mouseLeave(punkt.closest('g') as Element);
+  });
+
+  it('Taste T wechselt am selben Platz zur Tabelle und zurück', async () => {
+    await loadAndShowGraph();
+    const tabelle = (): HTMLElement | null =>
+      screen.queryByRole('region', { name: 'Tabelle — Bereich' });
+    expect(tabelle()).toBeNull();
+    fireEvent.keyDown(document.body, { key: 't' });
+    await waitFor(() => expect(tabelle()).toBeInTheDocument());
+    expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).toBeNull();
+    fireEvent.keyDown(document.body, { key: 't' });
+    await waitFor(() =>
+      expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).not.toBeNull(),
+    );
+    // In der Suche ist T ein Buchstabe.
+    fireEvent.keyDown(screen.getByLabelText('Suche'), { key: 't' });
+    expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).not.toBeNull();
+  });
+
+  it('Rechtsklick „Zur Tabelle wechseln“ wählt die Position und zeigt sie in der Tabelle', async () => {
+    await loadAndShowGraph();
+    const punkt = graph().querySelector('[data-slot]') as SVGElement;
+    fireEvent.contextMenu(punkt);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Zur Tabelle wechseln' }));
+    const tabelle = await screen.findByRole('region', { name: 'Tabelle — Bereich' });
+    expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).toBeNull();
+    await waitFor(() =>
+      expect(within(tabelle).getAllByRole('row', { selected: true })).toHaveLength(1),
+    );
   });
 });

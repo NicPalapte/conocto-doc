@@ -192,6 +192,22 @@ function Menu({ target, onClose }: { target: MenuTarget; onClose: () => void }) 
           </button>
         </>
       )}
+      {target.from === 'table' && (
+        <button
+          type="button"
+          role="menuitem"
+          title="Am selben Platz zum Graphen wechseln (Taste T)"
+          onClick={run(() => {
+            if (position !== null) jumpToPosition(id, { stayInView: true });
+            else dispatch({ type: 'selectNode', id });
+            dispatch({ type: 'switchGraphTable', to: 'graph' });
+            dispatch({ type: 'graphFocus' });
+          })}
+          className={ITEM}
+        >
+          Zum Graphen wechseln
+        </button>
+      )}
       {target.from !== 'graph' && (
         <button
           type="button"
@@ -204,6 +220,21 @@ function Menu({ target, onClose }: { target: MenuTarget; onClose: () => void }) 
           className={ITEM}
         >
           Im Graph zeigen
+        </button>
+      )}
+      {target.from === 'graph' && (
+        <button
+          type="button"
+          role="menuitem"
+          title="Am selben Platz zur Tabelle wechseln (Taste T)"
+          onClick={run(() => {
+            if (position !== null) jumpToPosition(id, { stayInView: true });
+            else dispatch({ type: 'selectNode', id });
+            dispatch({ type: 'switchGraphTable', to: 'table' });
+          })}
+          className={ITEM}
+        >
+          Zur Tabelle wechseln
         </button>
       )}
       {target.from !== 'table' && (

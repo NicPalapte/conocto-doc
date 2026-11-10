@@ -145,7 +145,8 @@ fachliche Filter · **Graph als Hauptscreen** auf einem Filterzustand
 (`docs/decisions/0034-graph-als-hauptscreen.md`): Graph, Tabelle, Positionskarte, Überblick
 (mit Import-Log), Prüfung und Dokument **nur** als nahtloser Splitscreen mit tausch-,
 stapel- und schließbaren Bereichen, ein- und ausblendbar über „Ansicht“, schmal Graph + ein
-Platz mit Reitern (`docs/decisions/0074-nur-noch-splitscreen.md`); Filterleiste und
+Platz mit Reitern (`docs/decisions/0074-nur-noch-splitscreen.md`); Graph ↔ Tabelle am selben Platz
+nur über Aktion `switchGraphTable` (Taste T, Rechtsklick, `docs/decisions/0107`); Filterleiste und
 Vergleich (max. 4 Positionen, `docs/decisions/0037-vergleichsfenster.md`) darüber
 (`view.workspace`, `docs/decisions/0064-splitscreen.md`,
 `docs/decisions/0070-splitscreen-nahtlos-stapeln.md`; frei teilbar, letzte Anordnung
