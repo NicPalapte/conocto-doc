@@ -163,14 +163,13 @@ export function OverviewView() {
         </div>
 
         {mitnehmen.hatBeton && (
-          <Card title="Betonsorten" note="Klick filtert">
+          <Card title="Betonsorten">
             <BetonSortenCard
               liste={betonSorten}
               active={activeSorten}
               selectedId={selection.positionId}
               onPickSorte={pickSorte}
               onPickPosition={pickPosition}
-              onCsv={mitnehmen.betonsortenAlsCsv}
             />
           </Card>
         )}

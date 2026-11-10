@@ -30,6 +30,10 @@
   Verdichtungsmaß (C0–C4) nur direkt nach „Konsistenz“.
 - **Klick auf eine Sorte filtert** über die neue Facette `betonsorte`. Aufgeklappt ist die
   Sorte, nach der gefiltert wird; kein eigener Zustand. Ein Filterzustand für alle Bereiche.
+  „← Alle Sorten“ hebt den Filter wieder auf.
+- **Was einer Position fehlt, steht auf der Positionskarte** (amber, unter den Eigenschaften),
+  nicht als Liste in der Karte (Nico, 10.11.).
+- **CSV nur im Logo-Menü** unter „Exportieren“, kein Knopf in der Karte.
 - **Ort:** Karte im Überblick, nur wenn das LV Beton enthält. Kein eigener Bereich.
 
 ## Verworfen

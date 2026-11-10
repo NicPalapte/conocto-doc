@@ -1,7 +1,8 @@
 // Karte „Betonsorten" im Überblick (Entscheidung 0104). Eine Zeile je Sorte; ein
 // Klick filtert nach der Sorte (Facette `betonsorte`) und klappt sie auf: dann
-// stehen darunter die Angaben zur Festlegung und die Positionen mit dem, was fehlt.
-// Aufgeklappt ist, was gefiltert ist — kein eigener Zustand neben dem Filter.
+// stehen darunter die Angaben zur Festlegung und die Positionen. „← Alle Sorten" hebt den
+// Filter wieder auf. Aufgeklappt ist, was gefiltert ist — kein eigener Zustand daneben.
+// Was einer Position fehlt, zeigt die Positionskarte (`fehlendeAngabenOf`).
 
 import { formatCount, formatNumber, formatPositions } from '../../lib/format';
 import { angabeText } from '../../lib/export/betonSorten';
@@ -45,9 +46,6 @@ function Detail({
             </span>
           </div>
         ))}
-        <p className="m-0 pt-[6px] text-[11px] text-mute">
-          Hinweis, kein Urteil: eine Angabe kann auch in Vorbemerkungen oder Dokumenten stehen.
-        </p>
       </div>
       <div className="min-w-0 flex-[2] basis-[280px]" role="list" aria-label="Positionen">
         {sorte.positions.map((position) => (
@@ -67,15 +65,6 @@ function Detail({
                 ? '—'
                 : `${formatNumber(position.quantity)} ${position.unit ?? ''}`.trim()}
             </span>
-            {position.fehlt.length > 0 && (
-              <span className="flex w-full flex-wrap gap-[4px] pl-[4px]">
-                {position.fehlt.map((label) => (
-                  <span key={label} className={`${PILL} bg-amberS text-amber`}>
-                    {label}
-                  </span>
-                ))}
-              </span>
-            )}
           </button>
         ))}
       </div>
@@ -89,14 +78,12 @@ export function BetonSortenCard({
   selectedId,
   onPickSorte,
   onPickPosition,
-  onCsv,
 }: {
   liste: BetonSortenListe;
   active: ReadonlySet<string>;
   selectedId: string | null;
   onPickSorte: (key: string) => void;
   onPickPosition: (nodeId: string) => void;
-  onCsv: () => void;
 }) {
   if (liste.sorten.length === 0) {
     return (
@@ -112,13 +99,16 @@ export function BetonSortenCard({
           {liste.sorten.length === 1 ? '1 Sorte' : `${formatCount(liste.sorten.length)} Sorten`} ·{' '}
           {formatPositions(liste.positions)} · {formatNumber(liste.kubik)} m³
         </span>
-        <button
-          type="button"
-          onClick={onCsv}
-          className="cursor-pointer rounded-[var(--r-sm)] border border-solid border-line bg-surface px-[10px] py-[4px] font-mono text-[12px] text-ink hover:bg-sunken"
-        >
-          CSV
-        </button>
+        {open !== null && (
+          <button
+            type="button"
+            onClick={() => onPickSorte(open)}
+            title="Filter auf diese Sorte aufheben"
+            className="cursor-pointer rounded-[var(--r-sm)] border border-solid border-line bg-surface px-[10px] py-[4px] font-mono text-[12px] text-ink hover:bg-sunken"
+          >
+            ← Alle Sorten
+          </button>
+        )}
       </div>
       <div role="list" aria-label="Betonsorten">
         {liste.sorten.map((sorte) => {

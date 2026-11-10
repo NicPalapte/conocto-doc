@@ -150,6 +150,17 @@ function angabeWerte(position: PositionSummary, key: PflichtKey): string[] {
   return festigkeit === null ? [] : [festigkeit];
 }
 
+/**
+ * Angaben zur Festlegung, die im Text einer Betonposition fehlen (Labels); `null`, wenn die
+ * Position zu keiner Sorte gehört. Für die Positionskarte.
+ */
+export function fehlendeAngabenOf(position: PositionSummary): string[] | null {
+  if (betonSorteOf(position) === null) return null;
+  return PFLICHTANGABEN.filter(({ key }) => angabeWerte(position, key).length === 0).map(
+    ({ label }) => label,
+  );
+}
+
 interface Acc {
   key: string;
   position: PositionSummary;

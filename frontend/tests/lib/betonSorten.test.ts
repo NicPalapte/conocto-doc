@@ -2,7 +2,13 @@
 // gebündelt, fehlende Angaben gezählt. Alle Texte sind erfunden.
 
 import { describe, expect, it } from 'vitest';
-import { betonSorteOf, buildBetonSorten, OHNE_KLASSE, sortExpo } from '../../src/lib/beton/sorten';
+import {
+  betonSorteOf,
+  buildBetonSorten,
+  fehlendeAngabenOf,
+  OHNE_KLASSE,
+  sortExpo,
+} from '../../src/lib/beton/sorten';
 import { betonklassenAttributes } from '../../src/lib/classify/rulesets/normklassen';
 import { buildPositionIndex } from '../../src/lib/index/positionIndex';
 import { classifyAndBuild } from '../../src/lib/pipeline/runPipeline';
@@ -119,6 +125,12 @@ describe('buildBetonSorten', () => {
     const mask = new Uint8Array(idx.size);
     mask[2] = 1;
     expect(buildBetonSorten(idx, mask).sorten.map((sorte) => sorte.key)).toEqual(['C12/15 · X0']);
+  });
+
+  it('nennt je Position die fehlenden Angaben für die Positionskarte', () => {
+    expect(fehlendeAngabenOf(idx.positions[0])).toEqual([]);
+    expect(fehlendeAngabenOf(idx.positions[2])).toContain('Feuchtigkeitsklasse');
+    expect(fehlendeAngabenOf(idx.positions[4])).toBeNull();
   });
 
   it('gibt Schalung und andere Nicht-m³-Positionen ohne Klasse keine Sorte', () => {

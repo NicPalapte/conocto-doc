@@ -205,5 +205,8 @@ describe('Betonsorten im Überblick', () => {
     const positionen = screen.getByRole('list', { name: 'Positionen' });
     fireEvent.click(positionen.querySelector('[role="listitem"]') as HTMLElement);
     expect(screen.getByTestId('position')).toHaveTextContent('01.01.10');
+    fireEvent.click(screen.getByRole('button', { name: '← Alle Sorten' }));
+    expect(screen.getByTestId('facets')).toHaveTextContent(/^$/);
+    expect(screen.getByRole('list', { name: 'Betonsorten' })).toHaveTextContent('C12/15');
   });
 });

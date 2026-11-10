@@ -18,8 +18,10 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
   DIN 1045-2 im LV stehen: Festigkeits-, Expositions-, Feuchtigkeits- und Chloridgehaltsklasse,
   Größtkorn, Konsistenz. Was fehlt, steht in amber, als Hinweis.
 - **Klick filtert:** Ein Klick auf eine Sorte filtert Graph und Tabelle und klappt die Sorte
-  auf: Angaben und Positionen mit dem, was fehlt. Noch ein Klick hebt den Filter auf.
-- **CSV:** Die Liste lässt sich als CSV für Excel speichern, in der Karte und im Logo-Menü unter „Exportieren“.
+  auf: Angaben und Positionen. „← Alle Sorten“ führt zurück zur Liste.
+- **Positionskarte:** Bei Betonpositionen steht unter den Eigenschaften, welche Angaben im LV
+  fehlen.
+- **CSV:** Die Liste lässt sich als CSV für Excel speichern: Logo-Menü → „Exportieren“.
 - **Mehr erkannt:** Chloridgehaltsklasse („Cl 0,40“), Konsistenz („F3“, „SF2“) und Größtkorn
   („Größtkorn 16 mm“, „Dmax 22“) werden jetzt gelesen, wenn eine Betonklasse daneben steht.
 
