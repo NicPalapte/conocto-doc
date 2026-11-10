@@ -1,0 +1,83 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Title (Grundriss EG) /Producer (Conocto Demo) >>
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190.55 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 1962 >>
+stream
+0 0 0 RG
+3 w 150 230 680.31 340.16 re S
+1.5 w 150 400.08 m 830.31 400.08 l S
+1.5 w 320.08 400.08 m 320.08 570.16 l S
+1.5 w 490.16 230 m 490.16 570.16 l S
+1.5 w 716.93 400.08 m 716.93 570.16 l S
+1.5 w 660.24 230 m 660.24 400.08 l S
+0.5 w 150 604.17 m 830.31 604.17 l S
+0.5 w 147 601.17 m 153 607.17 l S
+0.5 w 317.08 601.17 m 323.08 607.17 l S
+0.5 w 487.16 601.17 m 493.16 607.17 l S
+0.5 w 713.93 601.17 m 719.93 607.17 l S
+0.5 w 827.31 601.17 m 833.31 607.17 l S
+0.5 w 150 638.19 m 830.31 638.19 l S
+0.5 w 147 635.19 m 153 641.19 l S
+0.5 w 827.31 635.19 m 833.31 641.19 l S
+1 w 850 40 300 150 re S
+0.5 w 850 150 m 1150 150 l S
+BT /F2 9 Tf 1 0 0 1 211.64 489.12 Tm (Büro 1.01) Tj ET
+BT /F1 8 Tf 1 0 0 1 219.04 476.12 Tm (36,00 m²) Tj ET
+BT /F2 9 Tf 1 0 0 1 381.72 489.12 Tm (Büro 1.02) Tj ET
+BT /F1 8 Tf 1 0 0 1 389.12 476.12 Tm (36,00 m²) Tj ET
+BT /F2 9 Tf 1 0 0 1 561.94 489.12 Tm (Besprechung 1.03) Tj ET
+BT /F1 8 Tf 1 0 0 1 587.54 476.12 Tm (48,00 m²) Tj ET
+BT /F2 9 Tf 1 0 0 1 755.42 489.12 Tm (WC 1.04) Tj ET
+BT /F1 8 Tf 1 0 0 1 757.62 476.12 Tm (24,00 m²) Tj ET
+BT /F2 9 Tf 1 0 0 1 294.08 319.04 Tm (Foyer 1.05) Tj ET
+BT /F1 8 Tf 1 0 0 1 304.08 306.04 Tm (72,00 m²) Tj ET
+BT /F2 9 Tf 1 0 0 1 544 319.04 Tm (Technik 1.06) Tj ET
+BT /F1 8 Tf 1 0 0 1 559.2 306.04 Tm (36,00 m²) Tj ET
+BT /F2 9 Tf 1 0 0 1 719.28 319.04 Tm (Lager 1.07) Tj ET
+BT /F1 8 Tf 1 0 0 1 729.28 306.04 Tm (36,00 m²) Tj ET
+BT /F1 8 Tf 1 0 0 1 226.04 608.17 Tm (6,00) Tj ET
+BT /F1 8 Tf 1 0 0 1 396.12 608.17 Tm (6,00) Tj ET
+BT /F1 8 Tf 1 0 0 1 594.54 608.17 Tm (8,00) Tj ET
+BT /F1 8 Tf 1 0 0 1 764.62 608.17 Tm (4,00) Tj ET
+BT /F1 8 Tf 1 0 0 1 481.16 642.19 Tm (24,00) Tj ET
+BT /F2 11 Tf 1 0 0 1 862 168 Tm (Neubau Verwaltungsgebäude) Tj ET
+BT /F2 16 Tf 1 0 0 1 862 124 Tm (Grundriss Erdgeschoss) Tj ET
+BT /F1 11 Tf 1 0 0 1 862 100 Tm (M 1:100) Tj ET
+BT /F1 9 Tf 1 0 0 1 862 80 Tm (Plan-Nr. 101 · Index A) Tj ET
+BT /F1 8 Tf 1 0 0 1 862 56 Tm (Erfundenes Beispiel für die Conocto-Demo) Tj ET
+
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000320 00000 n 
+0000000388 00000 n 
+0000000531 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 5 0 R >>
+startxref
+2545
+%%EOF
