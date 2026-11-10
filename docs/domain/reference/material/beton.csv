@@ -11,6 +11,6 @@ Bauweise,Halbfertigteil,halbfertigteil*|elementdecke*|elementwand*|filigrandecke
 Bewehrung,enthalten,bewehrt*|einschl. bewehrung|einschließlich bewehrung|inkl. bewehrung|inklusive bewehrung|mit bewehrung,,Entwurf
 Bewehrung,gesondert,bewehrung gesondert*|bewehrung wird gesondert*|bewehrung siehe*|bewehrung separat*,,Entwurf: „ohne Bewehrung“ kann auch unbewehrt heißen
 Bewehrung,unbewehrt,unbewehrt*,,Entwurf
-Stahl/Fasern,Stahl,betonstahl*|bewehrungsstahl*|betonstabstahl*|stabstahl*,betonstahlmatte*,Entwurf: nur Angabe für die Betonsortenliste; Bewehrungspositionen selbst werden nicht ausgewertet
-Stahl/Fasern,Matten,betonstahlmatte*|bewehrungsmatte*|lagermatte*|listenmatte*,,Entwurf
-Stahl/Fasern,Fasern,stahlfaser*|kunststofffaser*|faserbeton*|glasfaser*,,Entwurf: Fasern als Bewehrung im Beton
+Stahl/Fasern,Stahl,betonstahl*|bewehrungsstahl*|betonstabstahl*|stabstahl*,betonstahlmatte*,Geprüft (Nico 10.11.): nur Angabe für die Betonsortenliste; Bewehrungspositionen selbst werden nicht ausgewertet
+Stahl/Fasern,Matten,betonstahlmatte*|bewehrungsmatte*|lagermatte*|listenmatte*,,Geprüft (Nico 10.11.)
+Stahl/Fasern,Fasern,stahlfaser*|kunststofffaser*|pp-faser*|faserbeton*|glasfaser*,,Geprüft (Nico 10.11.): Fasern als Bewehrung im Beton

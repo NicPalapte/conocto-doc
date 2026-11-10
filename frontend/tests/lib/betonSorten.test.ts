@@ -133,6 +133,13 @@ describe('buildBetonSorten', () => {
     expect(fehlendeAngabenOf(idx.positions[4])).toBeNull();
   });
 
+  it('erkennt PP-Fasern als Fasern', () => {
+    const faser = index([
+      position('01.01.10', 'Estrich', 'Beton C25/30 XC1 mit PP-Fasern', 'm3', 5),
+    ]);
+    expect(buildBetonSorten(faser, null).sorten[0].stahlFasern).toEqual(['Fasern']);
+  });
+
   it('gibt Schalung und andere Nicht-m³-Positionen ohne Klasse keine Sorte', () => {
     expect(betonSorteOf(idx.positions[4])).toBeNull();
   });
