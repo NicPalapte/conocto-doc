@@ -18,10 +18,10 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
   der Position unter der Maus.
 - **Matrix ohne „ohne Angabe“:** In der Darstellung lässt sich „Ohne Angabe“ ausblenden. Das
   ändert nur den Graphen, Tabelle und Überblick zählen weiter alles.
-- **Vorschläge im PDF durchgehen:** In der Kopfleiste des Dokuments blättert ‹ › durch die
-  Vorschläge, wie bei den eigenen Stellen. In der Leiste geht es mit ‹ › oder den Pfeiltasten
-  weiter, nach „Verknüpfen“ oder „Nein“ von selbst. Die Schalter OZ, Mengen und Beton liegen
-  im Menü „Vorschläge ▾“ und brechen in schmalen Bereichen nicht mehr um.
+- **Ein Blätterer im PDF:** In der Kopfleiste des Dokuments steht nur noch ein ‹ 1 / 8 ›.
+  Das Menü davor wählt, was er durchgeht: Vorschläge oder eigene Stellen. Dort schalten
+  Häkchen OZ, Mengen und Beton ein und aus. In der Leiste zum Vorschlag geht es mit ‹ › oder
+  den Pfeiltasten weiter, nach „Verknüpfen“ oder „Nein“ von selbst.
 - **Überblick:** Die Kacheln oben zeigen keine Erklärtexte mehr.
 
 ## 0.58.0 — 10.11.2026 · Beton im Dokument

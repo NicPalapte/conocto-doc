@@ -27,7 +27,7 @@ import { LinkDialog } from './LinkDialog';
 import { DOC_TOOL as TOOL, PdfInput } from './PdfInput';
 import { PdfPage, type PageSize } from './PdfPage';
 import { SuggestBar } from './SuggestBar';
-import { SuggestNav } from './SuggestNav';
+import { StepNav, type StepMode } from './StepNav';
 import { PlanLayer, type PlanDraft } from './PlanLayer';
 import { GROUP_OF, SNAP_TOOLS, TWO_POINT_TOOLS, type PlanTool, type ToolGroup } from './planTools';
 import { MeasureBar, PlanToolbar, ScalePanel } from './PlanControls';
@@ -1109,17 +1109,6 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
   // Schmaler Bereich: seltene Knöpfe wandern ins Menü „⋯“, ganz schmal auch die Suche.
   const narrow = width > 0 && width < (planCount > 0 ? NARROW_BAR_PLANS : NARROW_BAR);
   const tight = width > 0 && width < (planCount > 0 ? TIGHT_BAR_PLANS : TIGHT_BAR);
-  const suggestEl =
-    counts.oz + counts.menge + counts.beton > 0 ? (
-      <SuggestNav
-        counts={counts}
-        suggest={suggest}
-        setSuggest={setSuggest}
-        index={offerIndex < 0 ? null : offerIndex}
-        total={ordered.length}
-        onStep={stepOffer}
-      />
-    ) : null;
   // Vor/zurück durch die eigenen Stellen dieses PDFs (Issue #191): angestrichen oder verknüpft,
   // in Lesereihenfolge. Ohne letzte Wahl geht es von der aktuellen Seite aus.
   // `from`: Seite beim Sprung — bis der Sprung angekommen ist, gilt die Wahl weiter.
@@ -1159,35 +1148,26 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     setMarkPick({ index: next, from: current });
     jumpTo(spots[next]);
   };
-  const markEls =
-    spots.length > 0 ? (
-      <span
-        role="group"
-        aria-label="Eigene Stellen"
-        className="flex shrink-0 items-center gap-[2px]"
-      >
-        <button
-          type="button"
-          aria-label="Vorige Stelle"
-          title="Vorige angestrichene oder verknüpfte Stelle"
-          onClick={() => stepMark(-1)}
-          className={TOOL}
-        >
-          ‹
-        </button>
-        <span className="font-mono text-[11.5px] text-mute">
-          {markIndex === null ? '–' : markIndex + 1} / {spots.length}
-        </span>
-        <button
-          type="button"
-          aria-label="Nächste Stelle"
-          title="Nächste angestrichene oder verknüpfte Stelle"
-          onClick={() => stepMark(1)}
-          className={TOOL}
-        >
-          ›
-        </button>
-      </span>
+  // Ein Blätterer für Vorschläge oder eigene Stellen (Nico 11.11., Variante A). Gibt es nur
+  // eines von beiden, geht er das durch; die Wahl gilt, solange dieses PDF offen ist.
+  const [stepMode, setStepMode] = useState<StepMode>('vorschlaege');
+  const suggestTotal = counts.oz + counts.menge + counts.beton;
+  const mode: StepMode =
+    suggestTotal === 0 ? 'stellen' : spots.length === 0 ? 'vorschlaege' : stepMode;
+  const stepEl =
+    suggestTotal + spots.length > 0 ? (
+      <StepNav
+        mode={mode}
+        setMode={setStepMode}
+        suggestTotal={suggestTotal}
+        markTotal={spots.length}
+        counts={counts}
+        suggest={suggest}
+        setSuggest={setSuggest}
+        index={mode === 'stellen' ? markIndex : offerIndex < 0 ? null : offerIndex}
+        total={mode === 'stellen' ? spots.length : ordered.length}
+        onStep={(step, at) => (mode === 'stellen' ? stepMark(step) : stepOffer(step, at))}
+      />
     ) : null;
   const zoomEls = (
     <>
@@ -1297,8 +1277,7 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
         )}
         <span className="flex-1" />
         {!narrow && wholeEl}
-        {suggestEl}
-        {markEls}
+        {stepEl}
         {!narrow && zoomEls}
         {narrow && (
           <MoreMenu>
