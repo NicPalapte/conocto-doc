@@ -61,6 +61,13 @@ describe('Beton im Dokument', () => {
     ]);
   });
 
+  it('Umlaut im Plural: „Außenwände“ trifft „Außenwand“', () => {
+    const wand = pos('aussen', '02.03.50', 'Außenwand Untergeschoss', 'C30/37 · XC4, XF1 · WF');
+    const index = suggestIndexOf([...POSITIONEN, wand], DEFAULT_SUGGEST_RULES);
+    const text = 'Die Außenwände erhalten C30/37, XC4, XF1, WF.';
+    expect(suggestionsInPage(text, index, 1).map((s) => s.id)).toEqual(['aussen']);
+  });
+
   it('ohne eigenes Wort oder bei anderer Sorte kein Vorschlag', () => {
     expect(finde('Beton C30/37, XC4, XF1, WF, soweit nicht anders angegeben.')).toEqual([]);
     expect(finde('Wände Tiefgarage C30/37 XC4, XF1')).toEqual([]);

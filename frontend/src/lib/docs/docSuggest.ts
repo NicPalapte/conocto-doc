@@ -143,10 +143,14 @@ export function unitKeyOf(raw: string | null): string | null {
   return key === null ? null : key.toLowerCase();
 }
 
-/** Grober Wortstamm: häufige Endungen ab, damit „Bodens“ und „Boden“ gleich sind. */
+/**
+ * Grober Wortstamm: häufige Endungen ab, damit „Bodens“ und „Boden“ gleich sind. Umlaute
+ * zählen wie ihr Grundvokal, damit „Außenwände“ und „Außenwand“ gleich sind.
+ */
 function stemOf(word: string): string {
-  const stem = word.replace(/(?:en|er|es|em|e|n|s)$/, '');
-  return stem.length >= MIN_WORD ? stem : word;
+  const plain = word.replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u');
+  const stem = plain.replace(/(?:en|er|es|em|e|n|s)$/, '');
+  return stem.length >= MIN_WORD ? stem : plain;
 }
 
 interface Word {
