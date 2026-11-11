@@ -9,6 +9,11 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.59.1 — 11.11.2026 · Tasten nicht im Weg
+
+- **Taste T** wirkt nicht, solange ein Fenster, ein Menü oder die Tour offen ist.
+- **← → in der Vorschlagsleiste** lassen Regler, Listen, Menüs und Eingabefelder in Ruhe.
+
 ## 0.59.0 — 10.11.2026 · Funde aus dem Praxistest, Runde 3
 
 - **Graph ↔ Tabelle mit T:** Die Taste T wechselt am Platz des Graphen zur Tabelle und zurück.

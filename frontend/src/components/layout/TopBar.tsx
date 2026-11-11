@@ -24,6 +24,7 @@ import { NotesFileError, notesCount, readNotesFile, type NotesFile } from '../..
 import { useAdmin } from '../../state/admin';
 import { useSurvey } from '../../state/survey';
 import { useHostWindow } from '../common/hostWindow';
+import { keyIsTaken, overlayOpen } from '../common/keys';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
 
 const GHOST =
@@ -95,10 +96,8 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
     const onKey = (event: KeyboardEvent): void => {
       if (event.key.toLowerCase() !== 't' || event.repeat) return;
       if (event.ctrlKey || event.metaKey || event.altKey) return;
-      const target = event.target as HTMLElement | null;
-      const tag = target?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-      if (target?.isContentEditable === true) return;
+      // Offener Dialog, Menü oder Tour: T darf die Anordnung dahinter nicht ändern.
+      if (keyIsTaken(event, 'letters') || overlayOpen(host.document)) return;
       event.preventDefault();
       dispatch({ type: 'switchGraphTable' });
     };
