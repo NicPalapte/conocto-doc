@@ -475,6 +475,15 @@ describe('Funde aus dem Praxistest, Runde 3 (Issue #191)', () => {
     expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).not.toBeNull();
   });
 
+  it('Taste T ruht, solange ein Dialog offen ist', async () => {
+    await loadAndShowGraph();
+    fireEvent.keyDown(document.body, { key: '?' });
+    expect(screen.getByRole('dialog', { name: 'Tastenkürzel' })).toBeInTheDocument();
+    fireEvent.keyDown(document.body, { key: 't' });
+    expect(screen.queryByRole('region', { name: 'Tabelle — Bereich' })).toBeNull();
+    expect(screen.getByRole('group', { name: /Bubble-Graph/ })).toBeInTheDocument();
+  });
+
   it('Rechtsklick „In der Tabelle zeigen“ wechselt am Platz, wenn die Tabelle fehlt', async () => {
     await loadAndShowGraph();
     const punkt = graph().querySelector('[data-slot]') as SVGElement;

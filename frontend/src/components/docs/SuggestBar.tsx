@@ -6,6 +6,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useHostWindow } from '../common/hostWindow';
+import { keyIsTaken } from '../common/keys';
 import type { DocSuggestion } from '../../lib/docs/docSuggest';
 
 const WIDTH = 290;
@@ -51,22 +52,25 @@ export function SuggestBar({
 }) {
   const host = useHostWindow();
   const ref = useRef<HTMLDivElement>(null);
+  // Neue Funktion je Render beim Aufrufer: über Ref, damit der Listener nicht ständig wechselt.
+  const stepRef = useRef(onStep);
+  useEffect(() => {
+    stepRef.current = onStep;
+  });
   useEffect(() => {
     const onDown = (event: MouseEvent): void => {
       if (!(ref.current?.contains(event.target as Node) ?? false)) onClose();
     };
     const onKey = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') onClose();
-      const target = event.target as HTMLElement | null;
-      const typing =
-        target !== null &&
-        (/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) || target.isContentEditable);
-      if (onStep === undefined || typing || event.altKey || event.ctrlKey || event.metaKey) return;
-      const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
-      if (step === 0) return;
+      const step = stepRef.current;
+      if (step === undefined || keyIsTaken(event)) return;
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      const direction = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      if (direction === 0) return;
       // Sonst blättert der Pfeil zusätzlich das PDF zur Seite.
       event.preventDefault();
-      onStep(step);
+      step(direction);
     };
     host.document.addEventListener('mousedown', onDown);
     host.document.addEventListener('keydown', onKey);
@@ -74,7 +78,7 @@ export function SuggestBar({
       host.document.removeEventListener('mousedown', onDown);
       host.document.removeEventListener('keydown', onKey);
     };
-  }, [host, onClose, onStep]);
+  }, [host, onClose]);
 
   const { amount, sorte } = suggestion;
   const label =
