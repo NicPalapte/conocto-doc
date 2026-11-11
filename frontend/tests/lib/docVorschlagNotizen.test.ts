@@ -88,9 +88,9 @@ describe('Offene Vorschläge', () => {
     expect(isRejected(abgelehnt, MENGE, 'p1')).toBe(true);
     expect(isRejected(abgelehnt, MENGE, 'p2')).toBe(false);
     expect(pendingSuggestions(abgelehnt, 'd0c', LISTE, ALLE)).toEqual([LISTE[0]]);
-    expect(pendingSuggestions(EMPTY_DOC_NOTES, 'd0c', LISTE, { oz: false, menge: true, beton: true })).toEqual([
-      LISTE[1],
-    ]);
+    expect(
+      pendingSuggestions(EMPTY_DOC_NOTES, 'd0c', LISTE, { oz: false, menge: true, beton: true }),
+    ).toEqual([LISTE[1]]);
   });
 
   it('eine Stelle, die mit einer anderen Position verknüpft ist, schlägt weiter vor', () => {
