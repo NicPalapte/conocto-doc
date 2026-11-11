@@ -87,6 +87,25 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
     return () => host.removeEventListener('keydown', onKey);
   }, [host]);
 
+  // "T" wechselt am selben Platz zwischen Graph und Tabelle (Issue #191); die Auswahl bleibt.
+  // Nur im Hauptfenster: ein ausgelagertes Fenster zeigt genau einen Bereich.
+  const hasLv = lv !== null;
+  useEffect(() => {
+    if (!hasLv || host !== window) return;
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key.toLowerCase() !== 't' || event.repeat) return;
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (target?.isContentEditable === true) return;
+      event.preventDefault();
+      dispatch({ type: 'switchGraphTable' });
+    };
+    host.addEventListener('keydown', onKey);
+    return () => host.removeEventListener('keydown', onKey);
+  }, [host, hasLv, dispatch]);
+
   const loaded = lv !== null;
 
   const filterOpen = ownFilterOpen ?? view.filterBar;

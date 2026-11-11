@@ -54,7 +54,7 @@ export function DisplayControls() {
     lv,
     summary,
     view: {
-      graph: { layout, rows, cols },
+      graph: { layout, rows, cols, hideEmpty },
     },
   } = useViewer();
   const dispatch = useViewerDispatch();
@@ -116,6 +116,28 @@ export function DisplayControls() {
                   }
                 >
                   {axis.label}
+                </ValueChip>
+              ))}
+            </ChipGroup>
+          </Row>
+          <Row label="Ohne Angabe">
+            <ChipGroup label="Ohne Angabe" radio>
+              {[
+                { value: false, label: 'zeigen' },
+                { value: true, label: 'ausblenden' },
+              ].map((choice) => (
+                <ValueChip
+                  key={choice.label}
+                  kind="radio"
+                  on={hideEmpty === choice.value}
+                  title={
+                    choice.value
+                      ? 'Positionen ohne Wert in Zeile oder Spalte nur im Graphen ausblenden'
+                      : undefined
+                  }
+                  onClick={() => dispatch({ type: 'graphHideEmpty', value: choice.value })}
+                >
+                  {choice.label}
                 </ValueChip>
               ))}
             </ChipGroup>

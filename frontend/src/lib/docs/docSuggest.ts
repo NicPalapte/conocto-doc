@@ -707,3 +707,29 @@ export function suggestionsInPage(
   }
   return out.filter((item) => index.rules[item.source] !== null).sort((a, b) => a.start - b.start);
 }
+
+/** Gleicher Vorschlag: gleiche Stelle, gleiche Position. */
+export function sameSuggestion(a: DocSuggestion, b: DocSuggestion): boolean {
+  return a.page === b.page && a.start === b.start && a.id === b.id && a.source === b.source;
+}
+
+/** Vorschläge in Lesereihenfolge: Seite, dann Stelle im Text. */
+export function orderSuggestions(list: readonly DocSuggestion[]): DocSuggestion[] {
+  return [...list].sort((a, b) => a.page - b.page || a.start - b.start);
+}
+
+/**
+ * Nächster (`step` 1) oder voriger (-1) Vorschlag in `ordered`, ringsum (Issue #191).
+ * Ohne aktuellen Vorschlag der erste bzw. letzte; `null`, wenn keiner da ist.
+ */
+export function stepSuggestion(
+  ordered: readonly DocSuggestion[],
+  current: DocSuggestion | null,
+  step: 1 | -1,
+): number | null {
+  const count = ordered.length;
+  if (count === 0) return null;
+  const at = current === null ? -1 : ordered.findIndex((item) => sameSuggestion(item, current));
+  if (at < 0) return step === 1 ? 0 : count - 1;
+  return (at + step + count) % count;
+}

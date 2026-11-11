@@ -9,6 +9,21 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.59.0 — 10.11.2026 · Funde aus dem Praxistest, Runde 3
+
+- **Graph ↔ Tabelle mit T:** Die Taste T wechselt am Platz des Graphen zur Tabelle und zurück.
+  Die gewählte Position bleibt gewählt. Per Rechtsklick „In der Tabelle zeigen“ bzw.
+  „Im Graph zeigen“: wechselt am selben Platz, wenn das Ziel gerade nicht zu sehen ist.
+- **Karte beim Überfahren:** Im Graphen zeigt eine kleine Karte OZ, Kurztext, Menge und Einheit
+  der Position unter der Maus.
+- **Matrix ohne „ohne Angabe“:** In der Darstellung lässt sich „Ohne Angabe“ ausblenden. Das
+  ändert nur den Graphen, Tabelle und Überblick zählen weiter alles.
+- **Ein Blätterer im PDF:** In der Kopfleiste des Dokuments steht nur noch ein ‹ 1 / 8 ›.
+  Das Menü davor wählt, was er durchgeht: Vorschläge oder Verknüpfungen. Dort schalten
+  Häkchen OZ, Mengen und Beton ein und aus. In der Leiste zum Vorschlag geht es mit ‹ › oder
+  den Pfeiltasten weiter, nach „Verknüpfen“ oder „Nein“ von selbst.
+- **Überblick:** Die Kacheln oben zeigen keine Erklärtexte mehr.
+
 ## 0.58.0 — 10.11.2026 · Beton im Dokument
 
 - **Vorschläge über Beton:** Steht im PDF eine Betonsorte wie „C30/37, XC4, XF1, WF“, schlägt

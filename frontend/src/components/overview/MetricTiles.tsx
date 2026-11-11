@@ -12,7 +12,8 @@ function percent(share: number): string {
   return `${(share * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 })} %`;
 }
 
-function Tile({ label, value, note }: { label: string; value: string; note: string }) {
+// Ohne Erklärtexte (Issue #191): eine Zeile darunter nur, wenn sie eine Zahl trägt.
+function Tile({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div className="min-w-0 flex-1 basis-[150px] rounded-[var(--r-md)] border border-line bg-surface px-[12px] py-[10px]">
       <div className="font-mono text-[11px] uppercase tracking-[0.6px] text-mute">{label}</div>
@@ -22,9 +23,11 @@ function Tile({ label, value, note }: { label: string; value: string; note: stri
       >
         {value}
       </div>
-      <div className="mt-[2px] truncate font-mono text-[11px] text-mute" title={note}>
-        {note}
-      </div>
+      {note !== undefined && (
+        <div className="mt-[2px] truncate font-mono text-[11px] text-mute" title={note}>
+          {note}
+        </div>
+      )}
     </div>
   );
 }
@@ -36,22 +39,14 @@ export function MetricTiles({ metrics, flags }: { metrics: OverviewMetrics; flag
       <Tile
         label="Positionen"
         value={formatCount(metrics.positions)}
-        note={gefiltert ? `von ${formatCount(metrics.totalPositions)} im LV` : 'im ganzen LV'}
+        note={gefiltert ? `von ${formatCount(metrics.totalPositions)} im LV` : undefined}
       />
       {metrics.hasPrices ? (
-        <Tile
-          label="Summe"
-          value={formatEuro(metrics.totalPrice, 0)}
-          note={gefiltert ? 'der gefilterten Positionen' : 'Menge × EP über alle Positionen'}
-        />
+        <Tile label="Summe" value={formatEuro(metrics.totalPrice, 0)} />
       ) : (
-        <Tile
-          label="Summe"
-          value="keine Preise"
-          note="Diese Datei führt keine Preise — die Mengen tragen die Aussage."
-        />
+        <Tile label="Summe" value="keine Preise" />
       )}
-      <Tile label="Abschnitte" value={formatCount(metrics.sections)} note="Hauptabschnitte im LV" />
+      <Tile label="Abschnitte" value={formatCount(metrics.sections)} />
       {metrics.hasPrices ? (
         <Tile
           label="Ohne Preis"
@@ -65,11 +60,7 @@ export function MetricTiles({ metrics, flags }: { metrics: OverviewMetrics; flag
           note={`${formatPositions(metrics.withoutQuantity)} ohne Menge`}
         />
       )}
-      <Tile
-        label="Hinweise"
-        value={formatCount(flags)}
-        note="aus den aktiven Prüfregeln — Hinweis, kein Urteil"
-      />
+      <Tile label="Hinweise" value={formatCount(flags)} />
     </div>
   );
 }

@@ -24,7 +24,7 @@ import {
   type PaneId,
   type Split,
 } from '../../src/lib/workspace/split';
-import { INITIAL_WORKSPACE } from '../../src/state/viewState';
+import { INITIAL_WORKSPACE, switchGraphTable } from '../../src/state/viewState';
 import { INITIAL_VIEWER_STATE, viewerReducer, type ViewerState } from '../../src/state/viewer';
 
 const start = INITIAL_ARRANGEMENT;
@@ -390,5 +390,43 @@ describe('Schmale Fläche (Entscheidung 0074)', () => {
     // Nichts sichtbar: ein leerer Platz — SplitView zeigt dann „Alle Bereiche geschlossen".
     const none = compactRoot(only(), 'row', null);
     expect(splitLayout(none, only()).frames).toEqual({});
+  });
+});
+
+describe('Graph ↔ Tabelle am selben Platz (Taste T, Issue #191)', () => {
+  const ws = INITIAL_WORKSPACE;
+  const open = (w: typeof ws) => (pane: PaneId) => !w.closed[pane];
+
+  it('legt die geschlossene Tabelle als Reiter auf den Graphen und wieder zurück', () => {
+    const graphPlatz = leafOf(ws.root, 'graph').id;
+    const tabelle = switchGraphTable(ws, null);
+    expect(tabelle.closed.table).toBe(false);
+    expect(leafOf(tabelle.root, 'table').id).toBe(graphPlatz);
+    expect(frontOf(leafOf(tabelle.root, 'graph'), open(tabelle))).toBe('table');
+
+    const graph = switchGraphTable(tabelle, null);
+    expect(frontOf(leafOf(graph.root, 'graph'), open(graph))).toBe('graph');
+    expect(leafOf(graph.root, 'table').id).toBe(graphPlatz);
+  });
+
+  it('tauscht die Plätze, wenn beide an verschiedenen Plätzen offen sind', () => {
+    const beide = { ...ws, closed: { ...ws.closed, table: false } };
+    const graphPlatz = leafOf(beide.root, 'graph').id;
+    const tabellePlatz = leafOf(beide.root, 'table').id;
+    expect(graphPlatz).not.toBe(tabellePlatz);
+    const getauscht = switchGraphTable(beide, 'table');
+    expect(leafOf(getauscht.root, 'table').id).toBe(graphPlatz);
+    expect(leafOf(getauscht.root, 'graph').id).toBe(tabellePlatz);
+  });
+
+  it('ändert über den Reducer weder Filter noch Auswahl', () => {
+    const state: ViewerState = {
+      ...INITIAL_VIEWER_STATE,
+      selection: { ...INITIAL_VIEWER_STATE.selection, positionId: 'p1', nodeId: 'n1' },
+    };
+    const next = viewerReducer(state, { type: 'switchGraphTable' });
+    expect(next.selection).toBe(state.selection);
+    expect(next.filter).toBe(state.filter);
+    expect(next.view.workspace.closed.table).toBe(false);
   });
 });
