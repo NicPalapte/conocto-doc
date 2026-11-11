@@ -26,6 +26,7 @@ import { useJumpToPosition } from './useJumpToPosition';
 import { IMPORTANT_INFO } from '../../lib/annotations';
 import { EMPTY_SHARED, sharedHash } from '../../lib/share/urlState';
 import { MAX_COMPARE, useViewer, useViewerDispatch } from '../../state/viewer';
+import { paneShown } from '../../state/viewState';
 
 interface MenuTarget {
   id: string;
@@ -63,6 +64,7 @@ function Menu({ target, onClose }: { target: MenuTarget; onClose: () => void }) 
     lv,
     annotations,
     selection: { compare },
+    view: { workspace },
   } = useViewer();
   const dispatch = useViewerDispatch();
   const jumpToPosition = useJumpToPosition();
@@ -192,29 +194,22 @@ function Menu({ target, onClose }: { target: MenuTarget; onClose: () => void }) 
           </button>
         </>
       )}
-      {target.from === 'table' && (
-        <button
-          type="button"
-          role="menuitem"
-          title="Am selben Platz zum Graphen wechseln (Taste T)"
-          onClick={run(() => {
-            if (position !== null) jumpToPosition(id, { stayInView: true });
-            else dispatch({ type: 'selectNode', id });
-            dispatch({ type: 'switchGraphTable', to: 'graph' });
-            dispatch({ type: 'graphFocus' });
-          })}
-          className={ITEM}
-        >
-          Zum Graphen wechseln
-        </button>
-      )}
       {target.from !== 'graph' && (
         <button
           type="button"
           role="menuitem"
+          title={
+            target.from === 'table'
+              ? 'Ist der Graph nicht zu sehen: am selben Platz (Taste T)'
+              : undefined
+          }
           onClick={run(() => {
             if (position !== null) jumpToPosition(id, { stayInView: true });
             else dispatch({ type: 'selectNode', id });
+            // Aus der Tabelle: ist der Graph nicht zu sehen, tritt er an ihren Platz (0107).
+            if (target.from === 'table' && !paneShown(workspace, 'graph')) {
+              dispatch({ type: 'switchGraphTable', to: 'graph' });
+            }
             dispatch({ type: 'graphFocus' });
           })}
           className={ITEM}
@@ -222,26 +217,23 @@ function Menu({ target, onClose }: { target: MenuTarget; onClose: () => void }) 
           Im Graph zeigen
         </button>
       )}
-      {target.from === 'graph' && (
-        <button
-          type="button"
-          role="menuitem"
-          title="Am selben Platz zur Tabelle wechseln (Taste T)"
-          onClick={run(() => {
-            if (position !== null) jumpToPosition(id, { stayInView: true });
-            else dispatch({ type: 'selectNode', id });
-            dispatch({ type: 'switchGraphTable', to: 'table' });
-          })}
-          className={ITEM}
-        >
-          Zur Tabelle wechseln
-        </button>
-      )}
       {target.from !== 'table' && (
         <button
           type="button"
           role="menuitem"
+          title={
+            target.from === 'graph'
+              ? 'Ist die Tabelle nicht zu sehen: am selben Platz (Taste T)'
+              : undefined
+          }
           onClick={run(() => {
+            // Aus dem Graphen: ist die Tabelle nicht zu sehen, tritt sie an seinen Platz (0107).
+            if (target.from === 'graph' && !paneShown(workspace, 'table')) {
+              if (position !== null) jumpToPosition(id, { stayInView: true });
+              else dispatch({ type: 'selectNode', id });
+              dispatch({ type: 'switchGraphTable', to: 'table' });
+              return;
+            }
             if (position !== null) jumpToPosition(id);
             else dispatch({ type: 'openInTable', id });
           })}

@@ -21,8 +21,11 @@
   - Liegen beide im selben Stapel, kommt der andere Reiter nach vorn.
   - Sind beide an verschiedenen Plätzen offen, tauschen sie die Plätze.
   - Nur im Hauptfenster, nicht beim Tippen in ein Feld, nicht mit Strg/Alt/⌘.
-- **Rechtsklick:** im Graphen „Zur Tabelle wechseln“, in der Tabelle „Zum Graphen wechseln“.
-  „In der Tabelle zeigen“ und „Im Graph zeigen“ bleiben (anderer Platz, wie bisher).
+- **Rechtsklick:** je Richtung ein Eintrag (Nico, 11.11.: zwei Einträge machten dasselbe).
+  - Im Graphen „In der Tabelle zeigen“: Ist die Tabelle schon zu sehen, wählt er nur aus.
+    Sonst tritt die Tabelle an den Platz des Graphen, wie mit T.
+  - In der Tabelle „Im Graph zeigen“: entsprechend.
+  - Verworfen: eigene Einträge „Zur Tabelle wechseln“ / „Zum Graphen wechseln“.
 - Kein zweiter Fenster-Modus: Der Wechsel ist nur eine Änderung der Anordnung
   (`view.workspace`). Filter, Suche und Auswahl bleiben unberührt.
 - **Matrix:** Schalter „Ohne Angabe: zeigen / ausblenden“ in der Darstellung, ein Schalter für

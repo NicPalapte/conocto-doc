@@ -77,12 +77,21 @@ async function ladeAppMitPdf(seiten: readonly string[] = SEITEN): Promise<void> 
   await screen.findByRole('group', { name: 'Vorschläge' }, { timeout: PDF_MS });
 }
 
+/** Öffnet das Menü „Vorschläge ▾“ mit den Schaltern je Art (Issue #191, Runde 3). */
+function arten(): ReturnType<typeof within> {
+  const knopf = within(screen.getByRole('group', { name: 'Vorschläge' })).getByRole('button', {
+    name: /^Vorschläge/,
+  });
+  if (knopf.getAttribute('aria-expanded') !== 'true') fireEvent.click(knopf);
+  return within(screen.getByRole('dialog', { name: 'Arten von Vorschlägen' }));
+}
+
 describe('Vorschläge im Dokument', { timeout: 15_000 }, () => {
   it('OZ mit Menge zum Vergleich, verknüpft erst nach Klick', async () => {
     await ladeAppMitPdf();
-    const schalter = screen.getByRole('group', { name: 'Vorschläge' });
-    await waitFor(() => expect(within(schalter).getByText(/OZ 1/)).toBeInTheDocument());
-    expect(within(schalter).getByText(/Mengen 1/)).toBeInTheDocument();
+    await waitFor(() => expect(arten().getByText(/OZ 1/)).toBeInTheDocument());
+    expect(arten().getByText(/Mengen 1/)).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
 
     fireEvent.click(screen.getByRole('button', { name: 'Vorschlag 1.2.20' }));
     const leiste = screen.getByRole('dialog', { name: 'Vorschlag verknüpfen' });
@@ -103,8 +112,8 @@ describe('Vorschläge im Dokument', { timeout: 15_000 }, () => {
     expect(screen.queryByRole('dialog', { name: 'Vorschlag verknüpfen' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Vorschlag 1.2.20' })).toBeNull();
     // Alle OZ-Vorschläge erledigt: ihr Schalter verschwindet, der für Mengen bleibt.
-    expect(within(schalter).queryByText(/OZ/)).toBeNull();
-    expect(within(schalter).getByText(/Mengen 1/)).toBeInTheDocument();
+    expect(arten().queryByText(/OZ/)).toBeNull();
+    expect(arten().getByText(/Mengen 1/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Vorschlag 783,03 m³' }));
     fireEvent.click(screen.getByRole('button', { name: 'Nein' }));
     expect(screen.queryByRole('group', { name: 'Vorschläge' })).toBeNull();
@@ -112,8 +121,7 @@ describe('Vorschläge im Dokument', { timeout: 15_000 }, () => {
 
   it('Betonsorte im Text: Vorschlag über Beton (0106)', async () => {
     await ladeAppMitPdf(['Für die Außenwand gilt Beton C35/45, XM1, XA1.']);
-    const schalter = screen.getByRole('group', { name: 'Vorschläge' });
-    await waitFor(() => expect(within(schalter).getByText(/Beton 1/)).toBeInTheDocument());
+    await waitFor(() => expect(arten().getByText(/Beton 1/)).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: 'Vorschlag C35/45, XM1, XA1' }));
     const leiste = screen.getByRole('dialog', { name: 'Vorschlag verknüpfen' });
     expect(within(leiste).getByText('Betonsorte passt zu')).toBeInTheDocument();
@@ -132,8 +140,7 @@ describe('Vorschläge im Dokument', { timeout: 15_000 }, () => {
     fireEvent.click(within(leiste).getByRole('button', { name: 'Nein' }));
     expect(screen.queryByRole('button', { name: 'Vorschlag 783,03 m³' })).toBeNull();
 
-    const schalter = screen.getByRole('group', { name: 'Vorschläge' });
-    const oz = within(schalter).getByRole('button', { name: /OZ/ });
+    const oz = arten().getByRole('button', { name: /OZ/ });
     fireEvent.click(oz);
     expect(oz).toHaveAttribute('aria-pressed', 'false');
     expect(screen.queryByRole('button', { name: 'Vorschlag 1.2.20' })).toBeNull();
@@ -143,25 +150,23 @@ describe('Vorschläge im Dokument', { timeout: 15_000 }, () => {
 
   it('beide Arten aus: die Schalter bleiben da und blenden wieder ein (0087)', async () => {
     await ladeAppMitPdf();
-    const schalter = screen.getByRole('group', { name: 'Vorschläge' });
-    await waitFor(() => expect(within(schalter).getByText(/Mengen 1/)).toBeInTheDocument());
-    fireEvent.click(within(schalter).getByRole('button', { name: /OZ/ }));
-    fireEvent.click(within(schalter).getByRole('button', { name: /Mengen/ }));
+    await waitFor(() => expect(arten().getByText(/Mengen 1/)).toBeInTheDocument());
+    fireEvent.click(arten().getByRole('button', { name: /OZ/ }));
+    fireEvent.click(arten().getByRole('button', { name: /Mengen/ }));
     expect(screen.queryByRole('button', { name: 'Vorschlag 1.2.20' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Vorschlag 783,03 m³' })).toBeNull();
-    const menge = within(screen.getByRole('group', { name: 'Vorschläge' })).getByRole('button', {
-      name: /Mengen/,
-    });
+    const menge = arten().getByRole('button', { name: /Mengen/ });
     expect(menge).toHaveAttribute('aria-pressed', 'false');
     fireEvent.click(menge);
     expect(await screen.findByRole('button', { name: 'Vorschlag 783,03 m³' })).toBeInTheDocument();
   });
 
-  it('„Vorschläge“ springt zum ersten, dann weiter mit Pfeil und nach der Entscheidung (#191)', async () => {
+  it('‹ › in der Kopfleiste blättert durch die Vorschläge, auch mit Pfeil (#191)', async () => {
     await ladeAppMitPdf();
     const schalter = screen.getByRole('group', { name: 'Vorschläge' });
-    await waitFor(() => expect(within(schalter).getByText(/Mengen 1/)).toBeInTheDocument());
-    fireEvent.click(within(schalter).getByRole('button', { name: 'Vorschläge' }));
+    await waitFor(() => expect(within(schalter).getByText('– / 2')).toBeInTheDocument());
+    fireEvent.click(within(schalter).getByRole('button', { name: 'Nächster Vorschlag' }));
+    expect(within(schalter).getByText('1 / 2')).toBeInTheDocument();
     let leiste = screen.getByRole('dialog', { name: 'Vorschlag verknüpfen' });
     expect(within(leiste).getByText('1 / 2')).toBeInTheDocument();
     expect(within(leiste).getByText('001.002.0020')).toBeInTheDocument();

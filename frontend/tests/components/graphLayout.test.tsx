@@ -306,7 +306,6 @@ describe('Rechtsklick im Graphen (Issue #155)', () => {
     fireEvent.contextMenu(graph().querySelector('[data-group] circle') as SVGCircleElement);
     const menue = within(screen.getByRole('menu', { name: 'Abschnitt' }));
     expect(menue.getAllByRole('menuitem').map((eintrag) => eintrag.textContent)).toEqual([
-      'Zur Tabelle wechseln',
       'In der Tabelle zeigen',
     ]);
     fireEvent.click(menue.getByRole('menuitem', { name: 'In der Tabelle zeigen' }));
@@ -476,11 +475,12 @@ describe('Funde aus dem Praxistest, Runde 3 (Issue #191)', () => {
     expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).not.toBeNull();
   });
 
-  it('Rechtsklick „Zur Tabelle wechseln“ wählt die Position und zeigt sie in der Tabelle', async () => {
+  it('Rechtsklick „In der Tabelle zeigen“ wechselt am Platz, wenn die Tabelle fehlt', async () => {
     await loadAndShowGraph();
     const punkt = graph().querySelector('[data-slot]') as SVGElement;
     fireEvent.contextMenu(punkt);
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Zur Tabelle wechseln' }));
+    expect(screen.queryByRole('menuitem', { name: 'Zur Tabelle wechseln' })).toBeNull();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'In der Tabelle zeigen' }));
     const tabelle = await screen.findByRole('region', { name: 'Tabelle — Bereich' });
     expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).toBeNull();
     await waitFor(() =>

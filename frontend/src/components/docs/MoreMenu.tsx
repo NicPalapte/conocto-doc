@@ -1,5 +1,5 @@
 // Knopf „⋯“ für die Kopfleiste im Bereich „Dokument“: Ist der Bereich schmal, wandern
-// seltene Knöpfe (Zoom, Treffer blättern, Vorschläge) hierher, statt die Leiste umbrechen
+// seltene Knöpfe (Zoom, ganzes Dokument verknüpfen) hierher, statt die Leiste umbrechen
 // zu lassen (Nico, 06.11.2026).
 
 import { useCallback, useRef, useState, type ReactNode } from 'react';

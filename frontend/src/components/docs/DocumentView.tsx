@@ -27,6 +27,7 @@ import { LinkDialog } from './LinkDialog';
 import { DOC_TOOL as TOOL, PdfInput } from './PdfInput';
 import { PdfPage, type PageSize } from './PdfPage';
 import { SuggestBar } from './SuggestBar';
+import { SuggestNav } from './SuggestNav';
 import { PlanLayer, type PlanDraft } from './PlanLayer';
 import { GROUP_OF, SNAP_TOOLS, TWO_POINT_TOOLS, type PlanTool, type ToolGroup } from './planTools';
 import { MeasureBar, PlanToolbar, ScalePanel } from './PlanControls';
@@ -54,13 +55,10 @@ import {
   type DocSpot,
 } from '../../lib/docs/docNotes';
 import {
-  LINK_SOURCES,
   orderSuggestions,
-  SUGGEST_BORDER,
   sameSuggestion,
   stepSuggestion,
   type DocSuggestion,
-  type LinkSource,
 } from '../../lib/docs/docSuggest';
 import type { OpenedPdf } from '../../lib/docs/pdf';
 import type { DocHit } from '../../lib/docs/docSearch';
@@ -1113,11 +1111,13 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
   const tight = width > 0 && width < (planCount > 0 ? TIGHT_BAR_PLANS : TIGHT_BAR);
   const suggestEl =
     counts.oz + counts.menge + counts.beton > 0 ? (
-      <SuggestToggles
+      <SuggestNav
         counts={counts}
         suggest={suggest}
         setSuggest={setSuggest}
-        onFirst={ordered.length > 0 ? (at) => showSuggestion(0, at) : null}
+        index={offerIndex < 0 ? null : offerIndex}
+        total={ordered.length}
+        onStep={stepOffer}
       />
     ) : null;
   // Vor/zurück durch die eigenen Stellen dieses PDFs (Issue #191): angestrichen oder verknüpft,
@@ -1297,14 +1297,13 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
         )}
         <span className="flex-1" />
         {!narrow && wholeEl}
-        {!narrow && suggestEl}
+        {suggestEl}
         {markEls}
         {!narrow && zoomEls}
         {narrow && (
           <MoreMenu>
             {wholeEl}
             {zoomEls}
-            {suggestEl}
           </MoreMenu>
         )}
       </div>
@@ -1696,68 +1695,6 @@ const NO_HIT_LIST: readonly DocHit[] = [];
 const NO_EXTRA: readonly DocHighlightItem[] = [];
 const NO_IDS: readonly string[] = [];
 const NO_SUGGESTIONS: readonly DocSuggestion[] = [];
-
-const SOURCE_LABEL: Readonly<Record<LinkSource, string>> = {
-  oz: 'OZ',
-  menge: 'Mengen',
-  beton: 'Beton',
-};
-
-/**
- * Schalter je Art von Vorschlag, mit der Zahl der offenen Vorschläge im Dokument. Eine Art
- * ohne offene Vorschläge (alle übernommen oder abgelehnt) verschwindet.
- */
-function SuggestToggles({
-  counts,
-  suggest,
-  setSuggest,
-  onFirst,
-}: {
-  counts: Readonly<Record<LinkSource, number>>;
-  suggest: Readonly<Record<LinkSource, boolean>>;
-  setSuggest: (source: LinkSource, on: boolean) => void;
-  /** Springt zum ersten sichtbaren Vorschlag; `null`, wenn alle ausgeblendet sind. */
-  onFirst: ((at: { left: number; top: number }) => void) | null;
-}) {
-  return (
-    <span role="group" aria-label="Vorschläge" className="flex items-center gap-[4px]">
-      <button
-        type="button"
-        disabled={onFirst === null}
-        title="Zum ersten Vorschlag, dann mit ← → weiter"
-        onClick={(event) => {
-          const box = event.currentTarget.getBoundingClientRect();
-          onFirst?.({ left: box.left, top: box.bottom + 4 });
-        }}
-        className="cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-mute hover:text-ink hover:underline disabled:cursor-default disabled:no-underline"
-      >
-        Vorschläge
-      </button>
-      {LINK_SOURCES.filter((source) => counts[source] > 0).map((source) => (
-        <button
-          key={source}
-          type="button"
-          aria-pressed={suggest[source]}
-          title={
-            suggest[source]
-              ? `${SOURCE_LABEL[source]}-Vorschläge ausblenden`
-              : `${SOURCE_LABEL[source]}-Vorschläge zeigen`
-          }
-          onClick={() => setSuggest(source, !suggest[source])}
-          className={`${TOOL} gap-[4px] ${
-            suggest[source] ? '' : 'text-mute line-through decoration-line2'
-          }`}
-        >
-          <span
-            aria-hidden="true"
-            className={`w-[10px] border-b-2 border-dashed ${SUGGEST_BORDER[source]}`}
-          />
-          {SOURCE_LABEL[source]} {counts[source]}
-        </button>
-      ))}
-    </span>
-  );
-}
 
 export function DocumentView() {
   const { active, overview } = useDocuments();

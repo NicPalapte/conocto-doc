@@ -162,12 +162,18 @@ export const INITIAL_WORKSPACE: WorkspaceState = {
  * kommt der andere Reiter nach vorn. Ist das Ziel zu, legt es sich als Reiter auf den Platz
  * des anderen. Sind beide an verschiedenen Plätzen offen, tauschen sie die Plätze.
  */
+/** Bereich ist offen und vorn auf seinem Platz, also gerade zu sehen. */
+export function paneShown(workspace: WorkspaceState, pane: PaneId): boolean {
+  const open = (id: PaneId): boolean => !workspace.closed[id];
+  return open(pane) && frontOf(leafOf(workspace.root, pane), open) === pane;
+}
+
 export function switchGraphTable(
   workspace: WorkspaceState,
   to: 'graph' | 'table' | null,
 ): WorkspaceState {
   const open = (pane: PaneId): boolean => !workspace.closed[pane];
-  const graphShown = open('graph') && frontOf(leafOf(workspace.root, 'graph'), open) === 'graph';
+  const graphShown = paneShown(workspace, 'graph');
   const target = to ?? (graphShown ? 'table' : 'graph');
   const other = target === 'table' ? 'graph' : 'table';
   const otherLeaf = leafOf(workspace.root, other);
