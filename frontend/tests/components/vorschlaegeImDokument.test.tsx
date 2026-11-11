@@ -118,8 +118,8 @@ describe('Vorschläge im Dokument', { timeout: 15_000 }, () => {
     expect(arten().getByRole('menuitemcheckbox', { name: /Mengen\s*1/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Vorschlag 783,03 m³' }));
     fireEvent.click(screen.getByRole('button', { name: 'Nein' }));
-    // Keine offenen Vorschläge mehr: der Blätterer geht nur noch die eigenen Stellen durch.
-    expect(screen.getByRole('button', { name: 'Stellen ▾' })).toBeInTheDocument();
+    // Keine offenen Vorschläge mehr: der Blätterer geht nur noch die Verknüpfungen durch.
+    expect(screen.getByRole('button', { name: 'Verknüpfungen ▾' })).toBeInTheDocument();
     expect(arten().queryByRole('menuitemcheckbox')).toBeNull();
   });
 
@@ -195,15 +195,15 @@ describe('Vorschläge im Dokument', { timeout: 15_000 }, () => {
     expect(screen.queryByRole('dialog', { name: 'Vorschlag verknüpfen' })).toBeNull();
   });
 
-  it('ein Blätterer: im Menü auf eigene Stellen umschalten (Variante A, 11.11.)', async () => {
+  it('ein Blätterer: im Menü auf Verknüpfungen umschalten (Variante A, 11.11.)', async () => {
     await ladeAppMitPdf();
     fireEvent.click(await screen.findByRole('button', { name: 'Vorschlag 1.2.20' }));
     fireEvent.click(screen.getByRole('button', { name: 'Verknüpfen' }));
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.getByRole('button', { name: 'Vorschläge ▾' })).toBeInTheDocument();
-    fireEvent.click(arten().getByRole('menuitemradio', { name: /Eigene Stellen/ }));
-    expect(screen.getByRole('button', { name: 'Stellen ▾' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Nächste Stelle' })).toBeInTheDocument();
+    fireEvent.click(arten().getByRole('menuitemradio', { name: /Verknüpfungen/ }));
+    expect(screen.getByRole('button', { name: 'Verknüpfungen ▾' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Nächste Verknüpfung' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Nächster Vorschlag' })).toBeNull();
   });
 });

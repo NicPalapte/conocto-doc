@@ -154,6 +154,6 @@ describe('Ganzes Dokument verknüpfen (Issue #191)', () => {
       await screen.findByRole('button', { name: 'Dokument verknüpft · 1' }),
     ).toBeInTheDocument();
     // Blättern durch die Stellen bleibt aus: das ganze Dokument ist keine Stelle.
-    expect(screen.queryByRole('button', { name: 'Nächste Stelle' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Nächste Verknüpfung' })).toBeNull();
   });
 });

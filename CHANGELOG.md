@@ -19,7 +19,7 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 - **Matrix ohne „ohne Angabe“:** In der Darstellung lässt sich „Ohne Angabe“ ausblenden. Das
   ändert nur den Graphen, Tabelle und Überblick zählen weiter alles.
 - **Ein Blätterer im PDF:** In der Kopfleiste des Dokuments steht nur noch ein ‹ 1 / 8 ›.
-  Das Menü davor wählt, was er durchgeht: Vorschläge oder eigene Stellen. Dort schalten
+  Das Menü davor wählt, was er durchgeht: Vorschläge oder Verknüpfungen. Dort schalten
   Häkchen OZ, Mengen und Beton ein und aus. In der Leiste zum Vorschlag geht es mit ‹ › oder
   den Pfeiltasten weiter, nach „Verknüpfen“ oder „Nein“ von selbst.
 - **Überblick:** Die Kacheln oben zeigen keine Erklärtexte mehr.

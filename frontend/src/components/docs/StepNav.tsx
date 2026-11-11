@@ -1,6 +1,7 @@
 // Ein Blätterer in der Kopfleiste des Dokuments (Issue #191, Runde 3, Nico 11.11.: Variante A):
-// ‹ 1 / 8 › geht entweder durch die offenen Vorschläge oder durch die eigenen Stellen. Was er
-// durchgeht, wählt das Menü davor; dort stehen auch die Schalter je Art von Vorschlag
+// ‹ 1 / 8 › geht entweder durch die offenen Vorschläge oder durch die „Verknüpfungen“, also
+// die eigenen Stellen (angestrichen oder verknüpft; Name von Nico, 11.11.). Was er durchgeht,
+// wählt das Menü davor; dort stehen auch die Schalter je Art von Vorschlag
 // (OZ, Mengen, Beton, Entscheidung 0087) als Häkchenliste.
 
 import { useCallback, useRef, useState, type ReactNode } from 'react';
@@ -19,12 +20,12 @@ const SOURCE_LABEL: Readonly<Record<LinkSource, string>> = {
 
 const MODE_LABEL: Readonly<Record<StepMode, string>> = {
   vorschlaege: 'Vorschläge',
-  stellen: 'Stellen',
+  stellen: 'Verknüpfungen',
 };
 
 const STEP_LABEL: Readonly<Record<StepMode, readonly [string, string]>> = {
   vorschlaege: ['Voriger Vorschlag', 'Nächster Vorschlag'],
-  stellen: ['Vorige Stelle', 'Nächste Stelle'],
+  stellen: ['Vorige Verknüpfung', 'Nächste Verknüpfung'],
 };
 
 const ROW =
@@ -161,7 +162,7 @@ export function StepNav({
               onClick={() => setMode('stellen')}
               count={markTotal}
             >
-              Eigene Stellen
+              Verknüpfungen
             </Row>
           )}
           {sources.length > 0 && (
