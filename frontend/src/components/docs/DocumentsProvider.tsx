@@ -16,6 +16,7 @@
 // Dokumentart (Entscheidung 0096): erkannt beim Öffnen aus Name und erster Seite, hier
 // als Schätzung; eine Wahl von Hand steht in den Notizen und geht vor.
 
+import { betonSorteOf, OHNE_KLASSE } from '../../lib/beton/sorten';
 import {
   createContext,
   useCallback,
@@ -114,15 +115,17 @@ export interface DocumentsApi {
 }
 
 function* suggestPositions(index: PositionIndex): Generator<SuggestPosition> {
-  for (const node of index.nodes) {
-    const position = node.position;
-    if (position === null) continue;
+  for (let i = 0; i < index.size; i++) {
+    const position = index.positions[i];
+    const sorte = betonSorteOf(position);
     yield {
-      id: node.id,
+      id: index.nodes[i].id,
       oz: position.oz,
       quantity: position.quantity,
       unit: position.unit,
       shortText: position.shortText,
+      // Ohne Festigkeitsklasse gibt es nichts, was im Dokument wörtlich stehen könnte.
+      sorte: sorte === OHNE_KLASSE ? null : sorte,
     };
   }
 }
@@ -427,8 +430,12 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   );
 
   // Vorschläge: einmal je LV ein Verzeichnis, dann je Dokument alle Seiten im Worker.
-  const { oz: ozShown, menge: mengeShown } = shownSuggestions(annotations.documents);
-  const suggest = useMemo(() => ({ oz: ozShown, menge: mengeShown }), [ozShown, mengeShown]);
+  const shown = shownSuggestions(annotations.documents);
+  const { oz: ozShown, menge: mengeShown, beton: betonShown } = shown;
+  const suggest = useMemo(
+    () => ({ oz: ozShown, menge: mengeShown, beton: betonShown }),
+    [ozShown, mengeShown, betonShown],
+  );
   const setSuggest = useCallback(
     (source: LinkSource, on: boolean): void => dispatch({ type: 'docSuggest', source, on }),
     [dispatch],
@@ -441,7 +448,10 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   );
   // Nur an den Regeln, nicht an den Schaltern: Die Schalter zählen die Vorschläge und
   // blieben sonst weg, wenn beide aus sind — gemerkt in den Notizen, also dauerhaft.
-  const wanted = suggestIndex.rules.oz !== null || suggestIndex.rules.menge !== null;
+  const wanted =
+    suggestIndex.rules.oz !== null ||
+    suggestIndex.rules.menge !== null ||
+    suggestIndex.rules.beton !== null;
   const [suggested, setSuggested] = useState<{
     index: SuggestIndex | null;
     byDoc: ReadonlyMap<string, readonly DocSuggestion[]>;

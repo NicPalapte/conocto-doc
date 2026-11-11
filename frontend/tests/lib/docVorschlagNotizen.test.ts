@@ -78,7 +78,7 @@ describe('Herkunft einer Verknüpfung', () => {
 
 describe('Offene Vorschläge', () => {
   const LISTE = [vorschlag(SPOT, 'p1', 'oz'), vorschlag(MENGE, 'p1', 'menge')];
-  const ALLE = { oz: true, menge: true };
+  const ALLE = { oz: true, menge: true, beton: true };
 
   it('ohne abgelehnte, schon verknüpfte und abgeschaltete', () => {
     expect(pendingSuggestions(EMPTY_DOC_NOTES, 'd0c', LISTE, ALLE)).toHaveLength(2);
@@ -88,9 +88,9 @@ describe('Offene Vorschläge', () => {
     expect(isRejected(abgelehnt, MENGE, 'p1')).toBe(true);
     expect(isRejected(abgelehnt, MENGE, 'p2')).toBe(false);
     expect(pendingSuggestions(abgelehnt, 'd0c', LISTE, ALLE)).toEqual([LISTE[0]]);
-    expect(pendingSuggestions(EMPTY_DOC_NOTES, 'd0c', LISTE, { oz: false, menge: true })).toEqual([
-      LISTE[1],
-    ]);
+    expect(
+      pendingSuggestions(EMPTY_DOC_NOTES, 'd0c', LISTE, { oz: false, menge: true, beton: true }),
+    ).toEqual([LISTE[1]]);
   });
 
   it('eine Stelle, die mit einer anderen Position verknüpft ist, schlägt weiter vor', () => {
@@ -121,16 +121,16 @@ describe('Speichern', () => {
   });
 
   it('ausgeblendete Arten von Vorschlag bleiben für dieses LV gemerkt (0087)', () => {
-    expect(shownSuggestions(EMPTY_DOC_NOTES)).toEqual({ oz: true, menge: true });
+    expect(shownSuggestions(EMPTY_DOC_NOTES)).toEqual({ oz: true, menge: true, beton: true });
     const aus = showSuggestions(EMPTY_DOC_NOTES, 'menge', false);
     expect(showSuggestions(aus, 'menge', false)).toBe(aus);
-    expect(shownSuggestions(aus)).toEqual({ oz: true, menge: false });
+    expect(shownSuggestions(aus)).toEqual({ oz: true, menge: false, beton: true });
     const back = fromStored(
       JSON.parse(JSON.stringify(toStored({ ...EMPTY_ANNOTATIONS, documents: aus }))),
     );
-    expect(shownSuggestions(back.documents)).toEqual({ oz: true, menge: false });
+    expect(shownSuggestions(back.documents)).toEqual({ oz: true, menge: false, beton: true });
     const wieder = showSuggestions(back.documents, 'menge', true);
-    expect(shownSuggestions(wieder)).toEqual({ oz: true, menge: true });
+    expect(shownSuggestions(wieder)).toEqual({ oz: true, menge: true, beton: true });
     expect(toStored({ ...EMPTY_ANNOTATIONS, documents: wieder }).documents).not.toHaveProperty(
       'hidden',
     );
@@ -139,7 +139,7 @@ describe('Speichern', () => {
       ...JSON.parse(JSON.stringify(toStored(EMPTY_ANNOTATIONS))),
       documents: { docs: [], marks: [], hidden: ['oz', 'preis', 3] },
     });
-    expect(shownSuggestions(kaputt.documents)).toEqual({ oz: false, menge: true });
+    expect(shownSuggestions(kaputt.documents)).toEqual({ oz: false, menge: true, beton: true });
   });
 
   it('Notiz-Datei: „quelle“ und „abgelehnt“ je Position, an der neuen Position wieder da', () => {

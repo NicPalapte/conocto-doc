@@ -53,7 +53,12 @@ import {
   type DocMark,
   type DocSpot,
 } from '../../lib/docs/docNotes';
-import type { DocSuggestion, LinkSource } from '../../lib/docs/docSuggest';
+import {
+  LINK_SOURCES,
+  SUGGEST_BORDER,
+  type DocSuggestion,
+  type LinkSource,
+} from '../../lib/docs/docSuggest';
 import type { OpenedPdf } from '../../lib/docs/pdf';
 import type { DocHit } from '../../lib/docs/docSearch';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
@@ -656,10 +661,15 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
   }, [pending]);
   const counts = useMemo(() => {
     const all = suggestions.get(doc.id) ?? [];
-    const open = pendingSuggestions(annotations.documents, doc.id, all, { oz: true, menge: true });
+    const open = pendingSuggestions(annotations.documents, doc.id, all, {
+      oz: true,
+      menge: true,
+      beton: true,
+    });
     return {
       oz: open.filter((item) => item.source === 'oz').length,
       menge: open.filter((item) => item.source === 'menge').length,
+      beton: open.filter((item) => item.source === 'beton').length,
     };
   }, [annotations.documents, doc.id, suggestions]);
   const onSuggestion = useCallback(
@@ -1074,7 +1084,7 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
   const narrow = width > 0 && width < (planCount > 0 ? NARROW_BAR_PLANS : NARROW_BAR);
   const tight = width > 0 && width < (planCount > 0 ? TIGHT_BAR_PLANS : TIGHT_BAR);
   const suggestEl =
-    counts.oz + counts.menge > 0 ? (
+    counts.oz + counts.menge + counts.beton > 0 ? (
       <SuggestToggles counts={counts} suggest={suggest} setSuggest={setSuggest} />
     ) : null;
   // Vor/zurück durch die eigenen Stellen dieses PDFs (Issue #191): angestrichen oder verknüpft,
@@ -1605,6 +1615,16 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
             setOffer(null);
           }}
           onShow={() => jumpToPosition(offer.suggestion.id, { stayInView: true })}
+          onShowAll={
+            offer.suggestion.sorte === undefined
+              ? undefined
+              : () =>
+                  dispatch({
+                    type: 'setFacet',
+                    facetId: 'betonsorte',
+                    values: new Set([offer.suggestion.sorte?.key ?? '']),
+                  })
+          }
           onClose={() => setOffer(null)}
         />
       )}
@@ -1642,7 +1662,11 @@ const NO_EXTRA: readonly DocHighlightItem[] = [];
 const NO_IDS: readonly string[] = [];
 const NO_SUGGESTIONS: readonly DocSuggestion[] = [];
 
-const SOURCE_LABEL: Readonly<Record<LinkSource, string>> = { oz: 'OZ', menge: 'Mengen' };
+const SOURCE_LABEL: Readonly<Record<LinkSource, string>> = {
+  oz: 'OZ',
+  menge: 'Mengen',
+  beton: 'Beton',
+};
 
 /**
  * Schalter je Art von Vorschlag, mit der Zahl der offenen Vorschläge im Dokument. Eine Art
@@ -1660,32 +1684,28 @@ function SuggestToggles({
   return (
     <span role="group" aria-label="Vorschläge" className="flex items-center gap-[4px]">
       <span className="font-mono text-[11px] text-mute">Vorschläge</span>
-      {(['oz', 'menge'] as const)
-        .filter((source) => counts[source] > 0)
-        .map((source) => (
-          <button
-            key={source}
-            type="button"
-            aria-pressed={suggest[source]}
-            title={
-              suggest[source]
-                ? `${SOURCE_LABEL[source]}-Vorschläge ausblenden`
-                : `${SOURCE_LABEL[source]}-Vorschläge zeigen`
-            }
-            onClick={() => setSuggest(source, !suggest[source])}
-            className={`${TOOL} gap-[4px] ${
-              suggest[source] ? '' : 'text-mute line-through decoration-line2'
-            }`}
-          >
-            <span
-              aria-hidden="true"
-              className={`w-[10px] border-b-2 border-dashed ${
-                source === 'oz' ? 'border-accent' : 'border-amber'
-              }`}
-            />
-            {SOURCE_LABEL[source]} {counts[source]}
-          </button>
-        ))}
+      {LINK_SOURCES.filter((source) => counts[source] > 0).map((source) => (
+        <button
+          key={source}
+          type="button"
+          aria-pressed={suggest[source]}
+          title={
+            suggest[source]
+              ? `${SOURCE_LABEL[source]}-Vorschläge ausblenden`
+              : `${SOURCE_LABEL[source]}-Vorschläge zeigen`
+          }
+          onClick={() => setSuggest(source, !suggest[source])}
+          className={`${TOOL} gap-[4px] ${
+            suggest[source] ? '' : 'text-mute line-through decoration-line2'
+          }`}
+        >
+          <span
+            aria-hidden="true"
+            className={`w-[10px] border-b-2 border-dashed ${SUGGEST_BORDER[source]}`}
+          />
+          {SOURCE_LABEL[source]} {counts[source]}
+        </button>
+      ))}
     </span>
   );
 }

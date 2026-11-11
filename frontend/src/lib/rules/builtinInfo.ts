@@ -61,6 +61,16 @@ const INFO: Readonly<Record<string, BuiltinInfo>> = {
       'kleinste-ganze-zahl': { label: 'Ganze Zahlen erst ab', min: 0, max: 10000 },
     },
   },
+  'beton-im-pdf': {
+    name: 'Beton im Dokument',
+    params: {
+      'hoechstens-positionen': {
+        label: 'Höchstens so viele Positionen je Stelle',
+        min: 1,
+        max: 20,
+      },
+    },
+  },
 };
 
 /** Name und Parameter eines eingebauten Bausteins; Unbekanntes unter seinem Namen ohne Werte. */

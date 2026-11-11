@@ -9,6 +9,7 @@
 // Blob im Browser, der Druck läuft über `window.print()`
 // (docs/decisions/0022-export-und-druck-ohne-request.md).
 
+import { linkedTextsOf } from '../../lib/docs/docNotes';
 import { useCallback, useMemo } from 'react';
 import { buildBetonSorten } from '../../lib/beton/sorten';
 import { betonSortenCsv } from '../../lib/export/betonSorten';
@@ -102,11 +103,11 @@ export function useMitnehmen(): Mitnehmen {
       const mask = active.filtering ? filterMask(index, active) : null;
       downloadText(
         exportFileName(lv.fileName, 'betonsorten', 'csv'),
-        betonSortenCsv(buildBetonSorten(index, mask)),
+        betonSortenCsv(buildBetonSorten(index, mask, linkedTextsOf(annotations.documents))),
         'csv',
       );
     });
-  }, [lv, index, active, absichern]);
+  }, [lv, index, active, annotations, absichern]);
 
   const hinweiseAlsMarkdown = useCallback((): void => {
     if (lv === null) return;

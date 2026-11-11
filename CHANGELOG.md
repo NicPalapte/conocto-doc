@@ -9,6 +9,22 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.58.0 — 10.11.2026 · Beton im Dokument
+
+- **Vorschläge über Beton:** Steht im PDF eine Betonsorte wie „C30/37, XC4, XF1, WF“, schlägt
+  Conocto die Position mit genau dieser Sorte vor. Haben mehrere Positionen die Sorte,
+  entscheiden Wörter aus dem Kurztext („Wände Tiefgarage“). Übernommen wird erst per Klick.
+  Steht im PDF nur die Festigkeit („Außenwände … C35/45“), reicht das mit eindeutigem
+  Bauteilwort.
+- **„Alle N“** in der Leiste filtert nach der Sorte.
+- **Fehlt im LV:** Steht eine Angabe nur in einer verknüpften Stelle im Dokument, zeigt die
+  Betonsortenliste sie farbig mit „fehlt im LV“. Auch in der CSV.
+- **Abschaltbar:** Grundstock-Regel „Beton im Dokument“ in den Admin-Werkzeugen, Schalter
+  „Beton“ im Dokument.
+- **PP-Fasern** zählen als Fasern.
+- **Betonsorte aufgeklappt:** Positionen stehen unter den Angaben, mit Überschrift
+  „Gefundene Positionen“.
+
 ## 0.57.0 — 10.11.2026 · Betonsortenliste
 
 - **Betonsorten im Überblick:** Neue Karte „Betonsorten“. Eine Zeile je Sorte, also je

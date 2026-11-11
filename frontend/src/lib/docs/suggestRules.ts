@@ -1,5 +1,6 @@
 // Vorschläge im Begleitdokument aus den Regeln (Entscheidung 0087): „OZ im Dokument“
-// (`oz-im-pdf`) und „Menge im Dokument“ (`menge-im-pdf`) sind Grundstock-Regeln mit
+// (`oz-im-pdf`), „Menge im Dokument“ (`menge-im-pdf`) und „Beton im Dokument“
+// (`beton-im-pdf`, 0106) sind Grundstock-Regeln mit
 // eingebauter Logik in `docSuggest.ts`. Hier steht nur, welche davon aktiv ist und mit
 // welchen Parametern. Fehlt eine Regel oder ist sie aus, gibt es diese Art nicht.
 
@@ -7,6 +8,7 @@ import { blocksOf, type Rule } from '@core';
 import {
   AMOUNT_MIN_INTEGER,
   AMOUNT_NEAR_OZ,
+  BETON_MAX_POSITIONS,
   type LinkSource,
   type SuggestRules,
 } from './docSuggest';
@@ -15,6 +17,7 @@ import {
 export const SUGGEST_BUILTINS: Readonly<Record<LinkSource, string>> = {
   oz: 'oz-im-pdf',
   menge: 'menge-im-pdf',
+  beton: 'beton-im-pdf',
 };
 
 type Parameter = Readonly<Record<string, unknown>>;
@@ -42,11 +45,16 @@ function countOf(parameter: Parameter, key: string, fallback: number): number {
 export function suggestRulesOf(rules: readonly Rule[]): SuggestRules {
   const oz = activeParameter(rules, SUGGEST_BUILTINS.oz);
   const menge = activeParameter(rules, SUGGEST_BUILTINS.menge);
+  const beton = activeParameter(rules, SUGGEST_BUILTINS.beton);
   return {
     oz: oz === null ? null : { nearOz: countOf(oz, 'menge-hinter-oz', AMOUNT_NEAR_OZ) },
     menge:
       menge === null
         ? null
         : { minInteger: countOf(menge, 'kleinste-ganze-zahl', AMOUNT_MIN_INTEGER) },
+    beton:
+      beton === null
+        ? null
+        : { maxPositions: countOf(beton, 'hoechstens-positionen', BETON_MAX_POSITIONS) },
   };
 }
