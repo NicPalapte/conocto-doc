@@ -155,6 +155,20 @@ describe('buildBetonSorten', () => {
     expect(angabeText(haupt, 'chloridklasse')).toBe('Cl 0,40 (fehlt in 1 von 2)');
   });
 
+  it('nimmt aus einer Stelle mit zwei Sorten nur den Teil der eigenen (Review #228)', () => {
+    const wand = idx.nodes[1].id;
+    const texte = (id: string) =>
+      id === wand
+        ? ['Sauberkeitsschicht C12/15 X0 Konsistenz F2 · Wände C30/37 XC4, XF1, WF Konsistenz F3']
+        : [];
+    const [haupt] = buildBetonSorten(idx, null, texte).sorten;
+    const konsistenz = haupt.angaben.find((entry) => entry.key === 'konsistenz');
+    expect(konsistenz?.imDokument).toEqual(['F3']);
+    const fremd = () => ['Beton C25/30, Konsistenz F4'];
+    const [ohne] = buildBetonSorten(idx, null, fremd).sorten;
+    expect(ohne.angaben.find((entry) => entry.key === 'konsistenz')?.imDokument).toEqual([]);
+  });
+
   it('gibt Schalung und andere Nicht-m³-Positionen ohne Klasse keine Sorte', () => {
     expect(betonSorteOf(idx.positions[4])).toBeNull();
   });

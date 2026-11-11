@@ -501,8 +501,9 @@ const FESTIGKEIT = /(?<![\p{L}\p{N}])(?:lc|c)\s?\d{1,3}\/\d{1,3}(?![\p{L}\p{N}])
  * Weitere Klassen direkt hinter der Festigkeitsklasse: Exposition, Feuchtigkeit, Chlorid,
  * Konsistenz, Größtkorn — getrennt durch Komma, Punkt in der Mitte, Schrägstrich, „und“.
  */
+// Kürzel nur in Großschreibung: „wo möglich“ oder „f1“ in Prosa sind keine Klassen.
 const KLASSE_DANACH =
-  /(?:[\s,;·/]|und|sowie|-)*(?:x0|x[cdsfam][1-4]|w[ofa]|cl\s?[01][,.]\d{1,2}|sf[1-3]|f[1-6]|konsistenz(?:klasse)?\s*[:=]?\s*(?:s[1-5]|c[0-4]|sf[1-3]|f[1-6])|(?:gr(?:ö|oe)(?:ß|ss)tkorn|d\s?max|gk)\s*[:=]?\s*\d{1,2}(?:\s?mm)?)(?![\p{L}\p{N}])/iuy;
+  /(?:[\s,;·/]|und|sowie|-)*(?:X0|X[CDSFAM][1-4]|W[OFA]|C[lL]\s?[01][,.]\d{1,2}|SF[1-3]|F[1-6]|[Kk]onsistenz(?:klasse)?\s*[:=]?\s*(?:S[1-5]|C[0-4]|SF[1-3]|F[1-6])|(?:[Gg]r(?:ö|oe)(?:ß|ss)tkorn|[Dd]\s?max|GK)\s*[:=]?\s*\d{1,2}(?:\s?mm)?)(?![\p{L}\p{N}])/uy;
 
 /** Ende der Klassen ab `from` (hinter der Festigkeitsklasse). */
 function klassenEnde(text: string, from: number): number {
@@ -576,18 +577,23 @@ function findBeton(text: string, index: SuggestIndex, max: number): BetonFound[]
       return;
     }
     const stemsOf = (id: string) => index.words.get(id) ?? [];
+    // Je Wort einmal über alle Kandidaten: eigen ist es, wenn genau einer es hat. So bleibt
+    // der Aufwand linear, auch bei Sorten mit tausenden Positionen (Review #228).
     const ownIn = (part: Span) => {
-      const found = wordsIn(text.slice(part.start, part.end), part.start);
-      return candidates
-        .map((id) => {
-          const others = candidates.filter((other) => other !== id).map(stemsOf);
-          const own = found.filter(
-            (word) =>
-              stemsMatch(stemsOf(id), word) && !others.some((stems) => stemsMatch(stems, word)),
-          );
-          return { id, own };
-        })
-        .filter((item) => item.own.length > 0);
+      const own = new Map<string, Word[]>();
+      for (const word of wordsIn(text.slice(part.start, part.end), part.start)) {
+        let hit: string | null = null;
+        for (const id of candidates) {
+          if (!stemsMatch(stemsOf(id), word)) continue;
+          if (hit !== null) {
+            hit = null;
+            break;
+          }
+          hit = id;
+        }
+        if (hit !== null) own.set(hit, [...(own.get(hit) ?? []), word]);
+      }
+      return [...own].map(([id, words]) => ({ id, own: words }));
     };
     const front = ownIn(before);
     const picked = front.length > 0 ? front : ownIn(after);
@@ -688,8 +694,9 @@ export function suggestionsInPage(
       });
     }
   }
-  const max = index.rules.beton?.maxPositions ?? BETON_MAX_POSITIONS;
-  for (const found of findBeton(text, index, max)) {
+  // Regel aus: gar nicht erst suchen.
+  const beton = index.rules.beton;
+  for (const found of beton === null ? [] : findBeton(text, index, beton.maxPositions)) {
     if (ozs.some((oz) => overlaps(oz, found.span))) continue;
     out.push({
       page,
