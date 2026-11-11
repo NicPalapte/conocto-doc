@@ -27,6 +27,7 @@ import { LinkDialog } from './LinkDialog';
 import { DOC_TOOL as TOOL, PdfInput } from './PdfInput';
 import { PdfPage, type PageSize } from './PdfPage';
 import { SuggestBar } from './SuggestBar';
+import { StepNav, type StepMode } from './StepNav';
 import { PlanLayer, type PlanDraft } from './PlanLayer';
 import { GROUP_OF, SNAP_TOOLS, TWO_POINT_TOOLS, type PlanTool, type ToolGroup } from './planTools';
 import { MeasureBar, PlanToolbar, ScalePanel } from './PlanControls';
@@ -54,10 +55,10 @@ import {
   type DocSpot,
 } from '../../lib/docs/docNotes';
 import {
-  LINK_SOURCES,
-  SUGGEST_BORDER,
+  orderSuggestions,
+  sameSuggestion,
+  stepSuggestion,
   type DocSuggestion,
-  type LinkSource,
 } from '../../lib/docs/docSuggest';
 import type { OpenedPdf } from '../../lib/docs/pdf';
 import type { DocHit } from '../../lib/docs/docSearch';
@@ -677,6 +678,31 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
       setOffer({ suggestion, ...at }),
     [],
   );
+  // Durch die offenen Vorschläge blättern (Issue #191): Sprung zur Stelle, Leiste bleibt.
+  const ordered = useMemo(() => orderSuggestions(pending), [pending]);
+  const offerIndex =
+    offer === null ? -1 : ordered.findIndex((item) => sameSuggestion(item, offer.suggestion));
+  const showSuggestion = (index: number, at: { left: number; top: number }): void => {
+    const suggestion = ordered[index];
+    setOffer({ suggestion, ...at });
+    jumpTo({ doc: doc.id, page: suggestion.page, start: suggestion.start, text: suggestion.text });
+  };
+  const stepOffer = (step: 1 | -1, at: { left: number; top: number }): void => {
+    const next = stepSuggestion(ordered, offer?.suggestion ?? null, step);
+    if (next !== null) showSuggestion(next, at);
+  };
+  /** Nach „Verknüpfen“ oder „Nein“ weiter zum nächsten, solange einer bleibt. */
+  const afterDecision = (done: DocSuggestion, at: { left: number; top: number }): void => {
+    const rest = ordered.filter((item) => !sameSuggestion(item, done));
+    const at0 = ordered.findIndex((item) => sameSuggestion(item, done));
+    if (rest.length === 0 || at0 < 0) {
+      setOffer(null);
+      return;
+    }
+    const next = rest[at0 % rest.length];
+    setOffer({ suggestion: next, ...at });
+    jumpTo({ doc: doc.id, page: next.page, start: next.start, text: next.text });
+  };
 
   // Andere Datei gleichen Namens: Stellen von damals hängen an der alten Kennung.
   const otherVersion = useMemo(() => {
@@ -1083,10 +1109,6 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
   // Schmaler Bereich: seltene Knöpfe wandern ins Menü „⋯“, ganz schmal auch die Suche.
   const narrow = width > 0 && width < (planCount > 0 ? NARROW_BAR_PLANS : NARROW_BAR);
   const tight = width > 0 && width < (planCount > 0 ? TIGHT_BAR_PLANS : TIGHT_BAR);
-  const suggestEl =
-    counts.oz + counts.menge + counts.beton > 0 ? (
-      <SuggestToggles counts={counts} suggest={suggest} setSuggest={setSuggest} />
-    ) : null;
   // Vor/zurück durch die eigenen Stellen dieses PDFs (Issue #191): angestrichen oder verknüpft,
   // in Lesereihenfolge. Ohne letzte Wahl geht es von der aktuellen Seite aus.
   // `from`: Seite beim Sprung — bis der Sprung angekommen ist, gilt die Wahl weiter.
@@ -1126,35 +1148,26 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     setMarkPick({ index: next, from: current });
     jumpTo(spots[next]);
   };
-  const markEls =
-    spots.length > 0 ? (
-      <span
-        role="group"
-        aria-label="Eigene Stellen"
-        className="flex shrink-0 items-center gap-[2px]"
-      >
-        <button
-          type="button"
-          aria-label="Vorige Stelle"
-          title="Vorige angestrichene oder verknüpfte Stelle"
-          onClick={() => stepMark(-1)}
-          className={TOOL}
-        >
-          ‹
-        </button>
-        <span className="font-mono text-[11.5px] text-mute">
-          {markIndex === null ? '–' : markIndex + 1} / {spots.length}
-        </span>
-        <button
-          type="button"
-          aria-label="Nächste Stelle"
-          title="Nächste angestrichene oder verknüpfte Stelle"
-          onClick={() => stepMark(1)}
-          className={TOOL}
-        >
-          ›
-        </button>
-      </span>
+  // Ein Blätterer für Vorschläge oder eigene Stellen (Nico 11.11., Variante A). Gibt es nur
+  // eines von beiden, geht er das durch; die Wahl gilt, solange dieses PDF offen ist.
+  const [stepMode, setStepMode] = useState<StepMode>('vorschlaege');
+  const suggestTotal = counts.oz + counts.menge + counts.beton;
+  const mode: StepMode =
+    suggestTotal === 0 ? 'stellen' : spots.length === 0 ? 'vorschlaege' : stepMode;
+  const stepEl =
+    suggestTotal + spots.length > 0 ? (
+      <StepNav
+        mode={mode}
+        setMode={setStepMode}
+        suggestTotal={suggestTotal}
+        markTotal={spots.length}
+        counts={counts}
+        suggest={suggest}
+        setSuggest={setSuggest}
+        index={mode === 'stellen' ? markIndex : offerIndex < 0 ? null : offerIndex}
+        total={mode === 'stellen' ? spots.length : ordered.length}
+        onStep={(step, at) => (mode === 'stellen' ? stepMark(step) : stepOffer(step, at))}
+      />
     ) : null;
   const zoomEls = (
     <>
@@ -1264,14 +1277,12 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
         )}
         <span className="flex-1" />
         {!narrow && wholeEl}
-        {!narrow && suggestEl}
-        {markEls}
+        {stepEl}
         {!narrow && zoomEls}
         {narrow && (
           <MoreMenu>
             {wholeEl}
             {zoomEls}
-            {suggestEl}
           </MoreMenu>
         )}
       </div>
@@ -1583,6 +1594,8 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
           shortText={positionOf(offer.suggestion.id)?.shortText ?? ''}
           left={offer.left}
           top={offer.top}
+          place={offerIndex < 0 ? null : { index: offerIndex, total: ordered.length }}
+          onStep={(step) => stepOffer(step, { left: offer.left, top: offer.top })}
           onLink={() => {
             const { suggestion } = offer;
             dispatch({
@@ -1597,7 +1610,7 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
               at: Date.now(),
               source: suggestion.source,
             });
-            setOffer(null);
+            afterDecision(suggestion, { left: offer.left, top: offer.top });
           }}
           onReject={() => {
             const { suggestion } = offer;
@@ -1612,7 +1625,7 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
               id: suggestion.id,
               at: Date.now(),
             });
-            setOffer(null);
+            afterDecision(suggestion, { left: offer.left, top: offer.top });
           }}
           onShow={() => jumpToPosition(offer.suggestion.id, { stayInView: true })}
           onShowAll={
@@ -1661,54 +1674,6 @@ const NO_HIT_LIST: readonly DocHit[] = [];
 const NO_EXTRA: readonly DocHighlightItem[] = [];
 const NO_IDS: readonly string[] = [];
 const NO_SUGGESTIONS: readonly DocSuggestion[] = [];
-
-const SOURCE_LABEL: Readonly<Record<LinkSource, string>> = {
-  oz: 'OZ',
-  menge: 'Mengen',
-  beton: 'Beton',
-};
-
-/**
- * Schalter je Art von Vorschlag, mit der Zahl der offenen Vorschläge im Dokument. Eine Art
- * ohne offene Vorschläge (alle übernommen oder abgelehnt) verschwindet.
- */
-function SuggestToggles({
-  counts,
-  suggest,
-  setSuggest,
-}: {
-  counts: Readonly<Record<LinkSource, number>>;
-  suggest: Readonly<Record<LinkSource, boolean>>;
-  setSuggest: (source: LinkSource, on: boolean) => void;
-}) {
-  return (
-    <span role="group" aria-label="Vorschläge" className="flex items-center gap-[4px]">
-      <span className="font-mono text-[11px] text-mute">Vorschläge</span>
-      {LINK_SOURCES.filter((source) => counts[source] > 0).map((source) => (
-        <button
-          key={source}
-          type="button"
-          aria-pressed={suggest[source]}
-          title={
-            suggest[source]
-              ? `${SOURCE_LABEL[source]}-Vorschläge ausblenden`
-              : `${SOURCE_LABEL[source]}-Vorschläge zeigen`
-          }
-          onClick={() => setSuggest(source, !suggest[source])}
-          className={`${TOOL} gap-[4px] ${
-            suggest[source] ? '' : 'text-mute line-through decoration-line2'
-          }`}
-        >
-          <span
-            aria-hidden="true"
-            className={`w-[10px] border-b-2 border-dashed ${SUGGEST_BORDER[source]}`}
-          />
-          {SOURCE_LABEL[source]} {counts[source]}
-        </button>
-      ))}
-    </span>
-  );
-}
 
 export function DocumentView() {
   const { active, overview } = useDocuments();

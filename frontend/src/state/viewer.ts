@@ -431,6 +431,7 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
     case 'graphLayout':
     case 'graphRows':
     case 'graphCols':
+    case 'graphHideEmpty':
     case 'graphHints':
     case 'graphViewport':
     case 'graphFocus':
@@ -453,6 +454,7 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
     case 'paneFront':
     case 'paneClosed':
     case 'showPane':
+    case 'switchGraphTable':
     case 'splitSize':
     case 'workspaceReset':
     case 'workspaceRestore': {

@@ -416,3 +416,75 @@ describe('Abschnitt hervorheben (Entscheidung 0075)', () => {
     expect(hervorgehoben()).toBe(false);
   });
 });
+
+describe('Funde aus dem Praxistest, Runde 3 (Issue #191)', () => {
+  it('blendet in „Matrix" Positionen ohne Angabe aus, ohne den Filter zu ändern', async () => {
+    await loadAndShowGraph();
+    oeffneDarstellung();
+    fireEvent.click(screen.getByRole('radio', { name: 'Matrix' }));
+    fireEvent.click(
+      within(screen.getByRole('radiogroup', { name: 'Zeilen' })).getByRole('radio', {
+        name: 'Mengenstufe',
+      }),
+    );
+    expect(graphText()).toContain('ohne Angabe');
+    const vorher = graph().querySelectorAll('[data-slot]').length;
+
+    fireEvent.click(
+      within(screen.getByRole('radiogroup', { name: 'Ohne Angabe' })).getByRole('radio', {
+        name: 'ausblenden',
+      }),
+    );
+    expect(graphText()).not.toContain('ohne Angabe');
+    const nachher = graph().querySelectorAll('[data-slot]').length;
+    expect(nachher).toBeGreaterThan(0);
+    expect(nachher).toBeLessThan(vorher);
+    // Nur Darstellung: kein Filter, keine Suche.
+    expect(screen.queryByRole('radiogroup', { name: 'Nicht-Treffer' })).toBeNull();
+
+    // „nach LV" kennt den Schalter nicht und zeigt wieder alle Positionen.
+    fireEvent.click(screen.getByRole('radio', { name: 'nach LV' }));
+    expect(screen.queryByRole('radiogroup', { name: 'Ohne Angabe' })).toBeNull();
+    expect(graph().querySelectorAll('[data-slot]').length).toBe(vorher);
+  });
+
+  it('zeigt beim Überfahren einer Position eine Karte mit Kurztext und Menge', async () => {
+    await loadAndShowGraph();
+    const punkt = graph().querySelector('[data-slot]') as Element;
+    fireEvent.mouseOver(punkt);
+    const karte = await screen.findByRole('tooltip');
+    expect(karte).toHaveAccessibleName(/^Position /);
+    expect(karte.textContent ?? '').not.toBe('');
+    fireEvent.mouseLeave(punkt.closest('g') as Element);
+  });
+
+  it('Taste T wechselt am selben Platz zur Tabelle und zurück', async () => {
+    await loadAndShowGraph();
+    const tabelle = (): HTMLElement | null =>
+      screen.queryByRole('region', { name: 'Tabelle — Bereich' });
+    expect(tabelle()).toBeNull();
+    fireEvent.keyDown(document.body, { key: 't' });
+    await waitFor(() => expect(tabelle()).toBeInTheDocument());
+    expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).toBeNull();
+    fireEvent.keyDown(document.body, { key: 't' });
+    await waitFor(() =>
+      expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).not.toBeNull(),
+    );
+    // In der Suche ist T ein Buchstabe.
+    fireEvent.keyDown(screen.getByLabelText('Suche'), { key: 't' });
+    expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).not.toBeNull();
+  });
+
+  it('Rechtsklick „In der Tabelle zeigen“ wechselt am Platz, wenn die Tabelle fehlt', async () => {
+    await loadAndShowGraph();
+    const punkt = graph().querySelector('[data-slot]') as SVGElement;
+    fireEvent.contextMenu(punkt);
+    expect(screen.queryByRole('menuitem', { name: 'Zur Tabelle wechseln' })).toBeNull();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'In der Tabelle zeigen' }));
+    const tabelle = await screen.findByRole('region', { name: 'Tabelle — Bereich' });
+    expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).toBeNull();
+    await waitFor(() =>
+      expect(within(tabelle).getAllByRole('row', { selected: true })).toHaveLength(1),
+    );
+  });
+});

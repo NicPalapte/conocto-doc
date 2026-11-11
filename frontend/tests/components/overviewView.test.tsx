@@ -68,10 +68,11 @@ describe('Überblick', () => {
   it('zeigt die Kennzahlen der geladenen Datei', () => {
     renderOverview();
     expect(screen.getByText('28 Positionen')).toBeInTheDocument();
-    expect(screen.getByTitle('im ganzen LV')).toBeInTheDocument();
-    // Hauptabschnitte statt Gewerke: die stehen in jeder Datei.
-    const kachel = screen.getByTitle('Hauptabschnitte im LV').parentElement as HTMLElement;
-    expect(kachel).toHaveTextContent(/^Abschnitte3Hauptabschnitte im LV$/);
+    // Hauptabschnitte statt Gewerke: die stehen in jeder Datei. Ohne Erklärtext (Issue #191).
+    const kachel = screen.getByText('Abschnitte').parentElement as HTMLElement;
+    expect(kachel).toHaveTextContent(/^Abschnitte3$/);
+    expect(screen.queryByText('im ganzen LV')).toBeNull();
+    expect(screen.queryByText(/Hinweis, kein Urteil/)).toBeNull();
     expect(screen.queryByText('Gewerke')).toBeNull();
     expect(screen.getByText('Hinweise')).toBeInTheDocument();
   });
