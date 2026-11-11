@@ -103,10 +103,34 @@ export type DocTexts = (nodeId: string) => readonly string[];
 const NO_DOC_TEXTS: DocTexts = () => [];
 
 /** Angaben, die in Texten aus Begleitdokumenten stehen. */
-function dokumentWerte(texts: readonly string[]): Map<PflichtKey, string[]> {
+// Druckfestigkeitsklasse wie in `normklassen.ts`, auf kleingeschriebenem Text.
+const FESTIGKEIT = /\b(?:lc|c)\s?\d{1,3}\/\d{1,3}\b/g;
+
+/**
+ * Teile einer Stelle, die zur Festigkeit der Position gehören: ab ihrer Klasse bis zur
+ * nächsten. Ohne Festigkeitsklasse in der Stelle gilt die ganze Stelle; nennt sie nur
+ * andere, gilt nichts (Review #228: eine Tabellenzeile mit zwei Sorten mischt sonst Werte).
+ */
+function teileZur(text: string, festigkeit: string | null): string[] {
+  const lower = text.toLowerCase();
+  const matches = [...lower.matchAll(FESTIGKEIT)];
+  if (matches.length === 0) return [lower];
+  const eigene = festigkeit?.toLowerCase().replace(/\s+/g, '') ?? null;
+  return matches
+    .filter((match) => match[0].replace(/\s+/g, '') === eigene)
+    .map((match) => {
+      const next = matches.find((other) => other.index > match.index);
+      return lower.slice(match.index, next?.index ?? lower.length);
+    });
+}
+
+function dokumentWerte(
+  texts: readonly string[],
+  festigkeit: string | null,
+): Map<PflichtKey, string[]> {
   const out = new Map<PflichtKey, string[]>();
-  for (const text of texts) {
-    const klassen = extractBetonklassen(text.toLowerCase());
+  for (const text of texts.flatMap((entry) => teileZur(entry, festigkeit))) {
+    const klassen = extractBetonklassen(text);
     const found: Record<PflichtKey, readonly string[]> = {
       beton: klassen.beton === null ? [] : [klassen.beton],
       expo: klassen.expo,
@@ -241,7 +265,7 @@ export function buildBetonSorten(
       if (werte.length === 0) {
         fehlt.push(label);
         acc.fehlt.set(angabe, (acc.fehlt.get(angabe) ?? 0) + 1);
-        dokument ??= dokumentWerte(docTexts(nodeId));
+        dokument ??= dokumentWerte(docTexts(nodeId), attrString(position.attributes, 'beton'));
         const imDokument = dokument.get(angabe);
         if (imDokument !== undefined) {
           const list = acc.imDokument.get(angabe) ?? [];

@@ -92,4 +92,24 @@ describe('Beton im Dokument', () => {
     expect(finde(text, eine)).toEqual([]);
     expect(finde(text, { ...DEFAULT_SUGGEST_RULES, beton: null })).toEqual([]);
   });
+
+  it('„wo“ oder „f1“ in Prosa sind keine Klassen (Review #228)', () => {
+    expect(finde('Die Rampe in C35/45, XC4, XD3, XF4, WA und wo möglich glätten.')).toHaveLength(1);
+    expect(finde('Die Rampe in C35/45 XC4 XD3 XF4 WA wo nötig.').map((s) => s.id)).toEqual([
+      'rampe',
+    ]);
+  });
+
+  it('bleibt bei tausenden Positionen gleicher Sorte schnell (Review #228)', () => {
+    const viele = Array.from({ length: 5000 }, (_, i) =>
+      pos(`w${i}`, `09.${i}`, `Wand Abschnitt ${i}`, 'C25/30 · XC1'),
+    );
+    const eine = pos('kern', '09.9999', 'Treppenhauskern', 'C25/30 · XC1');
+    const index = suggestIndexOf([...viele, eine], DEFAULT_SUGGEST_RULES);
+    const seite = 'Treppenhauskern und Wände: C25/30, XC1. '.repeat(50);
+    const start = performance.now();
+    const vorschlaege = suggestionsInPage(seite, index, 1);
+    expect(performance.now() - start).toBeLessThan(1000);
+    expect(new Set(vorschlaege.map((s) => s.id))).toEqual(new Set(['kern']));
+  });
 });
