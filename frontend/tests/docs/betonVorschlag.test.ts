@@ -70,8 +70,19 @@ describe('Beton im Dokument', () => {
 
   it('ohne eigenes Wort oder bei anderer Sorte kein Vorschlag', () => {
     expect(finde('Beton C30/37, XC4, XF1, WF, soweit nicht anders angegeben.')).toEqual([]);
-    expect(finde('Wände Tiefgarage C30/37 XC4, XF1')).toEqual([]);
-    expect(finde('Rampe C35/45 XC4')).toEqual([]);
+    expect(finde('Wände Tiefgarage C30/37 XC2')).toEqual([]);
+    expect(finde('Rampe C30/37')).toEqual([]);
+  });
+
+  it('nur Festigkeit im PDF: reicht mit eigenem Bauteilwort (Nico, 11.11.)', () => {
+    const [rampe] = finde('Die Rampe erhält Ortbeton C35/45.');
+    expect(rampe).toMatchObject({
+      id: 'rampe',
+      sorte: { key: 'C35/45 · XC4, XD3, XF4 · WA', matches: 1, pdf: 'C35/45' },
+    });
+    expect(finde('Wände Tiefgarage C30/37 XC4, XF1').map((s) => s.id)).toEqual(['wand']);
+    // Nur eine Position mit dieser Festigkeit, aber kein Bauteilwort: kein Vorschlag.
+    expect(finde('Beton C35/45 nach DIN 1045-2.')).toEqual([]);
   });
 
   it('höchstens so viele Positionen, wie die Regel erlaubt', () => {

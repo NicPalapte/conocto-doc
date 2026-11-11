@@ -57,6 +57,8 @@ export interface SuggestIndex {
   readonly amountIds: ReadonlyMap<string, readonly string[]>;
   /** Alle Positionen je Betonsorte. */
   readonly sorten: ReadonlyMap<string, readonly string[]>;
+  /** Betonsorte je Position. */
+  readonly sorteOf: ReadonlyMap<string, string>;
   /** Wortstämme des Kurztexts je Position. */
   readonly words: ReadonlyMap<string, readonly string[]>;
   /** Menge einer Position für die Anzeige neben einer OZ. */
@@ -89,8 +91,11 @@ export interface DocSuggestion {
   };
   /** Bei Menge und Beton: Wörter im Satz, die auch im Kurztext der Position stehen. */
   readonly words?: readonly string[];
-  /** Nur bei Beton: die Sorte und wie viele Positionen im LV sie haben. */
-  readonly sorte?: { readonly key: string; readonly matches: number };
+  /**
+   * Nur bei Beton: die Sorte der Position und wie viele Positionen im LV sie haben. `pdf`:
+   * Im PDF stehen weniger Klassen als im LV (nur so viele, wie dort stehen).
+   */
+  readonly sorte?: { readonly key: string; readonly matches: number; readonly pdf?: string };
 }
 
 export { SENTENCE_REACH } from '@core';
@@ -215,6 +220,7 @@ export function suggestIndexOf(
   const amountOf = new Map<string, { text: string; key: string }>();
   const units = new Set<string>();
   const sorten = new Map<string, string[]>();
+  const sorteOf = new Map<string, string>();
   const stems = (position: SuggestPosition) =>
     words.set(position.id, [...new Set(wordsIn(position.shortText).map((w) => w.stem))]);
   for (const position of positions) {
@@ -245,10 +251,11 @@ export function suggestIndexOf(
       const ids = sorten.get(sorte);
       if (ids === undefined) sorten.set(sorte, [position.id]);
       else ids.push(position.id);
+      sorteOf.set(position.id, sorte);
       if (!words.has(position.id)) stems(position);
     }
   }
-  return { full, tail, amount, amountIds, sorten, words, amountOf, units, rules };
+  return { full, tail, amount, amountIds, sorten, sorteOf, words, amountOf, units, rules };
 }
 
 interface Run {
@@ -514,14 +521,35 @@ interface BetonFound {
   readonly words: readonly string[];
   readonly key: string;
   readonly matches: number;
+  /** Sorte, wie sie im PDF steht, wenn sie weniger Klassen nennt als das LV. */
+  readonly pdf?: string;
+}
+
+/** Klassen einer Sorte („C30/37 · XC4, XF1 · WF“): Festigkeit zuerst. */
+const klassenOfKey = (key: string): string[] => key.split(/ · |, /);
+
+/**
+ * Positionen, deren Sorte die Festigkeit und alle Klassen aus dem PDF hat, dazu weitere
+ * (Nico, 11.11.2026: im PDF steht oft nur „C35/45“). Nichts darf sich widersprechen.
+ */
+function weitereSorten(index: SuggestIndex, key: string): string[] {
+  const [festigkeit, ...rest] = klassenOfKey(key);
+  const out: string[] = [];
+  for (const [other, ids] of index.sorten) {
+    const [own, ...klassen] = klassenOfKey(other);
+    if (own === festigkeit && rest.every((klasse) => klassen.includes(klasse))) out.push(...ids);
+  }
+  return out;
 }
 
 /**
  * Betonsorten im Seitentext (Entscheidung 0106). Die Klassen hinter einer Festigkeitsklasse
- * ergeben die Sorte wie im LV (`sorteKeyOf`); nur genau gleiche Sorten zählen. Hat sie nur
- * eine Position, ist es diese. Sonst entscheiden eigene Wörter aus dem Kurztext, zuerst
- * davor (Tabellenzeile „Wände Tiefgarage | C30/37 | XC4, XF1, WF“), dann dahinter. Ohne
- * eigenes Wort oder bei mehr als `max` Treffern gibt es keinen Vorschlag.
+ * ergeben die Sorte wie im LV (`sorteKeyOf`). Gleiche Sorte mit nur einer Position: diese.
+ * Sonst entscheiden eigene Wörter aus dem Kurztext, zuerst davor (Tabellenzeile „Wände
+ * Tiefgarage | C30/37 | XC4, XF1, WF“), dann dahinter. Nennt das PDF weniger Klassen als
+ * das LV („Außenwände … C35/45“), zählen Sorten mit gleicher Festigkeit und allen genannten
+ * Klassen, dann immer nur mit eigenem Wort. Ohne eigenes Wort oder bei mehr als `max`
+ * Treffern gibt es keinen Vorschlag.
  */
 function findBeton(text: string, index: SuggestIndex, max: number): BetonFound[] {
   const matches = [...text.matchAll(FESTIGKEIT)];
@@ -538,10 +566,12 @@ function findBeton(text: string, index: SuggestIndex, max: number): BetonFound[]
     const klassen = extractBetonklassen(text.slice(start, end).toLowerCase());
     if (klassen.beton === null) return;
     const key = sorteKeyOf(klassen.beton, klassen.expo, klassen.feuchtigkeitsklasse);
-    const candidates = index.sorten.get(key);
-    if (candidates === undefined) return;
+    const exact = index.sorten.get(key);
+    const candidates = exact ?? weitereSorten(index, key);
+    if (candidates.length === 0) return;
     const klasse = { start, end };
-    if (candidates.length === 1) {
+    // Nur bei gleicher Sorte reicht eine einzige Position; sonst braucht es ein eigenes Wort.
+    if (exact !== undefined && candidates.length === 1) {
       out.push({ id: candidates[0], span: klasse, words: [], key, matches: 1 });
       return;
     }
@@ -565,12 +595,14 @@ function findBeton(text: string, index: SuggestIndex, max: number): BetonFound[]
     for (const { id, own } of picked) {
       const first = Math.min(...own.map((word) => word.start));
       const last = Math.max(...own.map((word) => word.end));
+      const sorte = index.sorteOf.get(id) ?? key;
       out.push({
         id,
         span: { start: Math.min(first, start), end: Math.max(last, end) },
         words: [...new Set(own.map((word) => word.word))],
-        key,
-        matches: candidates.length,
+        key: sorte,
+        matches: index.sorten.get(sorte)?.length ?? candidates.length,
+        ...(exact === undefined ? { pdf: key } : {}),
       });
     }
   });
@@ -665,7 +697,11 @@ export function suggestionsInPage(
       text: text.slice(found.span.start, found.span.end),
       id: found.id,
       source: 'beton',
-      sorte: { key: found.key, matches: found.matches },
+      sorte: {
+        key: found.key,
+        matches: found.matches,
+        ...(found.pdf === undefined ? {} : { pdf: found.pdf }),
+      },
       ...(found.words.length === 0 ? {} : { words: found.words }),
     });
   }

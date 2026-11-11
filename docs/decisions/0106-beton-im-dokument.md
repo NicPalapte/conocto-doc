@@ -25,6 +25,10 @@
 - **Gleiche Sorte, wörtlich:** Festigkeitsklasse und die Klassen direkt dahinter ergeben
   die Sorte wie im LV („C30/37 · XC4, XF1 · WF“). Nur genau gleiche Sorten zählen, nichts
   wird ergänzt.
+- **Nur Festigkeit im PDF** (Nico, 11.11.): Nennt das PDF weniger Klassen als das LV
+  („Außenwände … C35/45“), zählen Positionen mit gleicher Festigkeit und allen genannten
+  Klassen. Dann immer nur mit eigenem Bauteilwort, auch bei nur einer Position. Die Leiste
+  zeigt „Im PDF nur: …“.
 - **Eindeutig oder über Wörter:** Hat nur eine Position die Sorte, ist es diese. Sonst
   entscheiden eigene Wörter aus dem Kurztext, erst vor der Klasse (Tabellenzeile), dann
   dahinter. Ohne eigenes Wort: kein Vorschlag.
@@ -40,11 +44,12 @@
 
 ## Verworfen
 
-- Sorte mit Teilübereinstimmung (nur Festigkeit gleich): wäre Deutung, nicht Abgleich.
+- Teilübereinstimmung ohne Bauteilwort: wäre Deutung, nicht Abgleich.
 - Alle Angaben einer Seite (etwa „Konsistenz F3, soweit nicht anders angegeben“) für alle
   Sorten übernehmen: zu viel Deutung. Wer das will, verknüpft den Satz von Hand.
 
 ## Folgen
 
-- Betonsorten im LV und im PDF müssen gleich geschrieben sein, sonst kein Vorschlag.
+- Klassen im PDF, die dem LV widersprechen, verhindern den Vorschlag.
+- Umlaute zählen beim Wortabgleich wie ihr Grundvokal („Außenwände“ = „Außenwand“).
 - Alte Notizdateien bleiben gültig; die neue Herkunft `beton` lesen ältere Versionen nicht.

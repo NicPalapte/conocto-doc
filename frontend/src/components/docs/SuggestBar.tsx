@@ -85,6 +85,9 @@ export function SuggestBar({
           )}
         </span>
       )}
+      {sorte?.pdf !== undefined && (
+        <span className="font-mono text-[11.5px] text-mute">Im PDF nur: {sorte.pdf}</span>
+      )}
       <span className="min-w-0 font-sans text-[13px] text-ink">
         <span className="font-mono font-semibold">{oz}</span>
         {shortText !== '' && <span className="block truncate">{shortText}</span>}

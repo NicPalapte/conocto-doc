@@ -37,8 +37,8 @@ function Detail({
   onPickPosition: (nodeId: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-[12px] border-b border-solid border-line bg-panel px-[10px] py-[10px]">
-      <div className="min-w-0 flex-1 basis-[240px]">
+    <div className="flex flex-col gap-[12px] border-b border-solid border-line bg-panel px-[10px] py-[10px]">
+      <div className="min-w-0">
         <p className="m-0 pb-[4px] font-mono text-[11px] tracking-[0.6px] text-mute">
           ANGABEN · DIN EN 206 / DIN 1045-2
         </p>
@@ -54,26 +54,31 @@ function Detail({
           </div>
         ))}
       </div>
-      <div className="min-w-0 flex-[2] basis-[280px]" role="list" aria-label="Positionen">
-        {sorte.positions.map((position) => (
-          <button
-            key={position.nodeId}
-            type="button"
-            role="listitem"
-            onClick={() => onPickPosition(position.nodeId)}
-            className={`flex w-full cursor-pointer flex-wrap items-baseline gap-x-[8px] gap-y-[2px] border-none border-b border-solid border-line px-[4px] py-[5px] text-left text-[12px] ${
-              position.nodeId === selectedId ? 'bg-accent-soft' : 'bg-transparent'
-            }`}
-          >
-            <span className="w-[76px] shrink-0 text-dim">{position.oz}</span>
-            <span className="min-w-0 flex-1 truncate text-ink">{position.shortText}</span>
-            <span className="shrink-0 text-ink">
-              {position.quantity === null
-                ? '—'
-                : `${formatNumber(position.quantity)} ${position.unit ?? ''}`.trim()}
-            </span>
-          </button>
-        ))}
+      <div className="min-w-0">
+        <p className="m-0 pb-[4px] font-mono text-[11px] tracking-[0.6px] text-mute">
+          GEFUNDENE POSITIONEN · {formatCount(sorte.positions.length)}
+        </p>
+        <div role="list" aria-label="Positionen">
+          {sorte.positions.map((position) => (
+            <button
+              key={position.nodeId}
+              type="button"
+              role="listitem"
+              onClick={() => onPickPosition(position.nodeId)}
+              className={`flex w-full cursor-pointer flex-wrap items-baseline gap-x-[8px] gap-y-[2px] border-none border-b border-solid border-line px-[4px] py-[5px] text-left text-[12px] ${
+                position.nodeId === selectedId ? 'bg-accent-soft' : 'bg-transparent'
+              }`}
+            >
+              <span className="w-[76px] shrink-0 text-dim">{position.oz}</span>
+              <span className="min-w-0 flex-1 truncate text-ink">{position.shortText}</span>
+              <span className="shrink-0 text-ink">
+                {position.quantity === null
+                  ? '—'
+                  : `${formatNumber(position.quantity)} ${position.unit ?? ''}`.trim()}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
