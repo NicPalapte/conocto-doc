@@ -171,12 +171,14 @@ Graphen als PDF-Karten am Rand mit Linien, nur Anzeige, `docs/decisions/0097`); 
 bei exakt passender OZ oder eindeutiger Menge+Einheit (gleiche Menge: eigene Kurztext-Wörter im
 Satzteil, bei Aufzählung/„je“ mehrere Positionen), Übernahme erst per Klick, „Nein“ gemerkt,
 kein inhaltliches Matching (`lib/docs/docSuggest.ts`, `docs/decisions/0080`; an/aus und Werte nur
-über Grundstock-Regeln `pdf-oz`/`pdf-menge`, `lib/docs/suggestRules.ts`, 0087);
+über Grundstock-Regeln `pdf-oz`/`pdf-menge`/`pdf-beton`, `lib/docs/suggestRules.ts`, 0087;
+Betonsorte im PDF nur bei wörtlich gleicher Sorte, sonst eigene Kurztext-Wörter, 0106);
 eine Suchleiste für LV und alle PDFs mit Treffer-Navigator, PDF-Treffer filtern das LV nie,
 Suchregel nur über `searchKeyOf` im Kern (`docs/decisions/0103`); ganzer Kopf auch in
 ausgelagerten Fenstern (`docs/decisions/0102`). Betonsortenliste im Überblick: Sorte aus
 wörtlichen Klassen, fehlende Angaben nur als Hinweis, Klick filtert über Facette `betonsorte`
-(`lib/beton/sorten.ts`, `docs/decisions/0104`). Eigene Matrix-Ansicht und
+(`lib/beton/sorten.ts`, `docs/decisions/0104`); Angabe nur in verknüpfter Dokumentstelle ⇒
+„fehlt im LV“ (0106). Eigene Matrix-Ansicht und
 Ähnlichkeit sind entfernt (`docs/decisions/0031-drei-ansichten.md`); die Matrix lebt als
 Graph-Gliederung weiter (`docs/decisions/0035`, `docs/decisions/0059`); keine
 Befehlspalette (`docs/decisions/0038-keine-befehlspalette.md`).

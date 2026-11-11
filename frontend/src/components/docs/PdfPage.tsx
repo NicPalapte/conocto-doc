@@ -10,7 +10,7 @@ import { drawRegion, pixelRatio, showDrawing, type PageDrawing } from './pageCan
 import { useDocHighlights, rangeIn, type DocHighlightItem } from './docHighlights';
 import type { DocMark } from '../../lib/docs/docNotes';
 import { locateOnPage } from '../../lib/docs/docNotes';
-import type { DocSuggestion } from '../../lib/docs/docSuggest';
+import { SUGGEST_BORDER, type DocSuggestion } from '../../lib/docs/docSuggest';
 import { pdfLib, type OpenedPdf } from '../../lib/docs/pdf';
 import { bundleSpots, type Bundle } from '../../lib/docs/linkBundles';
 
@@ -416,7 +416,7 @@ function PdfPageView({
               onSuggestion(suggestion, { left: own.left, top: own.bottom + 4 });
             }}
             className={`doc-suggest absolute z-[2] cursor-pointer border-0 border-b-2 border-dashed bg-transparent p-0 ${
-              suggestion.source === 'oz' ? 'border-accent' : 'border-amber'
+              SUGGEST_BORDER[suggestion.source]
             }`}
             style={{ left: rect.left, top: rect.top, width: rect.width, height: rect.height }}
           />

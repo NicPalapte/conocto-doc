@@ -32,10 +32,11 @@ describe('Vorschläge aus den Grundstock-Regeln', () => {
     expect(JSON.parse(JSON.stringify(alle(GRUNDSTOCK)))).toEqual(vorher);
   });
 
-  it('stehen beide im Grundstock, mit den bisherigen Werten', () => {
+  it('stehen alle im Grundstock, mit den bisherigen Werten', () => {
     expect(suggestRulesOf(GRUNDSTOCK)).toEqual({
       oz: { nearOz: 80 },
       menge: { minInteger: 10 },
+      beton: { maxPositions: 3 },
     });
   });
 

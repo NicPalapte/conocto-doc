@@ -423,6 +423,27 @@
       "status": "freigegeben",
       "herkunft": "nutzer",
       "bemerkung": "Eingebaut: findet Menge und Einheit aus dem LV im Text des PDF. Eindeutig über Wert und Einheit oder über eigene Wörter aus dem Kurztext im Satzteil. Ganze Zahlen darunter sind zu allgemein."
+    },
+    {
+      "schema": "conocto-rule-v1",
+      "id": "pdf-beton",
+      "version": 1,
+      "name": "Beton im Dokument",
+      "bedingung": {
+        "alle": [
+          {
+            "eingebaut": "beton-im-pdf",
+            "parameter": { "hoechstens-positionen": 3 }
+          }
+        ],
+        "bereich": "satz",
+        "wo": ["pdf"]
+      },
+      "wirkung": { "verknuepfen": { "ziel": "pdf" } },
+      "geltung": "allgemein",
+      "status": "freigegeben",
+      "herkunft": "nutzer",
+      "bemerkung": "Eingebaut: findet Betonsorten aus dem LV im Text des PDF (Festigkeits-, Expositions- und Feuchtigkeitsklasse wörtlich gleich). Eindeutig, wenn nur eine Position die Sorte hat, sonst über eigene Wörter aus dem Kurztext, zuerst vor der Klasse. Mehr Positionen als der Wert: kein Vorschlag."
     }
   ]
 }
