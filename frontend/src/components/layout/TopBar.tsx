@@ -97,7 +97,7 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
       if (event.key.toLowerCase() !== 't' || event.repeat) return;
       if (event.ctrlKey || event.metaKey || event.altKey) return;
       // Offener Dialog, Menü oder Tour: T darf die Anordnung dahinter nicht ändern.
-      if (keyIsTaken(event) || overlayOpen(host.document)) return;
+      if (keyIsTaken(event, 'letters') || overlayOpen(host.document)) return;
       event.preventDefault();
       dispatch({ type: 'switchGraphTable' });
     };

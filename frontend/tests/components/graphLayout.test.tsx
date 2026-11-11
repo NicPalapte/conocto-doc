@@ -475,6 +475,18 @@ describe('Funde aus dem Praxistest, Runde 3 (Issue #191)', () => {
     expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).not.toBeNull();
   });
 
+  it('Taste T wirkt auch mit Fokus in der Tabelle', async () => {
+    await loadAndShowGraph();
+    fireEvent.keyDown(document.body, { key: 't' });
+    const tabelle = await screen.findByRole('region', { name: 'Tabelle — Bereich' });
+    const raster = within(tabelle).getByRole('grid');
+    raster.focus();
+    fireEvent.keyDown(raster, { key: 't' });
+    await waitFor(() =>
+      expect(screen.queryByRole('group', { name: /Bubble-Graph/ })).not.toBeNull(),
+    );
+  });
+
   it('Taste T ruht, solange ein Dialog offen ist', async () => {
     await loadAndShowGraph();
     fireEvent.keyDown(document.body, { key: '?' });

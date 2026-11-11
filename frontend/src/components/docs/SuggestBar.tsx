@@ -64,7 +64,7 @@ export function SuggestBar({
     const onKey = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') onClose();
       const step = stepRef.current;
-      if (step === undefined || keyIsTaken(event)) return;
+      if (step === undefined || keyIsTaken(event, 'arrows')) return;
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       const direction = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
       if (direction === 0) return;
@@ -92,6 +92,7 @@ export function SuggestBar({
       ref={ref}
       role="dialog"
       aria-label="Vorschlag verknüpfen"
+      data-nonmodal=""
       className="ov-window fixed z-[70] flex flex-col gap-[8px] p-[10px]"
       style={{
         left: Math.max(8, Math.min(left, host.innerWidth - WIDTH - 8)),
