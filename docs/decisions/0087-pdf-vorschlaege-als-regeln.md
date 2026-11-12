@@ -1,6 +1,7 @@
 # 0087 – PDF-Vorschläge als Regeln
 
 - **Status:** akzeptiert
+  — Pfade seit [0109](0109-einstellungen-statt-admin.md): `components/settings/`, `state/rules.tsx`
 - **Datum:** 2026-10-30
 - **Betrifft:** Vorschläge im PDF (`frontend/src/lib/docs/docSuggest.ts`,
   `frontend/src/lib/docs/suggestRules.ts`), Grundstock (`docs/domain/reference/regeln.json`),

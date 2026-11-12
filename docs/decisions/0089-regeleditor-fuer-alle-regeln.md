@@ -1,6 +1,7 @@
 # 0089 – Regeleditor für alle Regeln
 
 - **Status:** akzeptiert (Schritt 5b: [0090](0090-eigene-wortlisten.md))
+  — Pfade seit [0109](0109-einstellungen-statt-admin.md): `components/settings/`, `state/rules.tsx`
 - **Datum:** 2026-11-02
 - **Betrifft:** Regeleditor (`frontend/src/components/admin/RulesTab.tsx`,
   `RuleEditor.tsx`, `RuleSwitch.tsx`), Admin-Zustand (`frontend/src/state/admin.tsx`),

@@ -54,5 +54,5 @@
 - Der Speicher im Browser hält jetzt zusätzlich die gelernten Begriffe.
   „Letzte Datei löschen“ lässt sie stehen.
 - Owner: Begriffe aus dem Browser als CSV ins Repo übernehmen, sonst sieht sie nur
-  der eigene Browser. Anleitung: [`../setup/admin-werkzeuge.md`](../setup/admin-werkzeuge.md).
+  der eigene Browser. Anleitung: [`../setup/regeln.md`](../setup/regeln.md).
 - Später: Reiter „Material“ und „Prüfregeln“ im Admin-Fenster (heute ausgegraut).

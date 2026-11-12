@@ -53,4 +53,4 @@
   nach Wirkung.
 - Owner: Begriffe für alle übernehmen jetzt per „regeln.json herunterladen“ und Eintrag in
   `docs/domain/reference/regeln.json`. Anleitung:
-  [`../setup/admin-werkzeuge.md`](../setup/admin-werkzeuge.md).
+  [`../setup/regeln.md`](../setup/regeln.md).
