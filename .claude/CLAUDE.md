@@ -171,8 +171,10 @@ Graphen als PDF-Karten am Rand mit Linien, nur Anzeige, `docs/decisions/0097`); 
 bei exakt passender OZ oder eindeutiger Menge+Einheit (gleiche Menge: eigene Kurztext-Wörter im
 Satzteil, bei Aufzählung/„je“ mehrere Positionen), Übernahme erst per Klick, „Nein“ gemerkt,
 kein inhaltliches Matching (`lib/docs/docSuggest.ts`, `docs/decisions/0080`; an/aus und Werte nur
-über Grundstock-Regeln `pdf-oz`/`pdf-menge`/`pdf-beton`, `lib/docs/suggestRules.ts`, 0087;
-Betonsorte im PDF nur bei wörtlich gleicher Sorte, sonst eigene Kurztext-Wörter, 0106);
+über Grundstock-Regeln `pdf-oz`/`pdf-menge`/`pdf-beton`/`pdf-text`, `lib/docs/suggestRules.ts`,
+0087; Betonsorte im PDF nur bei wörtlich gleicher Sorte, sonst eigene Kurztext-Wörter, 0106;
+OZ ohne „Pos.“/„OZ“ nur in LV-Schreibweise und nicht als Kapitelnummer, Kurztext nur wörtlich
+und eindeutig, Positionskarte markiert offenen Vorschlag nur als Anzeige, 0108);
 eine Suchleiste für LV und alle PDFs mit Treffer-Navigator, PDF-Treffer filtern das LV nie,
 Suchregel nur über `searchKeyOf` im Kern (`docs/decisions/0103`); ganzer Kopf auch in
 ausgelagerten Fenstern (`docs/decisions/0102`). Betonsortenliste im Überblick: Sorte aus

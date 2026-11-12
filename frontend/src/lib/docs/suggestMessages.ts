@@ -6,7 +6,14 @@ import { suggestionsInPage, type DocSuggestion, type SuggestIndex } from './docS
 
 export type SuggestRequest =
   | { readonly type: 'index'; readonly index: SuggestIndex }
-  | { readonly type: 'page'; readonly req: number; readonly page: number; readonly text: string };
+  | {
+      readonly type: 'page';
+      readonly req: number;
+      readonly page: number;
+      readonly text: string;
+      /** Zeilenenden im Text (Lage hinter dem letzten Zeichen der Zeile). */
+      readonly lineEnds?: readonly number[];
+    };
 
 export interface SuggestResponse {
   readonly req: number;
@@ -21,7 +28,10 @@ export function createSuggestHandler(): (request: SuggestRequest) => SuggestResp
       index = request.index;
       return null;
     }
-    const list = index === null ? [] : suggestionsInPage(request.text, index, request.page);
+    const list =
+      index === null
+        ? []
+        : suggestionsInPage(request.text, index, request.page, request.lineEnds ?? []);
     return { req: request.req, list };
   };
 }

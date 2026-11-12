@@ -246,6 +246,7 @@ export function shownSuggestions(notes: DocNotes): Record<LinkSource, boolean> {
     oz: !hidden.includes('oz'),
     menge: !hidden.includes('menge'),
     beton: !hidden.includes('beton'),
+    text: !hidden.includes('text'),
   };
 }
 

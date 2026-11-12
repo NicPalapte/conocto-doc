@@ -1,7 +1,8 @@
-// Vorschläge zum Verknüpfen im Begleitdokument (Entscheidung 0080): OZ, Mengen und
-// Betonsorten (0106) aus dem geladenen LV im Seitentext wiederfinden. Ein- und
-// ausgeschaltet und eingestellt über die Grundstock-Regeln „OZ im Dokument“, „Menge im
-// Dokument“ und „Beton im Dokument“ (0087, `suggestRules.ts`). Nur exakter Abgleich mit dem LV, keine
+// Vorschläge zum Verknüpfen im Begleitdokument (Entscheidung 0080): OZ, Mengen,
+// Betonsorten (0106) und Kurztexte (0108) aus dem geladenen LV im Seitentext wiederfinden.
+// Ein- und ausgeschaltet und eingestellt über die Grundstock-Regeln „OZ im Dokument“,
+// „Menge im Dokument“, „Beton im Dokument“ und „Kurztext im Dokument“ (0087,
+// `suggestRules.ts`). Nur exakter Abgleich mit dem LV, keine
 // Deutung des Textes — was nicht eindeutig zu genau einer Position passt, wird kein
 // Vorschlag. Übernommen wird erst per Klick (KI/Automatik schlägt vor, Mensch entscheidet).
 //
@@ -16,19 +17,20 @@ import { canonicalUnit } from '../units';
 import { formatNumber } from '../format';
 
 /** Woher eine Verknüpfung kam, wenn nicht von Hand. */
-export type LinkSource = 'oz' | 'menge' | 'beton';
+export type LinkSource = 'oz' | 'menge' | 'beton' | 'text';
 
-export const LINK_SOURCES: readonly LinkSource[] = ['oz', 'menge', 'beton'];
+export const LINK_SOURCES: readonly LinkSource[] = ['oz', 'menge', 'beton', 'text'];
 
 /** Farbe der gestrichelten Linie je Art (Tailwind-Klasse). */
 export const SUGGEST_BORDER: Readonly<Record<LinkSource, string>> = {
   oz: 'border-accent',
   menge: 'border-amber',
   beton: 'border-cyan',
+  text: 'border-greenD',
 };
 
 export function isLinkSource(value: unknown): value is LinkSource {
-  return value === 'oz' || value === 'menge' || value === 'beton';
+  return value === 'oz' || value === 'menge' || value === 'beton' || value === 'text';
 }
 
 /** Was das Verzeichnis von einer Position braucht. `id` ist die Knoten-ID der Sitzung. */
@@ -49,6 +51,8 @@ type Unique = ReadonlyMap<string, string | null>;
 export interface SuggestIndex {
   /** Volle OZ, Glieder ohne führende Nullen mit `.` verbunden („1.2.30“). */
   readonly full: Unique;
+  /** Volle OZ in der Schreibweise des LV, Glieder mit `.` verbunden („01.02.0030“). */
+  readonly fullRaw: Unique;
   /** Hintere Glieder einer OZ für Kurzformen nach Kontextwort: `${anzahl}:${schlüssel}`. */
   readonly tail: Unique;
   /** Menge und Einheit: `${wert}|${einheit}`. */
@@ -59,6 +63,8 @@ export interface SuggestIndex {
   readonly sorten: ReadonlyMap<string, readonly string[]>;
   /** Betonsorte je Position. */
   readonly sorteOf: ReadonlyMap<string, string>;
+  /** Eindeutige Kurztexte als Wortfolge, nach ihrem ersten Wort (`textTokensOf`). */
+  readonly texts: ReadonlyMap<string, readonly TextEntry[]>;
   /** Wortstämme des Kurztexts je Position. */
   readonly words: ReadonlyMap<string, readonly string[]>;
   /** Menge einer Position für die Anzeige neben einer OZ. */
@@ -69,11 +75,18 @@ export interface SuggestIndex {
   readonly rules: SuggestRules;
 }
 
-/** Einstellungen aus den Regeln „OZ/Menge/Beton im Dokument“; `null`: aus. */
+/** Ein Kurztext, der genau einer Position gehört. */
+export interface TextEntry {
+  readonly tokens: readonly string[];
+  readonly id: string;
+}
+
+/** Einstellungen aus den Regeln „OZ/Menge/Beton/Kurztext im Dokument“; `null`: aus. */
 export interface SuggestRules {
   readonly oz: { readonly nearOz: number } | null;
   readonly menge: { readonly minInteger: number } | null;
   readonly beton: { readonly maxPositions: number } | null;
+  readonly text: { readonly minLength: number } | null;
 }
 
 export interface DocSuggestion {
@@ -107,11 +120,14 @@ export const AMOUNT_MIN_INTEGER = 10;
 export const AMOUNT_NEAR_OZ = 80;
 /** Höchstens so viele Positionen schlägt eine Betonsorte an einer Stelle vor. */
 export const BETON_MAX_POSITIONS = 3;
+/** Kürzere Kurztexte („Beton“, „Zulage“) sind zu allgemein für einen Vorschlag. */
+export const TEXT_MIN_LENGTH = 12;
 /** Alle Arten an, mit den Ersatzwerten — für Tests und ohne Regeln. */
 export const DEFAULT_SUGGEST_RULES: SuggestRules = {
   oz: { nearOz: AMOUNT_NEAR_OZ },
   menge: { minInteger: AMOUNT_MIN_INTEGER },
   beton: { maxPositions: BETON_MAX_POSITIONS },
+  text: { minLength: TEXT_MIN_LENGTH },
 };
 /** Längstes Glied einer OZ; längere Ziffernfolgen sind Telefon-, Auftrags- oder Seriennummern. */
 const MAX_PART = 6;
@@ -189,16 +205,53 @@ function amountKey(value: number, unit: string): string {
   return `${Math.round(value * 1000) / 1000}|${unit}`;
 }
 
-/** Glieder einer OZ ohne führende Nullen; `null`, wenn ein Glied keine Zahl ist. */
-function ozParts(oz: string): string[] | null {
+/** Glieder einer OZ wie geschrieben; `null`, wenn ein Glied keine Zahl ist. */
+function ozRawParts(oz: string): string[] | null {
   const parts = oz.split(/[\s.\-/]+/).filter((part) => part !== '');
   if (parts.length === 0) return null;
-  const out: string[] = [];
   for (const part of parts) {
     if (!/^\d+$/.test(part) || part.length > MAX_PART) return null;
-    out.push(String(Number(part)));
+  }
+  return parts;
+}
+
+/** Glieder einer OZ ohne führende Nullen; `null`, wenn ein Glied keine Zahl ist. */
+function ozParts(oz: string): string[] | null {
+  return ozRawParts(oz)?.map((part) => String(Number(part))) ?? null;
+}
+
+interface Token {
+  readonly text: string;
+  readonly start: number;
+  readonly end: number;
+}
+
+/**
+ * Wörter und Zahlen eines Texts, klein und mit Umlauten ausgeschrieben („Außenwände“ wie
+ * „aussenwaende“). Satzzeichen, Leerraum und Zeilenumbrüche dazwischen zählen nicht.
+ */
+function tokensOf(text: string): Token[] {
+  const out: Token[] = [];
+  for (const match of text.matchAll(/[\p{L}\p{N}]+/gu)) {
+    const plain = match[0]
+      .toLowerCase()
+      .replace(/ä/g, 'ae')
+      .replace(/ö/g, 'oe')
+      .replace(/ü/g, 'ue')
+      .replace(/ß/g, 'ss');
+    out.push({ text: plain, start: match.index, end: match.index + match[0].length });
   }
   return out;
+}
+
+/**
+ * Kurztext als Wortfolge für den wörtlichen Abgleich; `null`, wenn er zu allgemein ist:
+ * weniger als zwei Wörter, kürzer als `minLength` oder ohne eigenes Wort.
+ */
+function textTokensOf(shortText: string, minLength: number): string[] | null {
+  const tokens = tokensOf(shortText).map((token) => token.text);
+  if (tokens.length < 2 || tokens.join(' ').length < minLength) return null;
+  return wordsIn(shortText).length === 0 ? null : tokens;
 }
 
 function addUnique(map: Map<string, string | null>, key: string, id: string): void {
@@ -213,6 +266,7 @@ export function suggestIndexOf(
   rules: SuggestRules = DEFAULT_SUGGEST_RULES,
 ): SuggestIndex {
   const full = new Map<string, string | null>();
+  const fullRaw = new Map<string, string | null>();
   const tail = new Map<string, string | null>();
   const amount = new Map<string, string | null>();
   const amountIds = new Map<string, string[]>();
@@ -221,12 +275,16 @@ export function suggestIndexOf(
   const units = new Set<string>();
   const sorten = new Map<string, string[]>();
   const sorteOf = new Map<string, string>();
+  const textIds = new Map<string, string | null>();
+  const textTokens = new Map<string, string[]>();
+  const minLength = rules.text?.minLength ?? TEXT_MIN_LENGTH;
   const stems = (position: SuggestPosition) =>
     words.set(position.id, [...new Set(wordsIn(position.shortText).map((w) => w.stem))]);
   for (const position of positions) {
     const parts = ozParts(position.oz);
     if (parts !== null) {
       addUnique(full, parts.join('.'), position.id);
+      addUnique(fullRaw, (ozRawParts(position.oz) ?? []).join('.'), position.id);
       // Kurzformen nur als echte Teilstücke: „Pos. 30“ oder „Pos. 2.30“ zu „1.2.30“.
       for (let k = 1; k < parts.length; k++) {
         addUnique(tail, `${k}:${parts.slice(-k).join('.')}`, position.id);
@@ -244,18 +302,46 @@ export function suggestIndexOf(
       const ids = amountIds.get(key);
       if (ids === undefined) amountIds.set(key, [position.id]);
       else ids.push(position.id);
-      stems(position);
     }
+    const tokens = textTokensOf(position.shortText, minLength);
+    if (tokens !== null) {
+      const key = tokens.join(' ');
+      addUnique(textIds, key, position.id);
+      textTokens.set(key, tokens);
+    }
+    // Wortstämme aller Positionen: für Mengen, Sorten und Kapitelüberschriften hinter einer OZ.
+    stems(position);
     const sorte = position.sorte ?? null;
     if (sorte !== null) {
       const ids = sorten.get(sorte);
       if (ids === undefined) sorten.set(sorte, [position.id]);
       else ids.push(position.id);
       sorteOf.set(position.id, sorte);
-      if (!words.has(position.id)) stems(position);
     }
   }
-  return { full, tail, amount, amountIds, sorten, sorteOf, words, amountOf, units, rules };
+  // Gleicher Kurztext bei mehreren Positionen: kein Vorschlag.
+  const texts = new Map<string, TextEntry[]>();
+  for (const [key, id] of textIds) {
+    const tokens = textTokens.get(key);
+    if (id === null || tokens === undefined) continue;
+    const list = texts.get(tokens[0]);
+    if (list === undefined) texts.set(tokens[0], [{ tokens, id }]);
+    else list.push({ tokens, id });
+  }
+  return {
+    full,
+    fullRaw,
+    tail,
+    amount,
+    amountIds,
+    sorten,
+    sorteOf,
+    texts,
+    words,
+    amountOf,
+    units,
+    rules,
+  };
 }
 
 interface Run {
@@ -300,8 +386,41 @@ interface Found {
   readonly id: string;
 }
 
-/** OZ im Seitentext, die genau eine Position des LV treffen. */
-function findOz(text: string, index: SuggestIndex): Found[] {
+/** Folgt der Zahl am Zeilenanfang ein Titel ohne Wort aus dem Kurztext: eine Kapitelnummer. */
+function isHeading(
+  text: string,
+  start: number,
+  end: number,
+  id: string,
+  index: SuggestIndex,
+  lineStarts: ReadonlySet<number>,
+): boolean {
+  // Zeilenanfang: nur Leerraum zwischen Zeilenende und Nummer (PDF.js klebt Zeilen sonst an).
+  const atLineStart =
+    /^\s*$/.test(text.slice(0, start)) ||
+    [...lineStarts].some((at) => at <= start && /^\s*$/.test(text.slice(at, start)));
+  if (!atLineStart) return false;
+  // Gleich dahinter muss ein Wort stehen; folgt eine Menge, ist es eine Positionszeile.
+  if (!/^[ \t\u00a0]*\p{L}/u.test(text.slice(end, end + 8))) return false;
+  let stop = text.length;
+  for (const at of lineStarts) if (at > end && at < stop) stop = at;
+  const title = wordsIn(text.slice(end, Math.min(stop, end + 80)), end);
+  if (title.length === 0) return false;
+  const own = index.words.get(id) ?? [];
+  return !title.some((word) => stemsMatch(own, word));
+}
+
+/**
+ * OZ im Seitentext, die genau eine Position des LV treffen. Ohne „Pos.“/„OZ“ davor zählt
+ * eine Nummer nur in der Schreibweise des LV („01.02.0030“, nicht „1.2.30“) und nicht als
+ * Kapitelnummer vor einer Überschrift (Praxistest Nico, 12.11.2026: 10 von 11 Vorschlägen
+ * waren Kapitelnummern).
+ */
+function findOz(
+  text: string,
+  index: SuggestIndex,
+  lineStarts: ReadonlySet<number> = new Set(),
+): Found[] {
   const runs: Run[] = [];
   for (const match of text.matchAll(/\d+/g)) {
     const start = match.index;
@@ -314,13 +433,19 @@ function findOz(text: string, index: SuggestIndex): Found[] {
     out.push({ start: runs[from].start, end: runs[to].end, id });
     for (let i = from; i <= to; i++) used.add(i);
   };
-  const keyOf = (from: number, to: number): string | null => {
+  const keyOf = (from: number, to: number, raw = false): string | null => {
     const parts: string[] = [];
     for (let i = from; i <= to; i++) {
       if (runs[i].part.length > MAX_PART) return null;
-      parts.push(String(Number(runs[i].part)));
+      parts.push(raw ? runs[i].part : String(Number(runs[i].part)));
     }
     return parts.join('.');
+  };
+  /** Ohne Kontextwort: nur wörtlich wie im LV und keine Kapitelüberschrift. */
+  const plain = (from: number, to: number, id: string): boolean => {
+    const raw = keyOf(from, to, true);
+    if (raw === null || index.fullRaw.get(raw) !== id) return false;
+    return !isHeading(text, runs[from].start, runs[to].end, id, index, lineStarts);
   };
 
   // Ketten mit gleichem Satzzeichen als Trenner: als Ganzes eine volle OZ.
@@ -341,8 +466,9 @@ function findOz(text: string, index: SuggestIndex): Found[] {
     ) {
       const key = keyOf(i, j);
       const id = key === null ? undefined : index.full.get(key);
-      if (typeof id === 'string') take(i, j, id);
-      else if (key !== null && hasContext(text, runs[i].start)) {
+      const context = hasContext(text, runs[i].start);
+      if (typeof id === 'string' && (context || plain(i, j, id))) take(i, j, id);
+      else if (key !== null && context) {
         const short = index.tail.get(`${j - i + 1}:${key}`);
         if (typeof short === 'string') take(i, j, short);
       }
@@ -360,7 +486,7 @@ function findOz(text: string, index: SuggestIndex): Found[] {
       if (!freeAfter(text, runs[end].end)) continue;
       const key = keyOf(i, end);
       const id = key === null ? undefined : index.full.get(key);
-      if (typeof id === 'string') {
+      if (typeof id === 'string' && (hasContext(text, runs[i].start) || plain(i, end, id))) {
         take(i, end, id);
         break;
       }
@@ -615,6 +741,27 @@ function findBeton(text: string, index: SuggestIndex, max: number): BetonFound[]
   return out;
 }
 
+/**
+ * Kurztexte, die wörtlich im Seitentext stehen (Entscheidung 0108). Nur Kurztexte, die
+ * genau eine Position hat; an einer Stelle gilt der längste.
+ */
+function findText(text: string, index: SuggestIndex): Found[] {
+  const tokens = tokensOf(text);
+  const out: Found[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    let best: TextEntry | null = null;
+    for (const entry of index.texts.get(tokens[i].text) ?? []) {
+      if (best !== null && entry.tokens.length <= best.tokens.length) continue;
+      if (entry.tokens.every((token, k) => tokens[i + k]?.text === token)) best = entry;
+    }
+    if (best === null) continue;
+    const last = i + best.tokens.length - 1;
+    out.push({ start: tokens[i].start, end: tokens[last].end, id: best.id });
+    i = last;
+  }
+  return out;
+}
+
 const overlaps = (a: { start: number; end: number }, b: { start: number; end: number }) =>
   a.start < b.end && b.start < a.end;
 
@@ -631,8 +778,9 @@ export function suggestionsInPage(
   text: string,
   index: SuggestIndex,
   page: number,
+  lineEnds: readonly number[] = [],
 ): DocSuggestion[] {
-  const ozs = findOz(text, index);
+  const ozs = findOz(text, index, new Set(lineEnds));
   const amounts = findAmounts(text, index).filter((item) => !ozs.some((oz) => overlaps(oz, item)));
   const nearOz = index.rules.oz?.nearOz ?? AMOUNT_NEAR_OZ;
   const minInteger = index.rules.menge?.minInteger ?? AMOUNT_MIN_INTEGER;
@@ -712,7 +860,64 @@ export function suggestionsInPage(
       ...(found.words.length === 0 ? {} : { words: found.words }),
     });
   }
-  return out.filter((item) => index.rules[item.source] !== null).sort((a, b) => a.start - b.start);
+  // Kurztext zuletzt: wo schon ein Vorschlag zur selben Position steht, reicht der eine;
+  // kurz hinter ihrer OZ ist er deren Zeile. Regel aus: gar nicht erst suchen.
+  const kept = out.filter((item) => index.rules[item.source] !== null);
+  for (const found of index.rules.text === null ? [] : findText(text, index)) {
+    if (ozs.some((oz) => overlaps(oz, found))) continue;
+    const span = (item: DocSuggestion) => ({
+      start: item.start,
+      end: item.start + item.text.length + (item.source === 'oz' ? nearOz : 0),
+    });
+    if (kept.some((item) => item.id === found.id && overlaps(span(item), found))) continue;
+    kept.push({
+      page,
+      start: found.start,
+      text: text.slice(found.start, found.end),
+      id: found.id,
+      source: 'text',
+    });
+  }
+  return kept.sort((a, b) => a.start - b.start);
+}
+
+/** Was in der Positionskarte zum offenen Vorschlag passt (Entscheidung 0108). */
+export interface SuggestMatch {
+  /** Die OZ stand im Dokument. */
+  readonly oz: boolean;
+  /** Menge und Einheit stimmen mit dem Dokument überein. */
+  readonly amount: boolean;
+  /** Stellen in Kurz- und Langtext: Kurztext, gemeinsame Wörter, Betonklassen. */
+  readonly terms: readonly string[];
+}
+
+/** `shortText` und `longText` der vorgeschlagenen Position, ohne `**`-Auszeichnung. */
+export function suggestMatchOf(
+  item: DocSuggestion,
+  shortText: string,
+  longText: string,
+): SuggestMatch {
+  const terms = new Set<string>();
+  if (item.source === 'text') terms.add(shortText);
+  const pdfStems = (item.words ?? []).map((word) => stemOf(word.toLowerCase()));
+  if (pdfStems.length > 0) {
+    for (const word of wordsIn(`${shortText}\n${longText}`)) {
+      if (pdfStems.some((stem) => sameWord(stem, word.stem))) terms.add(word.word);
+    }
+  }
+  if (item.sorte !== undefined) {
+    for (const klasse of klassenOfKey(item.sorte.pdf ?? item.sorte.key)) terms.add(klasse);
+  }
+  return {
+    oz: item.source === 'oz',
+    amount: item.source === 'menge' || item.amount?.same === true,
+    terms: [...terms],
+  };
+}
+
+/** Kennung der markierten Stelle im DOM (`data-suggest`), damit die Leiste an ihr hängt. */
+export function suggestionKey(item: DocSuggestion): string {
+  return `${item.page}:${item.start}:${item.id}:${item.source}`;
 }
 
 /** Gleicher Vorschlag: gleiche Stelle, gleiche Position. */

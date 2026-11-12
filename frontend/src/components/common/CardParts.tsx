@@ -51,7 +51,13 @@ export interface Stat {
   unit?: string;
   /** Kein Wert in der Datei — „–" in gedämpfter Farbe. */
   empty?: boolean;
+  /** Passt zum offenen Vorschlag im Dokument: gestrichelt umrandet (Entscheidung 0108). */
+  dashed?: boolean;
 }
+
+/** Rahmen für Teile, die zum offenen Vorschlag im Dokument passen (wie `DashedMark`). */
+export const DASHED =
+  'w-fit max-w-full rounded-[2px] px-[2px] outline-dashed outline-[1.5px] outline-greenD';
 
 export function StatRow({ stats }: { stats: readonly Stat[] }) {
   return (
@@ -65,7 +71,7 @@ export function StatRow({ stats }: { stats: readonly Stat[] }) {
           <div
             className={`mt-[2px] truncate font-display text-[15px] font-semibold ${
               stat.empty === true ? 'text-mute' : 'text-ink'
-            }`}
+            } ${stat.dashed === true ? DASHED : ''}`}
             title={stat.value}
           >
             {stat.value}

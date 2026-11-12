@@ -27,12 +27,12 @@ const finde = (text: string) =>
   suggestionsInPage(text, INDEX, 1).map(({ text: t, id, source }) => ({ t, id, source }));
 
 describe('OZ im Seitentext', () => {
-  it('findet die volle OZ, auch mit anderem Trenner und ohne führende Nullen', () => {
+  it('findet die volle OZ, auch mit anderem Trenner; ohne führende Nullen nur mit „Pos.“', () => {
     expect(finde('Siehe 01.02.0030 und 1.2.40 sowie 01-03-0050.')).toEqual([
       { t: '01.02.0030', id: 'p1', source: 'oz' },
-      { t: '1.2.40', id: 'p2', source: 'oz' },
       { t: '01-03-0050', id: 'p4', source: 'oz' },
     ]);
+    expect(finde('Siehe Pos. 1.2.40.')).toEqual([{ t: '1.2.40', id: 'p2', source: 'oz' }]);
   });
 
   it('übersteht Leerraum und Zeilenumbruch, die PDF.js in die OZ setzt', () => {

@@ -3,14 +3,15 @@
 // „Verknüpfen“, „Nein“ und „Position zeigen“. Erst der Klick legt die Verknüpfung an;
 // „Nein“ merkt sich die Ablehnung in den Notizen.
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useHostWindow } from '../common/hostWindow';
 import { keyIsTaken } from '../common/keys';
-import type { DocSuggestion } from '../../lib/docs/docSuggest';
+import { suggestionKey, type DocSuggestion } from '../../lib/docs/docSuggest';
+import { placeNextTo, SUGGEST_GAP as GAP, type Box } from '../../lib/docs/suggestPlace';
 
 const WIDTH = 290;
-/** Grobe Höhe, damit die Leiste unten am Fenster nicht abgeschnitten wird. */
+/** Grobe Höhe, solange die Leiste noch nicht gemessen ist. */
 const HEIGHT = 180;
 
 const STEP =
@@ -80,13 +81,49 @@ export function SuggestBar({
     };
   }, [host, onClose]);
 
+  // An der Stelle hängen: je Bild nachsehen, wo sie gerade ist (Blättern, Scrollen, Zoom).
+  const key = suggestionKey(suggestion);
+  const [spot, setSpot] = useState<Box>({ left, top: top - GAP, right: left, bottom: top - GAP });
+  const [height, setHeight] = useState(HEIGHT);
+  useEffect(() => {
+    let frame = 0;
+    const follow = (): void => {
+      const anchor = [...host.document.querySelectorAll<HTMLElement>('[data-suggest]')].find(
+        (element) => element.dataset.suggest === key,
+      );
+      if (anchor !== undefined) {
+        const rect = anchor.getBoundingClientRect();
+        setSpot((prev) =>
+          prev.left === rect.left &&
+          prev.top === rect.top &&
+          prev.right === rect.right &&
+          prev.bottom === rect.bottom
+            ? prev
+            : { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom },
+        );
+      }
+      const own = ref.current?.offsetHeight;
+      if (own !== undefined && own > 0) setHeight(own);
+      frame = host.requestAnimationFrame(follow);
+    };
+    follow();
+    return () => host.cancelAnimationFrame(frame);
+  }, [host, key]);
+  const at = placeNextTo(
+    spot,
+    { width: WIDTH, height },
+    { width: host.innerWidth, height: host.innerHeight },
+  );
+
   const { amount, sorte } = suggestion;
   const label =
     suggestion.source === 'oz'
       ? 'OZ im Text'
       : suggestion.source === 'menge'
         ? 'Menge passt zu'
-        : 'Betonsorte passt zu';
+        : suggestion.source === 'text'
+          ? 'Kurztext im Text'
+          : 'Betonsorte passt zu';
   return createPortal(
     <div
       ref={ref}
@@ -94,11 +131,7 @@ export function SuggestBar({
       aria-label="Vorschlag verknüpfen"
       data-nonmodal=""
       className="ov-window fixed z-[70] flex flex-col gap-[8px] p-[10px]"
-      style={{
-        left: Math.max(8, Math.min(left, host.innerWidth - WIDTH - 8)),
-        top: Math.min(top, host.innerHeight - HEIGHT),
-        width: WIDTH,
-      }}
+      style={{ left: at.left, top: at.top, width: WIDTH }}
     >
       <span className="flex items-center gap-[4px] font-mono text-[11px] text-mute">
         <span className="flex-1">{label}</span>

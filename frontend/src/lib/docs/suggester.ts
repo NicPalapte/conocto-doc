@@ -7,7 +7,11 @@ import { createSuggestHandler, type SuggestRequest, type SuggestResponse } from 
 
 export interface Suggester {
   /** Vorschläge einer Seite (ab 1). */
-  page: (text: string, page: number) => Promise<readonly DocSuggestion[]>;
+  page: (
+    text: string,
+    page: number,
+    lineEnds?: readonly number[],
+  ) => Promise<readonly DocSuggestion[]>;
   dispose: () => void;
 }
 
@@ -35,16 +39,24 @@ export function createSuggester(
 ): Suggester {
   const local = createSuggestHandler();
   local({ type: 'index', index });
-  const inline = (text: string, page: number): readonly DocSuggestion[] =>
-    local({ type: 'page', req: 0, page, text })?.list ?? [];
+  const inline = (
+    text: string,
+    page: number,
+    lineEnds: readonly number[],
+  ): readonly DocSuggestion[] => local({ type: 'page', req: 0, page, text, lineEnds })?.list ?? [];
 
   let worker = makeWorker();
-  const waiting = new Map<number, { text: string; page: number; done: Resolve }>();
+  const waiting = new Map<
+    number,
+    { text: string; page: number; lineEnds: readonly number[]; done: Resolve }
+  >();
   let next = 1;
   const fallBack = (): void => {
     worker?.terminate();
     worker = null;
-    for (const { text, page, done } of waiting.values()) done(inline(text, page));
+    for (const { text, page, lineEnds, done } of waiting.values()) {
+      done(inline(text, page, lineEnds));
+    }
     waiting.clear();
   };
   if (worker !== null) {
@@ -63,14 +75,14 @@ export function createSuggester(
   }
 
   return {
-    page: (text, page) => {
+    page: (text, page, lineEnds = []) => {
       const own = worker;
-      if (own === null) return Promise.resolve(inline(text, page));
+      if (own === null) return Promise.resolve(inline(text, page, lineEnds));
       return new Promise((done) => {
         const req = next++;
-        waiting.set(req, { text, page, done });
+        waiting.set(req, { text, page, lineEnds, done });
         try {
-          own.postMessage({ type: 'page', req, page, text });
+          own.postMessage({ type: 'page', req, page, text, lineEnds });
         } catch {
           fallBack();
         }

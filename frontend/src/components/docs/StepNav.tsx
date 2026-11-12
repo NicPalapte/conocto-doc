@@ -16,6 +16,7 @@ const SOURCE_LABEL: Readonly<Record<LinkSource, string>> = {
   oz: 'OZ',
   menge: 'Mengen',
   beton: 'Beton',
+  text: 'Kurztext',
 };
 
 const MODE_LABEL: Readonly<Record<StepMode, string>> = {

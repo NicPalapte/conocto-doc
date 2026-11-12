@@ -196,6 +196,7 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     suggestions,
     suggest,
     setSuggest,
+    setOffered,
     pageText,
     ansatzFor,
     setAnsatzFor,
@@ -217,6 +218,12 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     left: number;
     top: number;
   } | null>(null);
+  // Die Positionskarte markiert, was zum offenen Vorschlag passt (Entscheidung 0108).
+  const offered = offer?.suggestion ?? null;
+  useEffect(() => {
+    setOffered(offered);
+    return () => setOffered(null);
+  }, [offered, setOffered]);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const attachScroller = useCallback((el: HTMLDivElement | null): void => {
@@ -666,11 +673,13 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
       oz: true,
       menge: true,
       beton: true,
+      text: true,
     });
     return {
       oz: open.filter((item) => item.source === 'oz').length,
       menge: open.filter((item) => item.source === 'menge').length,
       beton: open.filter((item) => item.source === 'beton').length,
+      text: open.filter((item) => item.source === 'text').length,
     };
   }, [annotations.documents, doc.id, suggestions]);
   const onSuggestion = useCallback(

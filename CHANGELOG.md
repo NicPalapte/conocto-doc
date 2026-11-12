@@ -9,6 +9,19 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.60.0 — 12.11.2026 · Bessere Vorschläge im Dokument
+
+- **Keine Kapitelnummern mehr als OZ:** Ohne „Pos.“ oder „OZ“ davor zählt eine Nummer nur,
+  wenn sie genau wie im LV geschrieben ist (mit führenden Nullen). Eine Nummer am Zeilenanfang
+  vor einer fremden Überschrift gilt als Kapitel.
+- **Neu: Vorschläge über den Kurztext.** Steht der Kurztext einer Position wörtlich im PDF,
+  schlägt Conocto die Position vor. Groß/klein, Zeilenumbrüche und Umlaute spielen keine
+  Rolle. Abschaltbar im Menü des Dokuments und als Regel „Kurztext im Dokument“.
+- **Leiste an der Stelle:** Die Leiste zum Vorschlag steht neben, unter oder über der
+  markierten Stelle und wandert beim Scrollen mit.
+- **Positionskarte zeigt den Treffer:** Solange ein Vorschlag offen ist, sind OZ, Menge,
+  Kurztext, gleiche Wörter und Betonklassen in der Karte grün gestrichelt umrandet.
+
 ## 0.59.1 — 11.11.2026 · Tasten nicht im Weg
 
 - **Taste T** wirkt nicht, solange ein Fenster, ein Menü oder die Tour offen ist.

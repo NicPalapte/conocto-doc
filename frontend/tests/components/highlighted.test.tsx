@@ -120,3 +120,16 @@ describe('Highlighted mit Suchschlüssel', () => {
     ]);
   });
 });
+
+describe('Passt zum Vorschlag im Dokument (Entscheidung 0108)', () => {
+  it('umrandet die Teile gestrichelt, auch in einer Fundstelle, ohne Text zu verlieren', () => {
+    const { container } = render(
+      <Highlighted text={TEXT} spans={SPANS} dashed={['c30/37', 'DIN EN 206']} />,
+    );
+    const marks = [...container.querySelectorAll('[data-suggest-match]')].map(
+      (mark) => mark.textContent,
+    );
+    expect(marks).toEqual(['C30/37', 'DIN EN 206']);
+    expect(container.textContent).toBe(TEXT);
+  });
+});

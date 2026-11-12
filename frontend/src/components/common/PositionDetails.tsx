@@ -3,7 +3,7 @@
 // Langtext mit Fundstellen und eine Eigenschaftstabelle.
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { CardHead, GroupPill, PropTable, Section, StatRow } from './CardParts';
+import { CardHead, DASHED, GroupPill, PropTable, Section, StatRow } from './CardParts';
 import { Highlighted } from './Highlighted';
 import { LearnPopover } from './LearnPopover';
 import { MAX_TERM_LENGTH, type LearnTarget } from './learnSelection';
@@ -21,6 +21,7 @@ import { shownText } from './shownText';
 import { useTextSearches } from './useTextSearches';
 import { HintBlock, HintCount } from '../check/HintBlock';
 import { DocLinks } from '../docs/DocLinks';
+import { useOptionalDocuments } from '../docs/DocumentsProvider';
 import { PlanQuantity } from '../docs/PlanQuantity';
 import {
   attributeLabel,
@@ -30,6 +31,7 @@ import {
   displayAttributes,
 } from '../../lib/attributes';
 import { fehlendeAngabenOf } from '../../lib/beton/sorten';
+import { suggestMatchOf } from '../../lib/docs/docSuggest';
 import { facetOptionLabel, FACETS_BY_ID } from '../../lib/facets';
 import { formatEuro, formatNumber } from '../../lib/format';
 import { categoryOf, keysOfLabel, presentCategories } from '../../lib/spanCategories';
@@ -43,6 +45,7 @@ import { useViewer, useViewerDispatch } from '../../state/viewer';
 import type { Highlight, Paint } from '../../lib/annotations';
 
 const NO_MARKS: readonly Highlight[] = [];
+const NO_TERMS: readonly string[] = [];
 /** Längere Auswahl ergibt keine brauchbare Regel mehr. */
 const MAX_RULE_SELECTION = 400;
 
@@ -145,6 +148,16 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
   const dispatch = useViewerDispatch();
   const searchesFor = useTextSearches();
   const parent = parents.get(node.id) ?? null;
+  // Offener Vorschlag im Dokument zu dieser Position: passende Teile gestrichelt (0108).
+  const offered = useOptionalDocuments()?.offered ?? null;
+  const match = useMemo(
+    () =>
+      offered === null || offered.id !== node.id
+        ? null
+        : suggestMatchOf(offered, position.shortText, position.longText),
+    [offered, node.id, position.shortText, position.longText],
+  );
+  const dashed = match?.terms ?? NO_TERMS;
 
   const positionsart = FACETS_BY_ID.get('positionsart');
   // Hauptabschnitt im Ton seiner Punkte im Graphen (Entscheidung 0043).
@@ -238,7 +251,12 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
   // „Meine Textmarkierungen" lässt sich wie eine Fundstellen-Kategorie ausblenden.
   // Suche und Legende bauen den Langtext neu auf — dann neu einfärben.
   const paintHidden = hiddenLabels.has(PAINT_SECTION);
-  usePaintHighlights(longTextRef, paintHidden ? NO_MARKS : marks, [search, spans, activeKeys]);
+  usePaintHighlights(longTextRef, paintHidden ? NO_MARKS : marks, [
+    search,
+    spans,
+    activeKeys,
+    dashed,
+  ]);
   const legend =
     marks.length === 0
       ? categories
@@ -285,7 +303,11 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
       <CardHead
         meta={
           <>
-            <span className="shrink-0 font-mono text-[12px] text-dim">{position.oz}</span>
+            <span
+              className={`shrink-0 font-mono text-[12px] text-dim ${match?.oz === true ? DASHED : ''}`}
+            >
+              {position.oz}
+            </span>
             {main !== null && mainColor !== undefined && (
               <GroupPill color={mainColor}>{headingOf(main)}</GroupPill>
             )}
@@ -301,7 +323,7 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
             // Wie der Langtext: im Graphen gilt `select-none`, hier soll man markieren können.
             className="cursor-text select-text"
           >
-            <Highlighted text={position.shortText} query={search} />
+            <Highlighted text={position.shortText} query={search} dashed={dashed} />
           </span>
         }
         actions={<MarkerHead positionId={node.id} />}
@@ -328,6 +350,7 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
             label: 'Menge',
             value: formatNumber(position.quantity),
             unit: position.unit ?? undefined,
+            dashed: match?.amount === true,
           },
           priced
             ? { label: 'EP', value: formatEuro(position.unitPrice) }
@@ -372,6 +395,7 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
                 query={search}
                 spans={spans}
                 activeKeys={activeKeys}
+                dashed={dashed}
               />
             </div>
             {paintTarget !== null && (
