@@ -9,6 +9,15 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.61.1 — 12.11.2026 · Betonklassen und Maße
+
+- **Nur echte Betonklassen:** Als Betonsorte zählen nur Festigkeitsklassen nach DIN EN 206 /
+  DIN 1045-2 (C8/10 bis C100/115, LC8/9 bis LC80/88). „C100/0“ aus dem Asphalt ist keine.
+  Das gilt für die Betonsortenliste, den Langtext und die Vorschläge im PDF.
+- **Mehr Maße im Langtext:** Neu ist die Breite („Stufenbreite 80 cm“, „Breite von 15 cm“).
+  Gebeugte Formen wie „10 cm dickem“ werden erkannt. Je Art werden alle Stellen markiert,
+  nicht nur die erste.
+
 ## 0.61.0 — 12.11.2026 · Einstellungen für alle
 
 - **Neu im Logo-Menü: „Einstellungen“.** Darin „Hervorhebung & Regeln“ (der Regeleditor),

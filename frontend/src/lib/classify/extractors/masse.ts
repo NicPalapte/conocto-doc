@@ -26,8 +26,14 @@ const ZAHL = '\\d+(?:[.,]\\d+)?';
  * würde beides verwerfen.
  */
 function named(words: string, einheit: string): RegExp {
-  return new RegExp(`(?:${words})\\s*[:=]?\\s*${ZAHL}\\s*${einheit}\\b`, 'gi');
+  return new RegExp(`(?:${words})\\s*[:=]?\\s*${FUELLWORT}${ZAHL}\\s*${einheit}\\b`, 'gi');
 }
+
+/** „Breite von 15 cm“, „Höhe mind. 10 cm“: ein kurzes Wort zwischen Stichwort und Zahl. */
+const FUELLWORT = '(?:(?:von|mit|ca\\.|mind\\.|min\\.|max\\.)\\s*)?';
+
+/** Gebeugte Formen: „dick“, „dicke“, „dickem“, „dicken“, „dicker“, „dickes“. */
+const GEBEUGT = '(?:e[mnrs]?)?';
 
 /**
  * Kurzform mit Formelzeichen: "d = 30 cm", "h=4m". Das Gleichheits- bzw.
@@ -63,7 +69,7 @@ const REGELN: readonly MassRegel[] = [
     patterns: [
       named('dicke|dick|stärke|staerke', LAENGE_EINHEIT),
       formula('d', LAENGE_EINHEIT),
-      suffixed(LAENGE_EINHEIT, 'dick'),
+      suffixed(LAENGE_EINHEIT, `dick${GEBEUGT}`),
     ],
   },
   {
@@ -72,7 +78,7 @@ const REGELN: readonly MassRegel[] = [
     patterns: [
       named('höhe|hoehe|hoch', LAENGE_EINHEIT),
       formula('h', LAENGE_EINHEIT),
-      suffixed(LAENGE_EINHEIT, 'hoch'),
+      suffixed(LAENGE_EINHEIT, `hoch|hohe[mnrs]?`),
     ],
   },
   {
@@ -81,7 +87,16 @@ const REGELN: readonly MassRegel[] = [
     patterns: [
       named('länge|laenge|lang', LAENGE_EINHEIT),
       formula('l', LAENGE_EINHEIT),
-      suffixed(LAENGE_EINHEIT, 'lang'),
+      suffixed(LAENGE_EINHEIT, `lang${GEBEUGT}`),
+    ],
+  },
+  {
+    key: 'breite',
+    einheit: LAENGE_EINHEIT,
+    patterns: [
+      named('breite|breit', LAENGE_EINHEIT),
+      formula('b', LAENGE_EINHEIT),
+      suffixed(LAENGE_EINHEIT, `breit${GEBEUGT}`),
     ],
   },
   {
@@ -90,7 +105,7 @@ const REGELN: readonly MassRegel[] = [
     patterns: [
       named('gewicht|schwer', GEWICHT_EINHEIT),
       formula('g|m', GEWICHT_EINHEIT),
-      suffixed(GEWICHT_EINHEIT, 'schwer'),
+      suffixed(GEWICHT_EINHEIT, `schwer${GEBEUGT}`),
     ],
   },
 ];
@@ -101,20 +116,27 @@ function valueOf(raw: string, einheit: string): string | null {
   return match === null ? null : tidy(match[0]).toLowerCase();
 }
 
-/** Erster Treffer je Regel — ein Bauteil hat eine Dicke, nicht fünf. */
-function findMass(text: string, regel: MassRegel): Hit | null {
-  let best: Hit | null = null;
+/**
+ * Alle Treffer einer Regel in Lesereihenfolge (Issue #191: „Stufenbreite 80 cm“ und
+ * „Auftrittsbreite 27 cm“ in einer Position). Überlappen sich zwei Muster, zählt der erste.
+ */
+function findMasse(text: string, regel: MassRegel): Hit[] {
+  const hits: Hit[] = [];
   for (const pattern of regel.patterns) {
     for (const match of text.matchAll(pattern)) {
       const value = valueOf(match[0], regel.einheit);
       if (value === null) continue;
       const start = match.index ?? 0;
-      if (best === null || start < best.start) {
-        best = { value, start, end: start + match[0].length, label: tidy(match[0]) };
-      }
+      hits.push({ value, start, end: start + match[0].length, label: tidy(match[0]) });
     }
   }
-  return best;
+  hits.sort((a, b) => a.start - b.start || b.end - a.end);
+  const out: Hit[] = [];
+  for (const hit of hits) {
+    const last = out.at(-1);
+    if (last === undefined || hit.start >= last.end) out.push(hit);
+  }
+  return out;
 }
 
 /**
@@ -131,15 +153,16 @@ export function extractMasse(
   const attributes: Record<string, string> = {};
   const spans: Span[] = [];
   for (const regel of REGELN) {
-    const hit = findMass(longText, regel);
-    if (hit !== null) {
-      const collected = collect(regel.key, [hit]);
+    const hits = findMasse(longText, regel);
+    if (hits.length > 0) {
+      // Markiert werden alle Stellen; als Wert der Position gilt die erste.
+      const collected = collect(regel.key, hits);
       attributes[regel.key] = collected.values[0];
       spans.push(...collected.spans);
       continue;
     }
-    const fromShort = findMass(shortText, regel);
-    if (fromShort !== null) attributes[regel.key] = fromShort.value;
+    const fromShort = findMasse(shortText, regel)[0];
+    if (fromShort !== undefined) attributes[regel.key] = fromShort.value;
   }
   return { attributes, spans };
 }

@@ -25,6 +25,7 @@ const ATTRIBUTE_LABELS: Record<string, string> = {
   groesstkorn: 'Größtkorn',
   dicke: 'Dicke',
   hoehe: 'Höhe',
+  breite: 'Breite',
   laenge: 'Länge',
   gewicht: 'Gewicht',
   keywords: 'Besonderheiten',

@@ -9,8 +9,12 @@
 // `tragend`) gehört zum Materialwissen, nicht hierher.
 
 import { allMatches } from '../text';
+import { istFestigkeitsklasse } from '../../beton/festigkeitsklassen';
 
-/** Druckfestigkeitsklasse nach DIN EN 206, Normal- und Leichtbeton ("C30/37", "LC25/28"). */
+/**
+ * Druckfestigkeitsklasse nach DIN EN 206, Normal- und Leichtbeton ("C30/37", "LC25/28").
+ * Die Form allein reicht nicht: nur Klassen aus `istFestigkeitsklasse` zählen.
+ */
 const DRUCKFESTIGKEIT = /\b(?:lc|c)\s?\d{1,3}\/\d{1,3}\b/g;
 
 /** Expositionsklassen nach DIN EN 206 / DIN 1045-2: X0, XC/XD/XS/XF/XA/XM + Ziffer. */
@@ -69,7 +73,7 @@ function groesstkoerner(text: string): string[] {
 }
 
 export function extractBetonklassen(text: string): Betonklassen {
-  const beton = upper(allMatches(text, DRUCKFESTIGKEIT));
+  const beton = upper(allMatches(text, DRUCKFESTIGKEIT).filter(istFestigkeitsklasse));
   return {
     beton: beton[0] ?? null,
     expo: upper(allMatches(text, EXPOSITION)),

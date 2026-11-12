@@ -14,6 +14,7 @@ import { sentenceAround } from '@core';
 import { sorteKeyOf } from '../beton/sorteKey';
 import { extractBetonklassen } from '../classify/rulesets/normklassen';
 import { canonicalUnit } from '../units';
+import { istFestigkeitsklasse } from '../beton/festigkeitsklassen';
 import { formatNumber } from '../format';
 
 /** Woher eine Verknüpfung kam, wenn nicht von Hand. */
@@ -679,7 +680,7 @@ function weitereSorten(index: SuggestIndex, key: string): string[] {
  * Treffern gibt es keinen Vorschlag.
  */
 function findBeton(text: string, index: SuggestIndex, max: number): BetonFound[] {
-  const matches = [...text.matchAll(FESTIGKEIT)];
+  const matches = [...text.matchAll(FESTIGKEIT)].filter((match) => istFestigkeitsklasse(match[0]));
   const out: BetonFound[] = [];
   let prevEnd = 0;
   matches.forEach((match, i) => {

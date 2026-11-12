@@ -2,6 +2,7 @@
 // eigene Regeln. `hervorhebungen-vorher.json` hält fest, was der Langtext vorher mit den
 // Begriffen aus `begriffe.ts` und dem Grundstock gezeigt hat — auf allen Test-LVs und
 // erfundenen Texten. Mit den Begriffen als Regeln muss genau dasselbe herauskommen.
+// Neu erzeugt mit Issue #191 (12.11.2026): Breite und alle benannten Maße je Position.
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
