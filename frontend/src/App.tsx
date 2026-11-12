@@ -1,6 +1,6 @@
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { ViewerPage } from './pages/ViewerPage';
-import { AdminProvider } from './state/admin';
+import { RulesProvider } from './state/rules';
 import { PaintNamesProvider } from './state/paintNames';
 import { SurveyProvider } from './state/survey';
 import { useViewer } from './state/viewer';
@@ -23,8 +23,8 @@ function ViewerMitNetz() {
 
 function App() {
   return (
-    // Admin außen: der Viewer braucht die gelernten Begriffe für den Filter „Material".
-    <AdminProvider>
+    // Regeln außen: der Viewer braucht die gelernten Begriffe für den Filter „Material".
+    <RulesProvider>
       <ViewerProvider>
         <PaintNamesProvider>
           <SurveyProvider>
@@ -32,7 +32,7 @@ function App() {
           </SurveyProvider>
         </PaintNamesProvider>
       </ViewerProvider>
-    </AdminProvider>
+    </RulesProvider>
   );
 }
 

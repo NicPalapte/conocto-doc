@@ -11,11 +11,11 @@
 // Seit Entscheidung 0047 liegen hier auch die eigenen Markierungen und Kommentare
 // zu genau dieser Datei. Eine neue Datei beginnt ohne sie.
 //
-// Seit Entscheidung 0053 außerdem die Begriffe, die der Admin im Langtext gelernt
-// hat. Sie hängen an keiner Datei: weder eine neue Datei noch „Letzte Datei
+// Seit Entscheidung 0053 außerdem die Begriffe, die im Langtext gelernt
+// wurden. Sie hängen an keiner Datei: weder eine neue Datei noch „Letzte Datei
 // löschen" nimmt sie mit. Ebenso die Farbnamen (0063), der Merker der
 // Kurzumfrage (0071), die letzte Anordnung im Splitscreen (0073) und die eigenen
-// Regeln aus dem Admin-Werkzeug (0081) und die eigenen Wortlisten (0090).
+// Regeln aus den Einstellungen (0081, 0109) und die eigenen Wortlisten (0090).
 
 import { toRule, type Rule } from '@core';
 import type { LearnedTerm } from '../highlight/terms';
@@ -322,7 +322,7 @@ function isTerm(value: unknown): value is LearnedTerm {
 }
 
 /**
- * Begriffe, die der Admin in diesem Browser gelernt hat. Leer ohne IndexedDB;
+ * Begriffe, die in diesem Browser gelernt wurden. Leer ohne IndexedDB;
  * `null`, wenn das Lesen scheitert — dann darf niemand darüber schreiben, sonst
  * gingen die bisher gelernten Begriffe still verloren.
  */
@@ -505,7 +505,7 @@ export async function saveWorkspace(workspace: StoredWorkspace): Promise<boolean
 }
 
 /**
- * Eigene Regeln aus dem Admin-Werkzeug. Leer ohne IndexedDB; `null`, wenn das Lesen
+ * Eigene Regeln aus den Einstellungen. Leer ohne IndexedDB; `null`, wenn das Lesen
  * scheitert — dann nicht darüber schreiben (wie bei den gelernten Begriffen).
  */
 export async function readOwnRules(): Promise<Rule[] | null> {

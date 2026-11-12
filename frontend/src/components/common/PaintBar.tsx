@@ -1,7 +1,7 @@
 // Menü beim Rechtsklick auf eine Auswahl im Langtext (Entscheidung 0063, Issue #155):
 // „In Suche übernehmen“ (eine Suche für LV und PDFs, Entscheidung 0103), Kopieren, sechs
 // Farben zum Markieren, je mit eigenem Namen, Anstreichung entfernen,
-// dazu „Farben benennen" und mit Admin-Zugang „Begriff lernen" (Entscheidung 0053).
+// dazu „Farben benennen", „Begriff lernen" und „Als Regel…" (Entscheidungen 0053, 0109).
 // Eine Auswahl allein öffnet es nicht mehr. Unter den Eigenschaften der Abschnitt
 // „Meine Textmarkierungen".
 
@@ -103,9 +103,9 @@ export function PaintBar({
   onUnpaint: (() => void) | null;
   /** Öffnet „Farben benennen". */
   onRename: () => void;
-  /** Nur mit Admin-Zugang und kurzer Auswahl. */
+  /** Nur bei kurzer Auswahl. */
   onLearn: (() => void) | null;
-  /** Nur mit Admin-Zugang: Regeleditor mit Bausteinen aus der Auswahl (Entscheidung 0081). */
+  /** Regeleditor mit Bausteinen aus der Auswahl (Entscheidung 0081). */
   onRule?: (() => void) | null;
   /** Nur im Begleitdokument (Entscheidung 0072): Stelle mit Positionen verknüpfen. */
   onLink?: () => void;

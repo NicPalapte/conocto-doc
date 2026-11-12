@@ -1,6 +1,7 @@
 # 0090 – Eigene Wortlisten
 
 - **Status:** akzeptiert
+  — Pfade seit [0109](0109-einstellungen-statt-admin.md): `components/settings/`, `state/rules.tsx`
 - **Datum:** 2026-11-02
 - **Betrifft:** Reiter „Wortlisten“ (`frontend/src/components/admin/WordListsTab.tsx`),
   Wortlisten (`frontend/src/lib/rules/wordLists.ts`, `wissen.ts`), Admin-Zustand

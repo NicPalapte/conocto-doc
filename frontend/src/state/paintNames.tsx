@@ -1,6 +1,6 @@
 // Eigene Namen der Markierfarben (Entscheidung 0063). Gelten in diesem Browser für
 // alle Dateien und bleiben in IndexedDB (lib/persist/lastLv.ts), wie die gelernten
-// Begriffe aus state/admin.tsx — gleiches Muster: erst lesen, dann schreiben.
+// Begriffe aus state/rules.tsx — gleiches Muster: erst lesen, dann schreiben.
 
 import {
   createContext,
@@ -44,7 +44,7 @@ export function PaintNamesProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Nacheinander speichern, nie parallel (siehe state/admin.tsx).
+  // Nacheinander speichern, nie parallel (siehe state/rules.tsx).
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   useEffect(() => {
     if (!loaded) return;

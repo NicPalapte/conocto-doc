@@ -9,6 +9,16 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.61.0 — 12.11.2026 · Einstellungen für alle
+
+- **Neu im Logo-Menü: „Einstellungen“.** Darin „Hervorhebung & Regeln“ (der Regeleditor),
+  „Wortlisten“ und „Markierfarben“. Ohne Passwort, für alle.
+- **Begriff lernen und „Als Regel…“** im Rechtsklick-Menü des Langtexts gibt es jetzt für
+  jeden.
+- **Treffer anklicken** schließt die Einstellungen und zeigt die Position.
+- **„Admin-Werkzeuge“ und das Passwort sind weg.** Eigene Regeln und Wortlisten bleiben.
+- **Am Tablet** sind Knöpfe, Felder und Schalter in den Einstellungen größer.
+
 ## 0.60.1 — 12.11.2026 · Leiste bleibt in der PDF-Ansicht
 
 - **Vorschlagsleiste beim Scrollen:** Scrollt die markierte Stelle aus dem Bild, bleibt die

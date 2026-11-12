@@ -17,7 +17,7 @@ gehört nicht in dieses Produkt.
 Persistenz über die Session hinaus — außer der zuletzt geöffneten Datei im Browser
 samt eigenen Markern und Kommentaren dazu (Entscheidungen 0046, 0047), den Stellen in
 Begleit-PDFs (ohne das PDF selbst, Entscheidung 0072) und der im
-Admin-Werkzeug gelernten Begriffe für die Langtext-Hervorhebung (Entscheidung 0053). Statische Fremd-Assets (Webfonts, npm-Pakete) sind
+in den Einstellungen gelernten Begriffe für die Langtext-Hervorhebung (Entscheidungen 0053, 0109). Statische Fremd-Assets (Webfonts, npm-Pakete) sind
 erlaubt, sie transportieren keine Nutzdaten.
 
 ---

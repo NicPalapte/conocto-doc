@@ -1,6 +1,7 @@
 # 0081 – Regeleditor und Regelformat `bubble-rule-v1`
 
-- **Status:** akzeptiert (Prototyp; Editor erweitert durch [0089](0089-regeleditor-fuer-alle-regeln.md))
+- **Status:** akzeptiert (Prototyp; Editor erweitert durch [0089](0089-regeleditor-fuer-alle-regeln.md),
+  Ort seit [0109](0109-einstellungen-statt-admin.md): „Einstellungen“ statt Admin-Werkzeuge)
 - **Datum:** 2026-10-28
 - **Betrifft:** Kern (`packages/core/src/rules/`, `packages/core/src/text/`), Admin-Werkzeuge
   (`frontend/src/components/admin/`), Langtext und Positionskarte (`PositionDetails.tsx`,

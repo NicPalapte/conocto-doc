@@ -1,4 +1,4 @@
-// Eigene Regeln im Admin-Zustand (Entscheidung 0081): Kennungen bleiben eindeutig,
+// Eigene Regeln im Regel-Zustand (Entscheidungen 0081, 0109): Kennungen bleiben eindeutig,
 // eine Grundstock-Kennung lässt sich nicht als eigene Regel speichern.
 
 import 'fake-indexeddb/auto';
@@ -8,20 +8,20 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { readOwnRules } from '../../src/lib/persist/lastLv';
 import { GRUNDSTOCK, newRule } from '../../src/lib/rules/rules';
-import { AdminProvider, useAdmin } from '../../src/state/admin';
+import { RulesProvider, useRules } from '../../src/state/rules';
 
 beforeEach(() => {
   globalThis.indexedDB = new IDBFactory();
 });
 
 const wrapper = ({ children }: { children: ReactNode }) => (
-  <AdminProvider>{children}</AdminProvider>
+  <RulesProvider>{children}</RulesProvider>
 );
 
 describe('eigene Regeln', () => {
   it('nimmt keine Kennung aus dem Grundstock an', async () => {
     const [base] = GRUNDSTOCK;
-    const { result } = renderHook(() => useAdmin(), { wrapper });
+    const { result } = renderHook(() => useRules(), { wrapper });
     const own = newRule(new Set(GRUNDSTOCK.map((rule) => rule.id)));
     act(() => {
       result.current.saveRule({ ...base, name: 'Überschrieben' });

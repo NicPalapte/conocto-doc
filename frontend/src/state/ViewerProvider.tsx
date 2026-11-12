@@ -52,7 +52,7 @@ import {
   type ViewerAction,
   type ViewerDerived,
 } from './viewer';
-import { useAdmin } from './admin';
+import { useRules } from './rules';
 import { readWorkspace, saveWorkspace } from '../lib/persist/lastLv';
 import { toStoredWorkspace } from '../lib/workspace/split';
 import { INITIAL_WORKSPACE } from './viewState';
@@ -118,7 +118,7 @@ export function ViewerProvider({ children }: { children: ReactNode }) {
   // Als Material gelernte Begriffe zählen in der Facette „Material" mit (Entscheidung
   // 0066). Nur bei neuem LV oder geänderten Begriffen; ohne Begriffe derselbe Index
   // und die Zählung aus dem Laden.
-  const { rules, grundstockOff, wordEntries, context } = useAdmin();
+  const { rules, grundstockOff, wordEntries, context } = useRules();
   // Als Text verglichen: `rules` ist nach jeder Änderung an eigenen Regeln neu.
   const materialKey = JSON.stringify(materialTermsOf(rules));
   const learnedMaterials = useMemo(

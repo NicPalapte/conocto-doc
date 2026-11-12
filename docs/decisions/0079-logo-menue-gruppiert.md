@@ -1,6 +1,7 @@
 # 0079 – Logo-Menü gruppiert, Exporte gebündelt
 
 - **Status:** akzeptiert
+  — Pfade seit [0109](0109-einstellungen-statt-admin.md): `components/settings/`, `state/rules.tsx`
 - **Datum:** 2026-10-27
 - **Betrifft:** Logo-Menü (`frontend/src/components/layout/AboutMenu.tsx`),
   Admin-Werkzeuge (`frontend/src/components/layout/AdminDialog.tsx`)

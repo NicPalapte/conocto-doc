@@ -1,38 +1,39 @@
-# Admin-Werkzeuge: Begriffe lernen und Regeln bauen
+# Einstellungen: Begriffe lernen und Regeln bauen
 
 Ergebnis: Du markierst wichtige Begriffe im Langtext (Material, Maße, Wichtig). Jeder
 gelernte Begriff ist eine eigene Regel. Erst gilt sie nur in deinem Browser, nach dem
 Übernehmen ins Repo für alle.
 Hintergrund: [Entscheidung 0053](../decisions/0053-marker-verlauf-und-gelernte-begriffe.md),
-[0088](../decisions/0088-gelernte-begriffe-als-regeln.md).
+[0088](../decisions/0088-gelernte-begriffe-als-regeln.md),
+[0109](../decisions/0109-einstellungen-statt-admin.md).
 
-## Anmelden
+## Öffnen
 
-1. Logo oben links → **Admin-Werkzeuge** → Passwort → **Öffnen**.
-2. Neben dem Logo steht jetzt **Admin**. Nach einem Neuladen ist das wieder weg.
+Logo oben links → **Einstellungen**. Kein Passwort. Rubriken: „Hervorhebung & Regeln“,
+„Wortlisten“, „Markierfarben“. „Fertig“ schließt.
 
 ## Begriff lernen
 
-1. Position öffnen, im Langtext einen Begriff mit der Maus markieren.
+1. Position öffnen, im Langtext einen Begriff markieren, Rechtsklick → „Begriff lernen…“.
 2. Kategorie wählen: **Material** (grün), **Maße** (violett), **Wichtig** (rot) oder
    **Nicht hervorheben** (nimmt eine falsche Markierung weg).
 3. Enthält der Begriff eine Zahl, kannst du **als Muster** lernen: „C30/37“ wird
    „C#/#“ und trifft jede Festigkeitsklasse.
 
 Der Begriff wirkt sofort, in jeder Datei, aber **nur in diesem Browser**. Er steht als
-eigene Regel im Reiter „Regeln“ unter „Eigene Regeln“. Dort kannst du ihn ändern,
+eigene Regel unter Einstellungen → „Hervorhebung & Regeln“ → „Eigene Regeln“. Dort kannst du ihn ändern,
 abschalten oder löschen. Begriffe aus älteren Versionen zieht die App beim Start einmal
 dorthin um.
 
 Für alle übernehmen: wie jede Regel, siehe unten „Regel in den Grundstock übernehmen“.
 
-## Regeln bauen (Reiter „Regeln“)
+## Regeln bauen („Hervorhebung & Regeln“)
 
 Ergebnis: Eine Regel färbt den Langtext ein, zeigt einen Hinweis in „Prüfung“, schlägt
 Verbindungen zwischen Positionen vor oder schlägt Stellen im Begleit-PDF vor.
 Hintergrund: Entscheidungen 0081 und 0089.
 
-1. Logo-Menü → Admin-Werkzeuge → Reiter „Regeln“ → „+ Neue Regel“.
+1. Logo-Menü → Einstellungen → „Hervorhebung & Regeln“ → „+ Neue Regel“.
    Oder: im Langtext Text markieren, Rechtsklick → „Als Regel…“.
 2. Bausteine zusammenstellen: Begriff, Menge, Norm, Wortliste, Einheit oder Angabe aus der
    Datei (Menge, Einheit, Positionsart). Dazu Abstand und Text wählen. Unten stehen sofort
@@ -66,16 +67,16 @@ ist sie weg; vorher „Regeln exportieren“ sichert sie. Mit „Regeln importie
 eine `regeln.json` wieder herein; vorhandene Regeln werden dabei nie überschrieben.
 Importierte Regeln mit Status `freigegeben` sind gleich an, alle anderen aus.
 
-## Wortlisten pflegen (Reiter „Wortlisten“)
+## Wortlisten pflegen („Wortlisten“)
 
 Ergebnis: Regeln mit dem Baustein „Wortliste“ finden auch deine eigenen Wörter, z. B. eine
 weitere Risiko-Formulierung. Hintergrund: Entscheidung 0090.
 
-1. Logo-Menü → Admin-Werkzeuge → Reiter „Wortlisten“ → links eine Liste wählen.
+1. Logo-Menü → Einstellungen → „Wortlisten“ → links eine Liste wählen.
 2. Eigenes Wort unten eintragen → „Hinzufügen“. `*` = beliebige Endung, `#` = eine Zahl.
 3. Ein Grundstock-Wort stört? Draufklicken schaltet es ab (durchgestrichen), noch einmal
    klicken schaltet es wieder an.
-4. Eigene Liste: „+ Neue Liste“, Namen eintragen, Wörter hinzufügen. Im Reiter „Regeln“
+4. Eigene Liste: „+ Neue Liste“, Namen eintragen, Wörter hinzufügen. In „Hervorhebung & Regeln“
    dann beim Baustein „Wortliste“ auswählen.
 
 „Benutzt von“ zeigt, welche Regeln die Liste verwenden. Die Listen `bieterangabe` und
@@ -91,13 +92,7 @@ In den Grundstock übernehmen (gilt dann für alle):
 
 Lässt du das aus, gelten die Wörter nur in deinem Browser. Website-Daten löschen nimmt sie mit.
 
-## Passwort ändern
+## Markierfarben benennen
 
-Das Passwort ist ein Sichtschutz, kein echter Schutz: Die App hat keinen Server, wer
-den Code liest, kommt vorbei. Es steht deshalb nicht im Repo, nur sein Fingerabdruck
-(SHA-256).
-
-1. Fingerabdruck des neuen Passworts erzeugen, z. B. im Terminal:
-   `printf '%s' 'NeuesPasswort' | shasum -a 256`
-2. Den Wert in `frontend/src/state/admin.tsx` bei `ADMIN_PASSWORD_SHA256` eintragen.
-   Die Tests brauchen keine Änderung.
+Logo-Menü → Einstellungen → „Markierfarben“. Je Farbe einen Namen eintragen, z. B.
+„Nachfragen“. Gilt sofort, nur in diesem Browser.

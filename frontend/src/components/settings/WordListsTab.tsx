@@ -1,4 +1,4 @@
-// Reiter „Wortlisten“ der Admin-Werkzeuge (Entscheidung 0090): links alle Listen, rechts die
+// Rubrik „Wortlisten“ der Einstellungen (Entscheidungen 0090, 0109): links alle Listen, rechts die
 // Wörter einer Liste. Grundstock-Listen kommen aus den CSV unter docs/domain/reference/ — ihre
 // Wörter lassen sich nur abschalten, eigene kommen dazu. Eigene Listen sind ganz änderbar.
 // Alles bleibt in diesem Browser; „Wortlisten exportieren“ gibt die CSV fürs Repo.
@@ -7,14 +7,14 @@ import { useMemo, useState } from 'react';
 import { downloadText } from '../../lib/export/download';
 import { listsOfRule } from '../../lib/check';
 import { LISTS_AT_LOAD, wordListsCsv, type WordListView } from '../../lib/rules/wordLists';
-import { useAdmin } from '../../state/admin';
+import { useRules } from '../../state/rules';
 
 const BUTTON =
-  'inline-flex h-[28px] cursor-pointer items-center rounded-[var(--r-pill)] border border-line bg-surface px-[12px] font-mono text-[11.5px] text-ink hover:border-line2 disabled:cursor-default disabled:opacity-40';
+  'inline-flex h-[28px] cursor-pointer items-center rounded-[var(--r-pill)] border border-line bg-surface px-[12px] font-mono text-[11.5px] text-ink hover:border-line2 disabled:cursor-default disabled:opacity-40 [@media(pointer:coarse)]:h-[40px] [@media(pointer:coarse)]:px-[16px] [@media(pointer:coarse)]:text-[13px]';
 const INPUT =
-  'h-[28px] min-w-0 rounded-[var(--r-sm)] border border-line bg-panel px-[8px] font-sans text-[12.5px] text-ink outline-none focus:border-accent';
+  'h-[28px] min-w-0 rounded-[var(--r-sm)] border border-line bg-panel px-[8px] font-sans text-[12.5px] text-ink outline-none focus:border-accent [@media(pointer:coarse)]:h-[40px] [@media(pointer:coarse)]:text-[14px]';
 const CHIP =
-  'inline-flex h-[24px] items-center gap-[4px] rounded-[var(--r-pill)] border px-[9px] font-mono text-[11.5px]';
+  'inline-flex h-[24px] items-center gap-[4px] rounded-[var(--r-pill)] border px-[9px] font-mono text-[11.5px] [@media(pointer:coarse)]:h-[36px] [@media(pointer:coarse)]:px-[12px] [@media(pointer:coarse)]:text-[13px]';
 
 function ListItem({
   list,
@@ -32,7 +32,7 @@ function ListItem({
         type="button"
         aria-current={selected}
         onClick={onSelect}
-        className={`flex w-full cursor-pointer items-center gap-[8px] border-0 border-l-[3px] bg-transparent px-[14px] py-[6px] text-left font-sans text-[13px] text-ink ${
+        className={`flex w-full cursor-pointer items-center gap-[8px] border-0 border-l-[3px] bg-transparent px-[14px] py-[6px] text-left font-sans text-[13px] text-ink [@media(pointer:coarse)]:py-[12px] ${
           selected ? 'border-accent bg-accent-soft' : 'border-transparent hover:bg-sunken'
         }`}
       >
@@ -77,7 +77,7 @@ function AddWord({ onAdd }: { onAdd: (word: string) => void }) {
 }
 
 function ListDetail({ list, onDeleted }: { list: WordListView; onDeleted: () => void }) {
-  const { rules, addWord, removeWord, setWordOn, renameList, deleteList } = useAdmin();
+  const { rules, addWord, removeWord, setWordOn, renameList, deleteList } = useRules();
   const usedBy = useMemo(
     () => rules.filter((rule) => listsOfRule(rule).includes(list.id)),
     [rules, list.id],
@@ -213,7 +213,7 @@ function ListDetail({ list, onDeleted }: { list: WordListView; onDeleted: () => 
 }
 
 export function WordListsTab() {
-  const { wordLists, wordEntries, addList } = useAdmin();
+  const { wordLists, wordEntries, addList } = useRules();
   const [selectedId, setSelectedId] = useState<string | null>(wordLists[0]?.id ?? null);
   const list = wordLists.find((other) => other.id === selectedId) ?? wordLists[0] ?? null;
   const grundstock = wordLists.filter((other) => other.grundstock);

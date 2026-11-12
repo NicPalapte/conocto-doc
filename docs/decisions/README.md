@@ -59,7 +59,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0050 | [Eingabefelder aus der Datei](0050-eingabefelder-aus-der-datei.md)                                             | akzeptiert                         | 2026-10-15 |
 | 0052 | [Kein Bauteiltyp](0052-kein-bauteiltyp.md)                                                                     | akzeptiert                         | 2026-10-15 |
 | 0051 | [Kein Status-Filter](0051-kein-status-filter.md)                                                               | akzeptiert                         | 2026-10-15 |
-| 0053 | [Drei Marker, Kommentar-Verlauf, Mengenstufe, gelernte Begriffe](0053-marker-verlauf-und-gelernte-begriffe.md) | teils ersetzt d. 0062, 0088        | 2026-10-16 |
+| 0053 | [Drei Marker, Kommentar-Verlauf, Mengenstufe, gelernte Begriffe](0053-marker-verlauf-und-gelernte-begriffe.md) | teils ersetzt d. 0062, 0088, 0109  | 2026-10-16 |
 | 0054 | [Kern als eigenes Paket im selben Repo](0054-kern-als-paket.md)                                                | akzeptiert                         | 2026-10-17 |
 | 0055 | [Positions-Hash und Datei-ID im Link](0055-positions-hash.md)                                                  | akzeptiert                         | 2026-10-17 |
 | 0056 | [Anonyme Nutzungszählung mit GoatCounter](0056-anonyme-nutzungszaehlung.md)                                    | akzeptiert                         | 2026-10-17 |
@@ -87,7 +87,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0078 | [Schlanke Startansicht, ein Schalter für blass/ausblenden](0078-schlanke-startansicht-ein-schalter.md)         | akzeptiert                         | 2026-10-26 |
 | 0079 | [Logo-Menü gruppiert, Exporte gebündelt](0079-logo-menue-gruppiert.md)                                         | akzeptiert                         | 2026-10-27 |
 | 0080 | [Vorschläge im PDF: OZ und Mengen aus dem LV](0080-oz-und-mengen-vorschlaege-im-pdf.md)                        | akzeptiert, teils ersetzt d. 0087  | 2026-10-27 |
-| 0081 | [Regeleditor und Regelformat `bubble-rule-v1`](0081-regeleditor-und-regelformat.md)                            | akzeptiert, ergänzt durch 0085     | 2026-10-28 |
+| 0081 | [Regeleditor und Regelformat `bubble-rule-v1`](0081-regeleditor-und-regelformat.md)                            | akz., ergänzt d. 0085, Ort: 0109   | 2026-10-28 |
 | 0082 | [Eigene Domain conocto.app](0082-eigene-domain.md)                                                             | akzeptiert                         | 2026-10-28 |
 | 0083 | [Nicht in Suchmaschinen, keine KI-Crawler](0083-nicht-in-suchmaschinen.md)                                     | akzeptiert                         | 2026-10-28 |
 | 0084 | [Eigene Suche im PDF](0084-eigene-suche-im-pdf.md)                                                             | ersetzt durch 0103                 | 2026-10-28 |
@@ -115,6 +115,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0106 | [Beton im Dokument: Vorschläge über Betonsorten](0106-beton-im-dokument.md)                                    | akzeptiert                         | 2026-11-10 |
 | 0107 | [Graph und Tabelle am selben Platz wechseln (Taste T)](0107-graph-tabelle-am-selben-platz.md)                  | akzeptiert                         | 2026-11-10 |
 | 0108 | [Vorschläge nach dem Praxistest](0108-vorschlaege-nach-praxistest.md)                                          | akzeptiert                         | 2026-11-12 |
+| 0109 | [Einstellungen statt Admin-Werkzeuge](0109-einstellungen-statt-admin.md)                                      | akzeptiert                         | 2026-11-12 |
 
 ## Wann schreibe ich eine neue Datei?
 

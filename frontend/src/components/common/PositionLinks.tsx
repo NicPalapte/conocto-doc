@@ -9,7 +9,7 @@ import { Section } from './CardParts';
 import { useJumpToPosition } from './useJumpToPosition';
 import { confirmedWith, linkOf } from '../../lib/positionLinks';
 import { linkSuggestionsOf } from '../../lib/rules/linkSuggestions';
-import { useAdmin } from '../../state/admin';
+import { useRules } from '../../state/rules';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
 
 export const POSITION_LINKS_SECTION = 'Verbunden';
@@ -21,7 +21,7 @@ export function PositionLinks({ positionId }: { positionId: string }) {
   const { annotations, nodes, index, parents } = useViewer();
   const dispatch = useViewerDispatch();
   const jump = useJumpToPosition();
-  const { rules, context } = useAdmin();
+  const { rules, context } = useRules();
   const links = annotations.links ?? [];
   const suggestions = useMemo(
     () => linkSuggestionsOf(index, parents, rules, undefined, context),
@@ -141,7 +141,7 @@ export function PositionLinks({ positionId }: { positionId: string }) {
         <p className="m-0 mt-[6px] font-sans text-[12px] text-amber">
           Nicht alle Vorschläge: {tooMany.map((rule) => `„${rule.name}“`).join(', ')}{' '}
           {tooMany.length === 1 ? 'trifft' : 'treffen'} mehr als {MAX_LINK_SUGGESTIONS} Paare. Im
-          Admin-Werkzeug enger fassen.
+          Unter Einstellungen enger fassen.
         </p>
       )}
     </Section>

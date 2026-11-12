@@ -1,7 +1,8 @@
 # 0053 – Drei Marker, Kommentar-Verlauf, Mengenstufe, gelernte Begriffe
 
-- **Status:** teilweise ersetzt durch 0062 (die drei Marker) und
-  [0088](0088-gelernte-begriffe-als-regeln.md) (gelernte Begriffe)
+- **Status:** teilweise ersetzt durch 0062 (die drei Marker),
+  [0088](0088-gelernte-begriffe-als-regeln.md) (gelernte Begriffe) und
+  [0109](0109-einstellungen-statt-admin.md) (kein Passwort mehr)
 - **Datum:** 2026-10-16
 - **Betrifft:** eigene Notizen (`frontend/src/lib/annotations.ts`), Matrix
   (`frontend/src/lib/graph/layoutMap.ts`), Langtext-Hervorhebung
@@ -53,5 +54,5 @@
 - Der Speicher im Browser hält jetzt zusätzlich die gelernten Begriffe.
   „Letzte Datei löschen“ lässt sie stehen.
 - Owner: Begriffe aus dem Browser als CSV ins Repo übernehmen, sonst sieht sie nur
-  der eigene Browser. Anleitung: [`../setup/admin-werkzeuge.md`](../setup/admin-werkzeuge.md).
+  der eigene Browser. Anleitung: [`../setup/regeln.md`](../setup/regeln.md).
 - Später: Reiter „Material“ und „Prüfregeln“ im Admin-Fenster (heute ausgegraut).

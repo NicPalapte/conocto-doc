@@ -1,7 +1,7 @@
 // Eigene Wortlisten (Entscheidung 0090): Grundstock-Listen bleiben in den CSV unter
 // docs/domain/reference/. In diesem Browser kommen dazu eigene Wörter, abgeschaltete
 // Grundstock-Wörter und eigene Listen. Gespeichert als flache Liste von Einträgen, damit
-// das Speichern dieselbe Mechanik nutzt wie die eigenen Regeln (state/admin.tsx).
+// das Speichern dieselbe Mechanik nutzt wie die eigenen Regeln (state/rules.tsx).
 
 import type { RuleContext } from '@core';
 import { GRUNDSTOCK_LISTS, WISSEN } from './wissen';

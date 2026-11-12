@@ -1,4 +1,4 @@
-// Begriff lernen (Entscheidungen 0053, 0088, nur mit Admin-Zugang): Text im Langtext
+// Begriff lernen (Entscheidungen 0053, 0088, 0109): Text im Langtext
 // markieren, dann Kategorie wählen. Enthält der Begriff eine Zahl, lässt er sich
 // auch als Muster lernen — „C30/37" wird „C#/#" und trifft jede Festigkeitsklasse.
 
@@ -11,7 +11,7 @@ import {
   type TermCategory,
 } from '../../lib/highlight/terms';
 import { categoryOf } from '../../lib/spanCategories';
-import { useAdmin } from '../../state/admin';
+import { useRules } from '../../state/rules';
 import type { LearnTarget } from './learnSelection';
 
 function swatch(category: TermCategory): string {
@@ -19,7 +19,7 @@ function swatch(category: TermCategory): string {
 }
 
 export function LearnPopover({ target, onClose }: { target: LearnTarget; onClose: () => void }) {
-  const { learn } = useAdmin();
+  const { learn } = useRules();
   const ref = useRef<HTMLDivElement>(null);
   const pattern = patternOf(target.text);
   const [asPattern, setAsPattern] = useState(false);
