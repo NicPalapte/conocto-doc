@@ -92,6 +92,9 @@ export interface DocumentsApi {
   /** Welche Vorschläge gezeigt werden; Standard: alle. Gemerkt in den Notizen des LV. */
   readonly suggest: Readonly<Record<LinkSource, boolean>>;
   setSuggest: (source: LinkSource, on: boolean) => void;
+  /** Vorschlag, dessen Leiste gerade offen ist: die Positionskarte markiert, was passt. */
+  readonly offered: DocSuggestion | null;
+  setOffered: (suggestion: DocSuggestion | null) => void;
   /**
    * Position (Knoten-ID), für die gerade ein Rechenansatz gebildet wird (Entscheidung
    * 0095): Antippen eines Maßes oder einer Messung im Plan hängt es an ihren Ansatz.
@@ -171,6 +174,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [offered, setOffered] = useState<DocSuggestion | null>(null);
   const [jump, setJump] = useState<DocJump | null>(null);
   const jumpCount = useRef(0);
   const [ansatzFor, setAnsatzState] = useState<string | null>(null);
@@ -431,10 +435,10 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
 
   // Vorschläge: einmal je LV ein Verzeichnis, dann je Dokument alle Seiten im Worker.
   const shown = shownSuggestions(annotations.documents);
-  const { oz: ozShown, menge: mengeShown, beton: betonShown } = shown;
+  const { oz: ozShown, menge: mengeShown, beton: betonShown, text: textShown } = shown;
   const suggest = useMemo(
-    () => ({ oz: ozShown, menge: mengeShown, beton: betonShown }),
-    [ozShown, mengeShown, betonShown],
+    () => ({ oz: ozShown, menge: mengeShown, beton: betonShown, text: textShown }),
+    [ozShown, mengeShown, betonShown, textShown],
   );
   const setSuggest = useCallback(
     (source: LinkSource, on: boolean): void => dispatch({ type: 'docSuggest', source, on }),
@@ -484,10 +488,10 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
           const key = `${doc.id}:${page}`;
           let found = cache.get(key);
           if (found === undefined) {
-            const text = await pageText(doc, page);
+            const lines = await pageLines(doc, page);
             if (!alive) return;
             suggester ??= createSuggester(suggestIndex);
-            found = await suggester.page(text, page);
+            found = await suggester.page(lines.text, page, [...lines.lineEnds]);
             if (!alive) return;
             cache.set(key, found);
           }
@@ -506,7 +510,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       alive = false;
       suggester?.dispose();
     };
-  }, [wanted, docs, index, suggestIndex, pageText]);
+  }, [wanted, docs, index, suggestIndex, pageLines]);
   const suggestions = wanted && suggested.index === suggestIndex ? suggested.byDoc : NO_SUGGESTIONS;
 
   const documents = annotations.documents;
@@ -543,6 +547,8 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       suggestions,
       suggest,
       setSuggest,
+      offered,
+      setOffered,
       ansatzFor,
       setAnsatzFor,
       planWanted,
@@ -574,6 +580,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       suggestions,
       suggest,
       setSuggest,
+      offered,
       ansatzFor,
       setAnsatzFor,
       planWanted,

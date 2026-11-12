@@ -10,7 +10,7 @@ import { drawRegion, pixelRatio, showDrawing, type PageDrawing } from './pageCan
 import { useDocHighlights, rangeIn, type DocHighlightItem } from './docHighlights';
 import type { DocMark } from '../../lib/docs/docNotes';
 import { locateOnPage } from '../../lib/docs/docNotes';
-import { SUGGEST_BORDER, type DocSuggestion } from '../../lib/docs/docSuggest';
+import { SUGGEST_BORDER, suggestionKey, type DocSuggestion } from '../../lib/docs/docSuggest';
 import { pdfLib, type OpenedPdf } from '../../lib/docs/pdf';
 import { bundleSpots, type Bundle } from '../../lib/docs/linkBundles';
 
@@ -410,6 +410,7 @@ function PdfPageView({
             key={`${suggestion.start}-${suggestion.id}-${i}`}
             type="button"
             aria-label={`Vorschlag ${suggestion.text}: verknüpfen?`}
+            data-suggest={suggestionKey(suggestion)}
             title="Verknüpfen?"
             onClick={(event) => {
               const own = event.currentTarget.getBoundingClientRect();

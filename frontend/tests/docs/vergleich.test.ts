@@ -1,5 +1,6 @@
 // Vorschläge im Begleitdokument nach dem Umzug ins Regelformat (Entscheidung 0087): mit den
-// Grundstock-Regeln genau wie vorher (`vorschlaege-vorher.json`, Stand v0.45.2). Dazu, was
+// Grundstock-Regeln genau wie vorher (`vorschlaege-vorher.json`, Stand v0.45.2; seit 0108 ohne
+// „1.2.40“: OZ ohne Kontextwort nur in LV-Schreibweise). Dazu, was
 // die Regeln schalten und einstellen. Alle Texte sind erfunden (`vorschlagPdf.ts`).
 
 import { describe, expect, it } from 'vitest';
@@ -37,16 +38,20 @@ describe('Vorschläge aus den Grundstock-Regeln', () => {
       oz: { nearOz: 80 },
       menge: { minInteger: 10 },
       beton: { maxPositions: 3 },
+      text: { minLength: 12 },
     });
   });
 
   it('eine Regel aus: nur ihre Art fällt weg, die andere bleibt unverändert', () => {
     const ohneMenge = alle(mit('pdf-menge', (rule) => ({ ...rule, status: 'aus' })));
     const ohneOz = alle(mit('pdf-oz', (rule) => ({ ...rule, status: 'entwurf' })));
+    // Kurztext-Vorschläge (0108) springen ein, wo die Menge fehlt; hier nicht verglichen.
+    const ohneText = (pages: readonly { source: string }[][]) =>
+      pages.map((page) => page.filter((s) => s.source !== 'text'));
     const nur = (source: string) =>
       (vorher as { source: string }[][]).map((page) => page.filter((s) => s.source === source));
-    expect(JSON.parse(JSON.stringify(ohneMenge))).toEqual(nur('oz'));
-    expect(JSON.parse(JSON.stringify(ohneOz))).toEqual(nur('menge'));
+    expect(JSON.parse(JSON.stringify(ohneText(ohneMenge)))).toEqual(nur('oz'));
+    expect(JSON.parse(JSON.stringify(ohneText(ohneOz)))).toEqual(nur('menge'));
   });
 
   it('ohne Regeln gibt es keine Vorschläge', () => {

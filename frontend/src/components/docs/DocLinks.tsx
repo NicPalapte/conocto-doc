@@ -15,6 +15,7 @@ const SOURCE_TEXT: Readonly<Record<LinkSource, string>> = {
   oz: 'OZ',
   menge: 'Menge',
   beton: 'Beton',
+  text: 'Kurztext',
 };
 
 export function DocLinks({ positionId }: { positionId: string }) {

@@ -71,6 +71,12 @@ const INFO: Readonly<Record<string, BuiltinInfo>> = {
       },
     },
   },
+  'text-im-pdf': {
+    name: 'Kurztext im Dokument',
+    params: {
+      'kleinste-laenge': { label: 'Kurztext mindestens so viele Zeichen', min: 4, max: 200 },
+    },
+  },
 };
 
 /** Name und Parameter eines eingebauten Bausteins; Unbekanntes unter seinem Namen ohne Werte. */

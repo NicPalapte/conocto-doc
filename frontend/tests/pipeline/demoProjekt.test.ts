@@ -101,7 +101,7 @@ describe('Demo-Projekt', () => {
             ],
       ),
     );
-    const all = { oz: true, menge: true, beton: true };
+    const all = { oz: true, menge: true, beton: true, text: true };
     const offen = [...texts].flatMap(([doc, pages]) =>
       pendingSuggestions(
         merged.documents,
