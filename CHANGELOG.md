@@ -13,6 +13,8 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 - **Vorschlagsleiste beim Scrollen:** Scrollt die markierte Stelle aus dem Bild, bleibt die
   Leiste am oberen oder unteren Rand der PDF-Ansicht stehen, nicht mehr am Rand des Fensters.
+- **Leiste verschieben:** Am Kopf der Leiste lässt sie sich zur Seite ziehen, wenn sie Text
+  verdeckt. Beim nächsten Vorschlag steht sie wieder neben der Stelle.
 
 ## 0.60.0 — 12.11.2026 · Bessere Vorschläge im Dokument
 

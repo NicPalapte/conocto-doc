@@ -3,7 +3,7 @@
 // „Verknüpfen“, „Nein“ und „Position zeigen“. Erst der Klick legt die Verknüpfung an;
 // „Nein“ merkt sich die Ablehnung in den Notizen.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useHostWindow } from '../common/hostWindow';
 import { keyIsTaken } from '../common/keys';
@@ -125,11 +125,33 @@ export function SuggestBar({
     follow();
     return () => host.cancelAnimationFrame(frame);
   }, [host, key, bounds]);
-  const at = placeNextTo(
-    spot,
-    { width: WIDTH, height },
-    view ?? { left: 0, top: 0, right: host.innerWidth, bottom: host.innerHeight },
-  );
+  const area = view ?? { left: 0, top: 0, right: host.innerWidth, bottom: host.innerHeight };
+  const placed = placeNextTo(spot, { width: WIDTH, height }, area);
+  // Von Hand weggezogen (Nico, 12.11.2026: verdeckt sonst Text): Versatz zur Stelle, gilt
+  // nur für diesen Vorschlag und bleibt in der PDF-Ansicht.
+  const [moved, setMoved] = useState<{ key: string; dx: number; dy: number } | null>(null);
+  const shift = moved?.key === key ? moved : { dx: 0, dy: 0 };
+  const within = (value: number, low: number, high: number) =>
+    Math.max(low, Math.min(value, Math.max(low, high)));
+  const at = {
+    left: within(placed.left + shift.dx, area.left + GAP, area.right - WIDTH - GAP),
+    top: within(placed.top + shift.dy, area.top + GAP, area.bottom - height - GAP),
+  };
+  const startDrag = (event: ReactPointerEvent<HTMLElement>): void => {
+    if (event.button !== 0 || (event.target as HTMLElement).closest('button') !== null) return;
+    event.preventDefault();
+    const from = { x: event.clientX - shift.dx, y: event.clientY - shift.dy };
+    const onMove = (move: PointerEvent): void =>
+      setMoved({ key, dx: move.clientX - from.x, dy: move.clientY - from.y });
+    const onUp = (): void => {
+      host.document.removeEventListener('pointermove', onMove);
+      host.document.removeEventListener('pointerup', onUp);
+      host.document.removeEventListener('pointercancel', onUp);
+    };
+    host.document.addEventListener('pointermove', onMove);
+    host.document.addEventListener('pointerup', onUp);
+    host.document.addEventListener('pointercancel', onUp);
+  };
 
   const { amount, sorte } = suggestion;
   const label =
@@ -149,7 +171,11 @@ export function SuggestBar({
       className="ov-window fixed z-[70] flex flex-col gap-[8px] p-[10px]"
       style={{ left: at.left, top: at.top, width: WIDTH }}
     >
-      <span className="flex items-center gap-[4px] font-mono text-[11px] text-mute">
+      <span
+        onPointerDown={startDrag}
+        title="Zum Verschieben ziehen"
+        className="flex cursor-grab touch-none select-none items-center gap-[4px] font-mono text-[11px] text-mute active:cursor-grabbing"
+      >
         <span className="flex-1">{label}</span>
         {onStep !== undefined && place !== null && place.total > 1 && (
           <>
