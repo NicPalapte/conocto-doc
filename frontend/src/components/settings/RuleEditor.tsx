@@ -114,9 +114,9 @@ function factBlock(fact: RuleFact, value: string): RuleBlock {
 const CHIP =
   'inline-flex h-[24px] min-w-[72px] shrink-0 items-center justify-center rounded-[var(--r-pill)] px-[8px] font-mono text-[11px] font-semibold text-white';
 const INPUT =
-  'h-[30px] min-w-0 rounded-[var(--r-sm)] border border-line bg-surface px-[8px] font-mono text-[12.5px] text-ink outline-none focus:border-accent disabled:opacity-60';
+  'h-[30px] min-w-0 rounded-[var(--r-sm)] border border-line bg-surface px-[8px] font-mono text-[12.5px] text-ink outline-none focus:border-accent disabled:opacity-60 [@media(pointer:coarse)]:h-[40px] [@media(pointer:coarse)]:text-[14px]';
 const ADD =
-  'cursor-pointer rounded-[var(--r-pill)] border border-dashed border-line2 bg-transparent px-[10px] py-[3px] font-mono text-[11.5px] text-dim hover:border-ink hover:text-ink disabled:cursor-default disabled:opacity-40';
+  'cursor-pointer rounded-[var(--r-pill)] border border-dashed border-line2 bg-transparent px-[10px] py-[3px] font-mono text-[11.5px] text-dim hover:border-ink hover:text-ink disabled:cursor-default disabled:opacity-40 [@media(pointer:coarse)]:py-[10px] [@media(pointer:coarse)]:px-[14px] [@media(pointer:coarse)]:text-[13px]';
 const LABEL = 'min-w-[72px] font-mono text-[11px] uppercase tracking-[0.06em] text-mute';
 const NOTE = 'font-sans text-[12px] text-mute';
 
@@ -806,7 +806,7 @@ export function RuleEditor({
                     disabled={readOnly}
                     aria-pressed={highlight === category}
                     onClick={() => onChange({ ...rule, wirkung: { hervorheben: category } })}
-                    className="inline-flex h-[26px] cursor-pointer items-center rounded-[var(--r-pill)] border px-[10px] font-mono text-[11.5px] disabled:cursor-default"
+                    className="inline-flex h-[26px] cursor-pointer items-center rounded-[var(--r-pill)] border px-[10px] font-mono text-[11.5px] [@media(pointer:coarse)]:h-[40px] [@media(pointer:coarse)]:px-[14px] [@media(pointer:coarse)]:text-[13px] disabled:cursor-default"
                     style={{
                       borderColor: highlight === category ? 'transparent' : 'var(--line)',
                       background:

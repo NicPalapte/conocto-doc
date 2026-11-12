@@ -10,11 +10,11 @@ import { LISTS_AT_LOAD, wordListsCsv, type WordListView } from '../../lib/rules/
 import { useRules } from '../../state/rules';
 
 const BUTTON =
-  'inline-flex h-[28px] cursor-pointer items-center rounded-[var(--r-pill)] border border-line bg-surface px-[12px] font-mono text-[11.5px] text-ink hover:border-line2 disabled:cursor-default disabled:opacity-40';
+  'inline-flex h-[28px] cursor-pointer items-center rounded-[var(--r-pill)] border border-line bg-surface px-[12px] font-mono text-[11.5px] text-ink hover:border-line2 disabled:cursor-default disabled:opacity-40 [@media(pointer:coarse)]:h-[40px] [@media(pointer:coarse)]:px-[16px] [@media(pointer:coarse)]:text-[13px]';
 const INPUT =
-  'h-[28px] min-w-0 rounded-[var(--r-sm)] border border-line bg-panel px-[8px] font-sans text-[12.5px] text-ink outline-none focus:border-accent';
+  'h-[28px] min-w-0 rounded-[var(--r-sm)] border border-line bg-panel px-[8px] font-sans text-[12.5px] text-ink outline-none focus:border-accent [@media(pointer:coarse)]:h-[40px] [@media(pointer:coarse)]:text-[14px]';
 const CHIP =
-  'inline-flex h-[24px] items-center gap-[4px] rounded-[var(--r-pill)] border px-[9px] font-mono text-[11.5px]';
+  'inline-flex h-[24px] items-center gap-[4px] rounded-[var(--r-pill)] border px-[9px] font-mono text-[11.5px] [@media(pointer:coarse)]:h-[36px] [@media(pointer:coarse)]:px-[12px] [@media(pointer:coarse)]:text-[13px]';
 
 function ListItem({
   list,
@@ -32,7 +32,7 @@ function ListItem({
         type="button"
         aria-current={selected}
         onClick={onSelect}
-        className={`flex w-full cursor-pointer items-center gap-[8px] border-0 border-l-[3px] bg-transparent px-[14px] py-[6px] text-left font-sans text-[13px] text-ink ${
+        className={`flex w-full cursor-pointer items-center gap-[8px] border-0 border-l-[3px] bg-transparent px-[14px] py-[6px] text-left font-sans text-[13px] text-ink [@media(pointer:coarse)]:py-[12px] ${
           selected ? 'border-accent bg-accent-soft' : 'border-transparent hover:bg-sunken'
         }`}
       >

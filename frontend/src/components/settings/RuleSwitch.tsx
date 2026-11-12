@@ -32,14 +32,15 @@ export function RuleSwitch({
         event.stopPropagation();
         onToggle();
       }}
-      className={`relative h-[18px] w-[30px] shrink-0 cursor-pointer rounded-[var(--r-pill)] border-none p-0 transition-colors disabled:cursor-default disabled:opacity-40 ${
+      // Am Tablet größer: ein Finger trifft 18 px schlecht (Entscheidung 0109).
+      className={`relative h-[18px] w-[30px] shrink-0 [@media(pointer:coarse)]:h-[28px] [@media(pointer:coarse)]:w-[46px] cursor-pointer rounded-[var(--r-pill)] border-none p-0 transition-colors disabled:cursor-default disabled:opacity-40 ${
         on ? 'bg-greenD' : 'bg-line2'
       }`}
     >
       <span
         aria-hidden="true"
-        className={`absolute top-[2px] h-[14px] w-[14px] rounded-full bg-surface transition-[left] ${
-          on ? 'left-[14px]' : 'left-[2px]'
+        className={`absolute top-[2px] h-[14px] w-[14px] rounded-full bg-surface transition-[left] [@media(pointer:coarse)]:h-[24px] [@media(pointer:coarse)]:w-[24px] ${
+          on ? 'left-[14px] [@media(pointer:coarse)]:left-[20px]' : 'left-[2px]'
         }`}
       />
     </button>

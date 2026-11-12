@@ -45,7 +45,7 @@ const PREVIEW_LIMIT = 40;
 const SNIPPET = 140;
 
 const BUTTON =
-  'inline-flex h-[28px] cursor-pointer items-center rounded-[var(--r-pill)] border border-line bg-surface px-[12px] font-mono text-[11.5px] text-ink hover:border-line2 disabled:cursor-default disabled:opacity-40';
+  'inline-flex h-[28px] cursor-pointer items-center rounded-[var(--r-pill)] border border-line bg-surface px-[12px] font-mono text-[11.5px] text-ink hover:border-line2 disabled:cursor-default disabled:opacity-40 [@media(pointer:coarse)]:h-[40px] [@media(pointer:coarse)]:px-[16px] [@media(pointer:coarse)]:text-[13px]';
 
 /** Grundstock-Regeln, die schon in regeln.json aus sind: nur abschalten erlaubt (0089). */
 const lockedIds: ReadonlySet<string> = new Set(
@@ -152,7 +152,7 @@ function HitPreview({ rule, positions }: { rule: Rule; positions: readonly LVNod
               type="button"
               onClick={() => jump(node.id)}
               title="Zur Position springen"
-              className="grid w-full cursor-pointer grid-cols-[92px_minmax(0,1fr)] gap-[10px] rounded-[var(--r-sm)] border-none bg-transparent px-[8px] py-[6px] text-left hover:bg-sunken"
+              className="grid w-full cursor-pointer grid-cols-[92px_minmax(0,1fr)] gap-[10px] rounded-[var(--r-sm)] border-none bg-transparent px-[8px] py-[6px] text-left hover:bg-sunken [@media(pointer:coarse)]:py-[12px]"
             >
               <span className="font-mono text-[12px] text-dim">{node.position?.oz}</span>
               {hit.feld === 'position' ? (
@@ -300,7 +300,7 @@ function RuleListItem({
   const on = rule.status === 'freigegeben';
   return (
     <li
-      className={`flex items-center gap-[8px] border-0 border-l-[3px] px-[14px] py-[6px] ${
+      className={`flex items-center gap-[8px] border-0 border-l-[3px] px-[14px] py-[6px] [@media(pointer:coarse)]:py-[12px] ${
         selected ? 'border-accent bg-accent-soft' : 'border-transparent hover:bg-sunken'
       }`}
     >
@@ -530,7 +530,7 @@ export function RulesTab() {
               onChange={(event) => setQuery(event.target.value)}
               aria-label="Regel suchen"
               placeholder="Regel suchen"
-              className="h-[30px] w-full rounded-[var(--r-sm)] border border-line bg-surface px-[8px] font-sans text-[12.5px] text-ink outline-none focus:border-accent"
+              className="h-[30px] w-full rounded-[var(--r-sm)] border border-line bg-surface px-[8px] font-sans text-[12.5px] [@media(pointer:coarse)]:h-[40px] [@media(pointer:coarse)]:text-[14px] text-ink outline-none focus:border-accent"
             />
           </div>
           {GROUPS.map((group) => {
