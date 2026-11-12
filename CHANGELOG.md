@@ -9,6 +9,13 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.60.1 — 12.11.2026 · Leiste bleibt in der PDF-Ansicht
+
+- **Vorschlagsleiste beim Scrollen:** Scrollt die markierte Stelle aus dem Bild, bleibt die
+  Leiste am oberen oder unteren Rand der PDF-Ansicht stehen, nicht mehr am Rand des Fensters.
+- **Leiste verschieben:** Am Kopf der Leiste lässt sie sich zur Seite ziehen, wenn sie Text
+  verdeckt. Beim nächsten Vorschlag steht sie wieder neben der Stelle.
+
 ## 0.60.0 — 12.11.2026 · Bessere Vorschläge im Dokument
 
 - **Keine Kapitelnummern mehr als OZ:** Ohne „Pos.“ oder „OZ“ davor zählt eine Nummer nur,
