@@ -4,7 +4,7 @@
 // Suchort Langtext, Wirkung „hervorheben“ (Material, Maße, Wichtig oder „Nicht
 // hervorheben“). Angewendet wird er wie jede Regel (`applyRules` in lib/rules/rules.ts).
 // Begriffe, die ältere Versionen getrennt im Browser gespeichert haben, zieht
-// `state/admin.tsx` beim Start einmal in eigene Regeln um.
+// `state/rules.tsx` beim Start einmal in eigene Regeln um.
 //
 // Schreibweise wie in den Materialtabellen (lib/classify/material/stichwort.ts):
 // `#` = eine Zahl, `*` = beliebige Buchstaben, sonst wörtlich, ohne Groß/klein.

@@ -1,5 +1,5 @@
-// Admin-Werkzeuge (Entscheidung 0053): Zugang mit Passwort, Begriff im Langtext
-// lernen, Liste mit Löschen. Gespeichert wird in der IndexedDB dieses Browsers.
+// Einstellungen (Entscheidungen 0053, 0109): Begriff im Langtext lernen, ohne Passwort,
+// Liste mit Löschen. Gespeichert wird in der IndexedDB dieses Browsers.
 
 import 'fake-indexeddb/auto';
 import { readFileSync } from 'node:fs';
@@ -10,23 +10,11 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../src/App';
 import { readLearnedTerms, readOwnRules, saveLearnedTerms } from '../../src/lib/persist/lastLv';
-import { ADMIN_PASSWORD_SHA256 } from '../../src/state/admin';
 
 const NAME = 'gaeb-xml-beispiel.x83';
 const FIXTURE = readFileSync(resolve(process.cwd(), '../packages/core/tests/fixtures', NAME));
-// Das echte Passwort steht nirgends im Repo (docs/setup/admin-werkzeuge.md). Der
-// Test ersetzt den Fingerabdruck: „richtig" ergibt den hinterlegten Wert.
-const PASSWORT = 'richtig';
-
 beforeEach(() => {
   globalThis.indexedDB = new IDBFactory();
-  const echt = crypto.subtle.digest.bind(crypto.subtle);
-  vi.spyOn(crypto.subtle, 'digest').mockImplementation((algorithm, data) => {
-    const text = new TextDecoder().decode(data as Uint8Array);
-    if (text !== PASSWORT) return echt(algorithm, data);
-    const bytes = ADMIN_PASSWORD_SHA256.match(/../g)?.map((hex) => parseInt(hex, 16)) ?? [];
-    return Promise.resolve(new Uint8Array(bytes).buffer);
-  });
 });
 
 afterEach(() => {
@@ -41,13 +29,10 @@ async function ladeDatei(): Promise<void> {
   await screen.findByRole('button', { name: '+ Filter' });
 }
 
-async function oeffneAdmin(passwort: string): Promise<void> {
+async function oeffneEinstellungen(): Promise<HTMLElement> {
   fireEvent.click(screen.getByRole('button', { name: 'Über diese App' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Admin-Werkzeuge' }));
-  fireEvent.change(await screen.findByLabelText('Admin-Passwort'), {
-    target: { value: passwort },
-  });
-  fireEvent.click(screen.getByRole('button', { name: 'Öffnen' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Einstellungen' }));
+  return screen.findByRole('dialog', { name: 'Einstellungen' });
 }
 
 /** Merkt sich die Dateinamen, die `downloadText` dem Browser übergeben hätte. */
@@ -93,36 +78,26 @@ function markiereWort(block: HTMLElement): string {
   throw new Error('Kein Wort im Langtext');
 }
 
-describe('Admin-Werkzeuge', () => {
+describe('Einstellungen', () => {
   it('bietet das Treffer-Protokoll erst mit geladenem LV', async () => {
     render(<App />);
-    await oeffneAdmin(PASSWORT);
-    fireEvent.click(await screen.findByRole('button', { name: 'Admin' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Admin-Werkzeuge' });
-    expect(within(dialog).getByRole('button', { name: 'Admin beenden' })).toBeInTheDocument();
+    const dialog = await oeffneEinstellungen();
+    expect(within(dialog).getByRole('navigation', { name: 'Regeln' })).toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: 'Treffer-Protokoll (CSV)' })).toBeNull();
   });
 
-  it('bleibt ohne richtiges Passwort zu', async () => {
-    await ladeDatei();
-    await oeffneAdmin('falsch');
-    expect(await screen.findByText('Passwort falsch')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Admin beenden' })).toBeNull();
+  it('benennt Markierfarben', async () => {
+    render(<App />);
+    const dialog = await oeffneEinstellungen();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Markierfarben' }));
+    const feld = within(dialog).getAllByRole('textbox')[0];
+    fireEvent.change(feld, { target: { value: 'Nach fragen' } });
+    // Der Entwurf behält das Leerzeichen, auch wenn der gespeicherte Name gekürzt wird.
+    expect(feld).toHaveValue('Nach fragen');
   });
 
-  it('lernt einen Begriff im Langtext als eigene Regel (0088)', async () => {
+  it('lernt einen Begriff im Langtext als eigene Regel (0088), ohne Passwort', async () => {
     await ladeDatei();
-    // Ohne Admin bietet die Leiste nur Farben zum Anstreichen.
-    markiereWort(await langtextBlock());
-    const leiste = await screen.findByRole('toolbar', { name: 'Textmarkierung' });
-    expect(within(leiste).queryByRole('button', { name: 'Begriff lernen…' })).toBeNull();
-    fireEvent.keyDown(document, { key: 'Escape' });
-
-    await oeffneAdmin(PASSWORT);
-    // Nach dem Passwort geht das Fenster zu, damit man gleich im Langtext arbeiten kann.
-    expect(await screen.findByRole('button', { name: 'Admin' })).toBeInTheDocument();
-    expect(screen.queryByRole('dialog', { name: 'Admin-Werkzeuge' })).toBeNull();
-
     const block = await langtextBlock();
     // Der Graph darunter setzt `select-none`; der Langtext muss markierbar bleiben.
     expect(block.querySelector('.whitespace-pre-wrap')).toHaveClass('select-text');
@@ -141,19 +116,15 @@ describe('Admin-Werkzeuge', () => {
     );
     expect(await readLearnedTerms()).toEqual([]);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Admin' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Admin-Werkzeuge' });
+    const dialog = await oeffneEinstellungen();
     const liste = within(dialog).getByRole('navigation', { name: 'Regeln' });
     fireEvent.click(within(liste).getByText(wort));
-    // Das Treffer-Protokoll sitzt hier, nicht mehr im Logo-Menü (Entscheidung 0079).
+    // Das Treffer-Protokoll sitzt hier, nicht im Logo-Menü (Entscheidungen 0079, 0109).
     const geladen = fangeDownloads();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Treffer-Protokoll (CSV)' }));
     expect(geladen).toEqual([expect.stringMatching(/treffer.*\.csv$/)]);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Löschen' }));
     await waitFor(async () => expect(await readOwnRules()).toEqual([]));
-
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Admin beenden' }));
-    expect(screen.queryByRole('button', { name: 'Admin' })).toBeNull();
   });
 
   it('zieht Begriffe älterer Versionen einmal in eigene Regeln um', async () => {

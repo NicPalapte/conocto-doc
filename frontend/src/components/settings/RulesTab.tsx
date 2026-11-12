@@ -1,6 +1,6 @@
-// Reiter „Regeln" der Admin-Werkzeuge (Entscheidungen 0081, 0089): links alle Regeln nach
-// Wirkung gruppiert, jede mit Schalter, rechts der Baukasten und die Treffer im geladenen LV.
-// Eigene Regeln speichern sich bei jeder Änderung im Browser; der Grundstock
+// Rubrik „Hervorhebung & Regeln" der Einstellungen (Entscheidungen 0081, 0089, 0109): links
+// alle Regeln nach Wirkung gruppiert, jede mit Schalter, rechts der Baukasten und die Treffer
+// im geladenen LV. Eigene Regeln speichern sich bei jeder Änderung im Browser; der Grundstock
 // (docs/domain/reference/regeln.json) lässt sich nur abschalten oder als eigene Regel
 // kopieren. Austausch über „Regeln importieren/exportieren“ (`regeln.json`).
 
@@ -20,6 +20,7 @@ import {
 import { RuleEditor } from './RuleEditor';
 import { RuleSwitch } from './RuleSwitch';
 import { useJumpToPosition } from '../common/useJumpToPosition';
+import { useCloseSettings } from './closeSettings';
 import { downloadText } from '../../lib/export/download';
 import { linkOf } from '../../lib/positionLinks';
 import { LEARNED_NOTE } from '../../lib/highlight/terms';
@@ -34,7 +35,7 @@ import {
   type RuleGroup,
 } from '../../lib/rules/rules';
 import { HINT_LABELS } from '../../lib/rules/sentence';
-import { useAdmin } from '../../state/admin';
+import { useRules } from '../../state/rules';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
 import type { LVNode } from '../../types/lvNode';
 
@@ -105,8 +106,13 @@ function Snippet({ text, hit }: { text: string; hit: RuleHit }) {
 }
 
 function HitPreview({ rule, positions }: { rule: Rule; positions: readonly LVNode[] }) {
-  const jump = useJumpToPosition();
-  const { context } = useAdmin();
+  const jumpTo = useJumpToPosition();
+  const close = useCloseSettings();
+  const jump = (id: string): void => {
+    jumpTo(id);
+    close();
+  };
+  const { context } = useRules();
   const hits = useMemo(() => {
     const out: Array<{ node: LVNode; hit: RuleHit }> = [];
     for (const node of positions) {
@@ -175,8 +181,13 @@ function HitPreview({ rule, positions }: { rule: Rule; positions: readonly LVNod
 function LinkPreview({ rule, positions }: { rule: Rule; positions: readonly LVNode[] }) {
   const { parents, nodes, annotations } = useViewer();
   const dispatch = useViewerDispatch();
-  const jump = useJumpToPosition();
-  const { context } = useAdmin();
+  const jumpTo = useJumpToPosition();
+  const close = useCloseSettings();
+  const jump = (id: string): void => {
+    jumpTo(id);
+    close();
+  };
+  const { context } = useRules();
   const links = annotations.links ?? [];
   const result = useMemo(() => {
     const link = positionLinkOf(rule.wirkung);
@@ -353,7 +364,7 @@ function HintCard({ rule, own }: { rule: Rule; own: boolean }) {
 
 export function RulesTab() {
   const { ownRules, saveRule, deleteRule, ruleRequest, grundstockOff, setGrundstockOn } =
-    useAdmin();
+    useRules();
   const { index, lv } = useViewer();
   const [selectedId, setSelectedId] = useState<string | null>(
     ruleRequest?.id ?? ownRules[0]?.id ?? GRUNDSTOCK[0]?.id ?? null,

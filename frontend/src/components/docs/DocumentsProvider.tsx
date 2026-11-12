@@ -46,7 +46,7 @@ import { firstPageOf, isPdfFile, openPdf, PdfOpenError, type OpenedPdf } from '.
 import { takeDocs } from '../../lib/docs/pendingDocs';
 import { kindOfDoc, type DocKindOf, type DocSort } from '../../lib/docs/docList';
 import { guessDocKind, type DocKind, type DocKindGuess } from '@core';
-import { useAdmin } from '../../state/admin';
+import { useRules } from '../../state/rules';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
 
 /** Sprungziel: Stelle im Dokument; `nonce` macht denselben Sprung wiederholbar. */
@@ -168,7 +168,7 @@ const NO_SUGGESTIONS: ReadonlyMap<string, readonly DocSuggestion[]> = new Map();
 
 export function DocumentsProvider({ children }: { children: ReactNode }) {
   const { lv, index, annotations, filter } = useViewer();
-  const { rules } = useAdmin();
+  const { rules } = useRules();
   const dispatch = useViewerDispatch();
   const [docs, setDocs] = useState<OpenedPdf[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);

@@ -40,7 +40,7 @@ import { mainSectionOf } from '../../lib/tree/mainSection';
 import { blocksFromSelection } from '@core';
 import { applyRules, nameOf, newRule } from '../../lib/rules/rules';
 import { PositionLinks } from './PositionLinks';
-import { useAdmin } from '../../state/admin';
+import { useRules } from '../../state/rules';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
 import type { Highlight, Paint } from '../../lib/annotations';
 
@@ -172,10 +172,10 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
 
   // Aktive Regeln (0081), auch gelernte Begriffe (0088), kommen beim Anzeigen dazu,
   // nicht in der Klassifizierung: sie färben nur ein.
-  const admin = useAdmin();
+  const regeln = useRules();
   const spans = useMemo(
-    () => applyRules(position, attrSpans(position.attributes), admin.rules, admin.context),
-    [position, admin.rules, admin.context],
+    () => applyRules(position, attrSpans(position.attributes), regeln.rules, regeln.context),
+    [position, regeln.rules, regeln.context],
   );
   const longTextRef = useRef<HTMLDivElement>(null);
   // Zusätzlich als Zustand: Die Tablet-Leiste muss mitbekommen, wann der Langtext da ist.
@@ -440,7 +440,7 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
                   setPaintTarget(null);
                 }}
                 onLearn={
-                  admin.unlocked && paintTarget.text.replace(/\s+/g, ' ').length <= MAX_TERM_LENGTH
+                  paintTarget.text.replace(/\s+/g, ' ').length <= MAX_TERM_LENGTH
                     ? () => {
                         const { left, top } = paintTarget;
                         const text = paintTarget.text.replace(/\s+/g, ' ');
@@ -450,18 +450,18 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
                     : null
                 }
                 onRule={
-                  admin.unlocked && paintTarget.text.length <= MAX_RULE_SELECTION
+                  paintTarget.text.length <= MAX_RULE_SELECTION
                     ? () => {
                         const blocks = blocksFromSelection(paintTarget.text);
-                        const taken = new Set(admin.rules.map((rule) => rule.id));
+                        const taken = new Set(regeln.rules.map((rule) => rule.id));
                         const rule = newRule(
                           taken,
                           blocks.length > 0 ? blocks : undefined,
                           nameOf(blocks),
                         );
                         // Gleich als eigener Entwurf speichern, dann im Editor zeigen.
-                        admin.saveRule(rule);
-                        admin.requestRule(rule);
+                        regeln.saveRule(rule);
+                        regeln.requestRule(rule);
                         window.getSelection()?.removeAllRanges();
                         setPaintTarget(null);
                       }
@@ -473,9 +473,7 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
             {renameAt !== null && (
               <PaintNamesDialog left={renameAt.left} top={renameAt.top} onClose={closeRename} />
             )}
-            {admin.unlocked && learnTarget !== null && (
-              <LearnPopover target={learnTarget} onClose={closeLearn} />
-            )}
+            {learnTarget !== null && <LearnPopover target={learnTarget} onClose={closeLearn} />}
             {keywords.length > 0 && (
               <div className="flex flex-wrap gap-[4px]">
                 {keywords.map((keyword) => (

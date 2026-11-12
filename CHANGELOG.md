@@ -9,6 +9,15 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.61.0 — 12.11.2026 · Einstellungen für alle
+
+- **Neu im Logo-Menü: „Einstellungen“.** Darin „Hervorhebung & Regeln“ (der Regeleditor),
+  „Wortlisten“ und „Markierfarben“. Ohne Passwort, für alle.
+- **Begriff lernen und „Als Regel…“** im Rechtsklick-Menü des Langtexts gibt es jetzt für
+  jeden.
+- **Treffer anklicken** schließt die Einstellungen und zeigt die Position.
+- **„Admin-Werkzeuge“ und das Passwort sind weg.** Eigene Regeln und Wortlisten bleiben.
+
 ## 0.60.0 — 12.11.2026 · Bessere Vorschläge im Dokument
 
 - **Keine Kapitelnummern mehr als OZ:** Ohne „Pos.“ oder „OZ“ davor zählt eine Nummer nur,

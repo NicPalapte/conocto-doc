@@ -1,4 +1,4 @@
-// Regeleditor in den Admin-Werkzeugen (Entscheidungen 0081, 0089): Regel aus einer Markierung
+// Regeleditor in den Einstellungen (Entscheidungen 0081, 0089, 0109): Regel aus einer Markierung
 // im Langtext, Bausteine ändern, Treffer-Vorschau, Schalter an/aus, Speichern im Browser.
 
 import 'fake-indexeddb/auto';
@@ -10,23 +10,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../src/App';
 import { readGrundstockOff, readOwnRules } from '../../src/lib/persist/lastLv';
 import { GRUNDSTOCK } from '../../src/lib/rules/rules';
-import { ADMIN_PASSWORD_SHA256 } from '../../src/state/admin';
 
 const NAME = 'gaeb-xml-beispiel.x83';
 const FIXTURE = readFileSync(resolve(process.cwd(), '../packages/core/tests/fixtures', NAME));
-// Das echte Passwort steht nirgends im Repo (docs/setup/admin-werkzeuge.md). Der
-// Test ersetzt den Fingerabdruck: „richtig" ergibt den hinterlegten Wert.
-const PASSWORT = 'richtig';
-
 beforeEach(() => {
   globalThis.indexedDB = new IDBFactory();
-  const echt = crypto.subtle.digest.bind(crypto.subtle);
-  vi.spyOn(crypto.subtle, 'digest').mockImplementation((algorithm, data) => {
-    const text = new TextDecoder().decode(data as Uint8Array);
-    if (text !== PASSWORT) return echt(algorithm, data);
-    const bytes = ADMIN_PASSWORD_SHA256.match(/../g)?.map((hex) => parseInt(hex, 16)) ?? [];
-    return Promise.resolve(new Uint8Array(bytes).buffer);
-  });
 });
 
 afterEach(() => {
@@ -41,13 +29,10 @@ async function ladeDatei(): Promise<void> {
   await screen.findByRole('button', { name: '+ Filter' });
 }
 
-async function oeffneAdmin(passwort: string): Promise<void> {
+async function oeffneEinstellungen(): Promise<HTMLElement> {
   fireEvent.click(screen.getByRole('button', { name: 'Über diese App' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Admin-Werkzeuge' }));
-  fireEvent.change(await screen.findByLabelText('Admin-Passwort'), {
-    target: { value: passwort },
-  });
-  fireEvent.click(screen.getByRole('button', { name: 'Öffnen' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Einstellungen' }));
+  return screen.findByRole('dialog', { name: 'Einstellungen' });
 }
 
 /** Wählt den ersten Punkt mit Langtext und gibt den Langtext-Block zurück. */
@@ -81,21 +66,27 @@ function markiereWort(block: HTMLElement): string {
 }
 
 describe('Regeleditor', () => {
-  it('ist ohne Admin nicht erreichbar: keine „Als Regel…“ in der Leiste', async () => {
+  it('steht ohne Passwort im Logo-Menü, ein Admin-Zugang fehlt (0109)', async () => {
     await ladeDatei();
-    markiereWort(await langtextBlock());
-    const leiste = await screen.findByRole('toolbar', { name: 'Textmarkierung' });
-    expect(within(leiste).queryByRole('button', { name: 'Als Regel…' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Über diese App' }));
+    expect(screen.queryByRole('button', { name: 'Admin-Werkzeuge' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Einstellungen' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Einstellungen' });
+    expect(within(dialog).getByRole('button', { name: 'Hervorhebung & Regeln' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(within(dialog).queryByLabelText('Admin-Passwort')).toBeNull();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Fertig' }));
+    expect(screen.queryByRole('dialog', { name: 'Einstellungen' })).toBeNull();
   });
 
   it('macht aus einer Markierung eine Regel, zeigt Treffer und färbt nach dem Anschalten', async () => {
     await ladeDatei();
-    await oeffneAdmin(PASSWORT);
-    await screen.findByRole('button', { name: 'Admin' });
     const wort = markiereWort(await langtextBlock());
     fireEvent.click(await screen.findByRole('button', { name: 'Als Regel…' }));
 
-    const dialog = await screen.findByRole('dialog', { name: 'Admin-Werkzeuge' });
+    const dialog = await screen.findByRole('dialog', { name: 'Einstellungen' });
     expect(within(dialog).getByRole('textbox', { name: 'Name der Regel' })).toHaveValue(wort);
     expect(within(dialog).getByRole('textbox', { name: 'Begriff' })).toHaveValue(wort);
     expect(within(dialog).getByText(/^Wenn im Langtext/)).toHaveTextContent(`„${wort}“`);
@@ -112,7 +103,7 @@ describe('Regeleditor', () => {
     await waitFor(async () =>
       expect((await readOwnRules())?.map((rule) => rule.status)).toEqual(['freigegeben']),
     );
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Admin-Werkzeuge schließen' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Fertig' }));
     await waitFor(() =>
       expect(document.querySelectorAll(`[data-span-key="wichtig"]`).length).toBeGreaterThan(0),
     );
@@ -120,10 +111,8 @@ describe('Regeleditor', () => {
 
   it('Grundstock lässt sich nur schalten und als eigene Regel kopieren', async () => {
     render(<App />);
-    await oeffneAdmin(PASSWORT);
-    fireEvent.click(await screen.findByRole('button', { name: 'Admin' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Admin-Werkzeuge' });
-    fireEvent.click(within(dialog).getByRole('radio', { name: 'Regeln' }));
+    const dialog = await oeffneEinstellungen();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Hervorhebung & Regeln' }));
     expect(await within(dialog).findByText(/Grundstock-Regel/)).toBeInTheDocument();
     expect(within(dialog).getByRole('textbox', { name: 'Name der Regel' })).toBeDisabled();
     expect(within(dialog).getByText(/Erst ein LV öffnen/)).toBeInTheDocument();
@@ -158,10 +147,8 @@ describe('Regeleditor', () => {
 
   it('Laden einer regeln.json überschreibt keine eigene Regel', async () => {
     render(<App />);
-    await oeffneAdmin(PASSWORT);
-    fireEvent.click(await screen.findByRole('button', { name: 'Admin' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Admin-Werkzeuge' });
-    fireEvent.click(within(dialog).getByRole('radio', { name: 'Regeln' }));
+    const dialog = await oeffneEinstellungen();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Hervorhebung & Regeln' }));
     fireEvent.click(await within(dialog).findByRole('button', { name: 'Als eigene kopieren' }));
     const [own] = await waitFor(async () => {
       const rules = (await readOwnRules()) ?? [];
@@ -193,10 +180,8 @@ describe('Regeleditor', () => {
 
   it('bearbeitet Regeln mit neuen Bausteinen, Treffer mit Kurztext', async () => {
     await ladeDatei();
-    await oeffneAdmin(PASSWORT);
-    fireEvent.click(await screen.findByRole('button', { name: 'Admin' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Admin-Werkzeuge' });
-    fireEvent.click(within(dialog).getByRole('radio', { name: 'Regeln' }));
+    const dialog = await oeffneEinstellungen();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Hervorhebung & Regeln' }));
     const file = {
       schema: 'conocto-rule-v1',
       regeln: [

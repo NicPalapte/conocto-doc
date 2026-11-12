@@ -12,7 +12,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ReportDialog } from '../report/ReportDialog';
-import { AdminDialog } from './AdminDialog';
+import { SettingsDialog } from '../settings/SettingsDialog';
 import { ShortcutsDialog } from './ShortcutsDialog';
 import { NotesImportDialog } from './NotesImportDialog';
 import { AboutMenu } from './AboutMenu';
@@ -21,7 +21,7 @@ import { WorkspaceBar } from '../shell/WorkspaceBar';
 import { SearchPill } from './SearchPill';
 import { useOptionalDocuments } from '../docs/DocumentsProvider';
 import { NotesFileError, notesCount, readNotesFile, type NotesFile } from '../../lib/notesFile';
-import { useAdmin } from '../../state/admin';
+import { useRules } from '../../state/rules';
 import { useSurvey } from '../../state/survey';
 import { useHostWindow } from '../common/hostWindow';
 import { keyIsTaken, overlayOpen } from '../common/keys';
@@ -48,12 +48,12 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
   const [melden, setMelden] = useState(false);
   /** „Tastenkürzel" aus dem Logo-Menü oder per „?". */
   const [kuerzel, setKuerzel] = useState(false);
-  /** „Admin-Werkzeuge" aus dem Logo-Menü (Entscheidung 0053). */
-  const [adminOffen, setAdminOffen] = useState(false);
-  const { unlocked: adminFrei, ruleRequest, requestRule } = useAdmin();
-  // „Als Regel…" im Langtext öffnet den Regeleditor (Entscheidung 0081) — nur im
-  // Hauptfenster, sonst ginge er in jedem ausgelagerten Fenster mit auf.
-  if (!popout && ruleRequest !== null && !adminOffen) setAdminOffen(true);
+  /** „Einstellungen" aus dem Logo-Menü (Entscheidung 0109). */
+  const [einstellungenOffen, setEinstellungenOffen] = useState(false);
+  const { ruleRequest, requestRule } = useRules();
+  // „Als Regel…" im Langtext öffnet die Einstellungen beim Regeleditor (0081, 0109) — nur im
+  // Hauptfenster, sonst gingen sie in jedem ausgelagerten Fenster mit auf.
+  if (!popout && ruleRequest !== null && !einstellungenOffen) setEinstellungenOffen(true);
   const host = useHostWindow();
   /** „Arbeitsstand laden…": versteckter Dateidialog, danach das Ergebnisfenster (0061). */
   const notizDateiRef = useRef<HTMLInputElement>(null);
@@ -130,7 +130,7 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
           }
           onNotizenLaden={loaded ? () => notizDateiRef.current?.click() : undefined}
           notizen={notizAnzahl}
-          onAdmin={() => setAdminOffen(true)}
+          onEinstellungen={() => setEinstellungenOffen(true)}
         />
         <input
           ref={notizDateiRef}
@@ -157,17 +157,6 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
             void documents?.openFiles(files);
           }}
         />
-        {adminFrei && (
-          <button
-            type="button"
-            onClick={() => setAdminOffen(true)}
-            title="Admin-Werkzeuge"
-            className="-ml-[8px] inline-flex h-[20px] shrink-0 cursor-pointer items-center rounded-[var(--r-pill)] border-none bg-[var(--violetS)] px-[8px] font-mono text-[11px] text-[var(--violetD)]"
-          >
-            Admin
-          </button>
-        )}
-
         {loaded && (
           <>
             {/* Einzige h1 der Seite, auch auf schmalen Bildschirmen, wo der
@@ -223,10 +212,10 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
       </div>
 
       {kuerzel && <ShortcutsDialog onClose={() => setKuerzel(false)} />}
-      {adminOffen && (
-        <AdminDialog
+      {einstellungenOffen && (
+        <SettingsDialog
           onClose={() => {
-            setAdminOffen(false);
+            setEinstellungenOffen(false);
             requestRule(null);
           }}
           onTrefferProtokoll={loaded ? mitnehmen.trefferAlsCsv : undefined}

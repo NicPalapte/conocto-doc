@@ -7,8 +7,8 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it } from 'vitest';
 import { readWordLists } from '../../src/lib/persist/lastLv';
 import { GRUNDSTOCK_LISTS } from '../../src/lib/rules/wissen';
-import { WordListsTab } from '../../src/components/admin/WordListsTab';
-import { AdminProvider } from '../../src/state/admin';
+import { WordListsTab } from '../../src/components/settings/WordListsTab';
+import { RulesProvider } from '../../src/state/rules';
 
 beforeEach(() => {
   globalThis.indexedDB = new IDBFactory();
@@ -16,9 +16,9 @@ beforeEach(() => {
 
 const renderTab = () =>
   render(
-    <AdminProvider>
+    <RulesProvider>
       <WordListsTab />
-    </AdminProvider>,
+    </RulesProvider>,
   );
 
 describe('Reiter „Wortlisten“', () => {

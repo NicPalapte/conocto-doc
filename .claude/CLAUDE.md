@@ -11,7 +11,7 @@ Browser laden, klassifizieren, prüfen und im Graphen mit Fenstern darüber
 durchsuchen und filtern. Die Datei verlässt den Browser nie. Einzige Ausnahme vom
 Nicht-Speichern: die zuletzt geöffnete eigene Datei samt eigenen Markierungen und Kommentaren
 bleibt in der IndexedDB dieses Browsers (`docs/decisions/0046-letzte-datei-im-browser.md`,
-`docs/decisions/0047-kommentare-und-markierungen.md`), dazu die im Admin-Werkzeug gelernten
+`docs/decisions/0047-kommentare-und-markierungen.md`), dazu die in den Einstellungen gelernten
 Begriffe für die Langtext-Hervorhebung (`docs/decisions/0053`); sonst verwirft ein Reload
 den Stand.
 
@@ -58,7 +58,7 @@ _Linting/Formatierung laufen automatisch via Claude Code Hook nach jedem Edit/Wr
   (`state/survey.tsx`, Schlüssel `umfrage`, Entscheidung 0071) und der Merker „Tour gesehen“
   (`components/tour/Tour.tsx`, Schlüssel `tour`, Entscheidung 0098) und die letzte Anordnung
   im Splitscreen (`state/ViewerProvider.tsx`, Schlüssel `anordnung`, Entscheidung 0073)
-  und die eigenen Regeln `conocto-rule-v1` (`state/admin.tsx`, Schlüssel `regeln`, 0081)
+  und die eigenen Regeln `conocto-rule-v1` (`state/rules.tsx`, Schlüssel `regeln`, 0081)
   und die abgeschalteten Grundstock-Regeln (Schlüssel `grundstock-aus`, 0089)
   und die eigenen Wortlisten (Schlüssel `wortlisten`, `lib/rules/wordLists.ts`, 0090).
   Urteile über Verbindungen aus Regeln liegen in den Notizen der Datei (`links`, 0081).
@@ -154,14 +154,15 @@ gemerkt: `docs/decisions/0073-splitscreen-frei-teilen-und-merken.md`) · Beziehu
 ähnliche Positionen im Vergleich, keine wertende Prüfregel (`docs/decisions/0049`) · eigene Marker (Fortschritt Offen/In Bearbeitung/Fertig + Wichtig, `docs/decisions/0062`) + Kommentar-Verlauf je Position zur letzten
 Datei (`docs/decisions/0047-kommentare-und-markierungen.md`, `docs/decisions/0053`) ·
 eigene Textmarkierungen im Langtext (6 feste Farben mit eigenen Namen, `docs/decisions/0063`) ·
-gelernte Hervorhebungen im Langtext nur über Admin-Werkzeug, je Begriff eine eigene Regel
-(0053, 0088) · Regeleditor im
-Admin-Werkzeug (`conocto-rule-v1`, Auswerter nur in `packages/core/src/rules/`; Verbindungen
+gelernte Hervorhebungen im Langtext über Rechtsklick „Begriff lernen…“, je Begriff eine eigene
+Regel (0053, 0088) · Regeleditor in Logo-Menü → „Einstellungen“ (Overlay, für alle, kein
+Passwort, kein Bereich im Splitscreen, `components/settings/`, `docs/decisions/0109`;
+`conocto-rule-v1`, Auswerter nur in `packages/core/src/rules/`; Verbindungen
 zwischen Positionen nur als Vorschlag, gilt erst nach Bestätigung, `docs/decisions/0081`;
 ein Format für alle Regelarten, Wortlisten/Einheiten-Gruppen liefert die App, `docs/decisions/0085`;
 jede Regel an/aus, Grundstock nur abschalten oder kopieren, eigene Prüfhinweise,
 `docs/decisions/0089`; Wortlisten: Grundstock-Wörter nur abschalten, eigene Wörter/Listen,
-Regeln suchen nur über `useAdmin().context`, `docs/decisions/0090`) · lokaler Export/Druck über das
+Regeln suchen nur über `useRules().context`, `docs/decisions/0090`) · lokaler Export/Druck über das
 Logo-Menü · Arbeitsstand als Datei sichern/laden (`lib/notesFile.ts`, `conocto-arbeitsstand`, 0061, 0101) · freiwillige Kurzumfrage
 zum Produkt (Owner-Wunsch, `docs/decisions/0071-kurzumfrage.md`). · Begleit-PDF im
 Fenster „Dokument“ lesen, anstreichen, Stellen oder das ganze Dokument (Seite 0, 0099) von Hand
@@ -186,8 +187,8 @@ Graph-Gliederung weiter (`docs/decisions/0035`, `docs/decisions/0059`); keine
 Befehlspalette (`docs/decisions/0038-keine-befehlspalette.md`).
 
 **Out of Scope** (ablehnen / vertrösten): Server jeglicher Art, Persistenz über die
-Session hinaus (außer 0046/0047/0053/0073), Auth/SSO (das Admin-Passwort aus 0053 ist nur
-Sichtschutz), **mehrere Dateien gleichzeitig** (Versionsvergleich,
+Session hinaus (außer 0046/0047/0053/0073), Auth/SSO (kein Passwort, auch nicht als
+Sichtschutz, 0109), **mehrere Dateien gleichzeitig** (Versionsvergleich,
 x83+x84-Merge — perspektivisch gewollt, jetzt draußen; Begleit-PDF erlaubt, 0072), Aufgaben, Notizen außer
 Markierung/Kommentar je Position, Vergabepakete, NU-Anfragen, Bieterfragen **verwalten**, Zuständigkeit/Zuweisung,
 Status-**Änderung**, EP-Kalkulation, Excel-/Manuell-Import, Multi-Tenant, GAEB-Export,

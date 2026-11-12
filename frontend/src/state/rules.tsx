@@ -1,19 +1,13 @@
-// Admin-Werkzeuge (Entscheidung 0053): Begriffe im Langtext lernen und eigene Regeln.
+// Eigene Regeln, Grundstock-Schalter und Wortlisten (Entscheidungen 0081, 0089, 0090, 0109).
 //
-// Das Passwort ist ein Sichtschutz, kein Zugriffsschutz: ohne Server steht die
-// Prüfung im ausgelieferten Code, wer sucht, kommt daran vorbei. Das ist hier
-// in Ordnung — hinter dem Zugang liegen keine fremden Daten, nur eine Funktion,
-// die normale Nutzer nicht sehen sollen.
-//
-// „Freigeschaltet" ist reiner UI-Zustand und überlebt keinen Reload. Die eigenen Regeln
-// aus dem Regeleditor (Entscheidung 0081) dagegen bleiben in diesem Browser
-// (lib/persist/lastLv.ts) und wirken auch ohne Admin-Zugang — es ist ja der Browser des
-// Admins. Ein gelernter Begriff ist seit 0088 eine solche Regel; Begriffe älterer
-// Versionen zieht `readOwnRulesAndTerms` beim Start einmal um. Der Grundstock kommt aus
-// docs/domain/reference/regeln.json und lässt sich hier nicht ändern, nur je Regel abschalten
-// (Entscheidung 0089); die Liste der abgeschalteten bleibt ebenfalls in diesem Browser.
-// Ebenso die eigenen Wörter und Listen (Entscheidung 0090): `context` ist das, womit alle
-// Regeln suchen.
+// Seit 0109 für alle, ohne Passwort: zu sehen und zu ändern unter Logo-Menü → „Einstellungen“
+// (components/settings/). Die eigenen Regeln bleiben in diesem Browser
+// (lib/persist/lastLv.ts) und wirken in jeder Datei. Ein gelernter Begriff ist seit 0088 eine
+// solche Regel; Begriffe älterer Versionen zieht `readOwnRulesAndTerms` beim Start einmal um.
+// Der Grundstock kommt aus docs/domain/reference/regeln.json und lässt sich hier nicht ändern,
+// nur je Regel abschalten (Entscheidung 0089); die Liste der abgeschalteten bleibt ebenfalls in
+// diesem Browser. Ebenso die eigenen Wörter und Listen (Entscheidung 0090): `context` ist das,
+// womit alle Regeln suchen.
 
 import {
   createContext,
@@ -50,20 +44,7 @@ import {
 
 const GRUNDSTOCK_IDS: ReadonlySet<string> = new Set(GRUNDSTOCK.map((rule) => rule.id));
 
-/** SHA-256 des Passworts; ändern: docs/setup/admin-werkzeuge.md. */
-export const ADMIN_PASSWORD_SHA256 =
-  'a7778ae6d93219dfcb6ffbafda058fe96a781fe5cf36b4b481809860d070b327';
-
-async function sha256(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
-}
-
-interface AdminContextValue {
-  readonly unlocked: boolean;
-  /** Prüft das Passwort; `true` = freigeschaltet. */
-  unlock(password: string): Promise<boolean>;
-  lock(): void;
+interface RulesContextValue {
   /** Lernt einen Begriff als eigene Regel; eine Regel mit gleichem Begriff wird ersetzt. */
   learn(term: LearnedTerm): void;
   /** Eigene Regeln (Geltung `unternehmen`), im Browser gespeichert. */
@@ -97,7 +78,7 @@ interface AdminContextValue {
   renameList(liste: string, name: string): void;
   /** Eigene Liste samt ihrer Wörter löschen. */
   deleteList(liste: string): void;
-  /** Regel im Editor öffnen, z. B. aus einer Markierung im Langtext. */
+  /** Regel in den Einstellungen öffnen, z. B. aus einer Markierung im Langtext. */
   readonly ruleRequest: Rule | null;
   requestRule(rule: Rule | null): void;
 }
@@ -177,10 +158,9 @@ async function migrateTerms(): Promise<Rule[] | null> {
 const sameRule = (a: Rule, b: Rule): boolean => a.id === b.id;
 const sameId = (a: string, b: string): boolean => a === b;
 
-const AdminContext = createContext<AdminContextValue | null>(null);
+const RulesContext = createContext<RulesContextValue | null>(null);
 
-export function AdminProvider({ children }: { children: ReactNode }) {
-  const [unlocked, setUnlocked] = useState(false);
+export function RulesProvider({ children }: { children: ReactNode }) {
   const [ownRules, changeRules] = usePersistedList(readOwnRulesAndTerms, saveOwnRules, sameRule);
   const [offIds, changeOff] = usePersistedList(readGrundstockOff, saveGrundstockOff, sameId);
   const [wordEntries, changeWords] = usePersistedList(readWordLists, saveWordLists, sameEntry);
@@ -188,19 +168,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const wordLists = useMemo(() => wordListsOf(wordEntries), [wordEntries]);
   const context = useMemo(() => contextWith(wordEntries), [wordEntries]);
 
-  const value = useMemo<AdminContextValue>(
+  const value = useMemo<RulesContextValue>(
     () => ({
-      unlocked,
-      unlock: async (password) => {
-        // Ohne Web Crypto (sehr alter Browser) kein Admin.
-        const ok = await sha256(password).then(
-          (hash) => hash === ADMIN_PASSWORD_SHA256,
-          () => false,
-        );
-        if (ok) setUnlocked(true);
-        return ok;
-      },
-      lock: () => setUnlocked(false),
       learn: (term) =>
         changeRules((current) => {
           const taken = new Set([...GRUNDSTOCK_IDS, ...current.map((rule) => rule.id)]);
@@ -287,7 +256,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       requestRule: setRuleRequest,
     }),
     [
-      unlocked,
       ownRules,
       changeRules,
       offIds,
@@ -300,13 +268,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
+  return <RulesContext.Provider value={value}>{children}</RulesContext.Provider>;
 }
 
-const OUTSIDE: AdminContextValue = {
-  unlocked: false,
-  unlock: () => Promise.resolve(false),
-  lock: () => undefined,
+const OUTSIDE: RulesContextValue = {
   learn: () => undefined,
   ownRules: [],
   rules: GRUNDSTOCK,
@@ -327,7 +292,7 @@ const OUTSIDE: AdminContextValue = {
   requestRule: () => undefined,
 };
 
-/** Außerhalb des Providers (Tests einzelner Komponenten): nur der Grundstock, kein Admin. */
-export function useAdmin(): AdminContextValue {
-  return useContext(AdminContext) ?? OUTSIDE;
+/** Außerhalb des Providers (Tests einzelner Komponenten): nur der Grundstock. */
+export function useRules(): RulesContextValue {
+  return useContext(RulesContext) ?? OUTSIDE;
 }

@@ -25,7 +25,7 @@ import { RuleSwitch } from './RuleSwitch';
 import { categoryOf } from '../../lib/spanCategories';
 import { builtinInfoOf } from '../../lib/rules/builtinInfo';
 import { builtinParameter, RULE_CONTEXT } from '../../lib/rules/rules';
-import { useAdmin } from '../../state/admin';
+import { useRules } from '../../state/rules';
 import {
   FIELD_LABELS,
   HIGHLIGHT_LABELS,
@@ -70,7 +70,7 @@ const KIND_LABELS: Readonly<Record<RulePositionKind, string>> = {
   zulage: 'Zulage',
 };
 
-// Erste Liste für einen neuen Baustein; welche es gibt, liest BlockRow aus `useAdmin().context`.
+// Erste Liste für einen neuen Baustein; welche es gibt, liest BlockRow aus `useRules().context`.
 const LIST_NAMES: readonly string[] = [...(RULE_CONTEXT.listen?.keys() ?? [])];
 const UNIT_GROUPS: readonly string[] = [...(RULE_CONTEXT.einheitGruppen?.keys() ?? [])];
 
@@ -134,7 +134,7 @@ function BlockRow({
   onRemove: () => void;
 }) {
   // Eigene Wörter und Listen (0090) gehören dazu.
-  const { context, wordLists } = useAdmin();
+  const { context, wordLists } = useRules();
   let body;
   if ('begriff' in block) {
     body = (

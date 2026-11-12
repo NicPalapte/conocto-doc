@@ -1,4 +1,4 @@
-// Reiter „Wortlisten“ der Admin-Werkzeuge (Entscheidung 0090): links alle Listen, rechts die
+// Rubrik „Wortlisten“ der Einstellungen (Entscheidungen 0090, 0109): links alle Listen, rechts die
 // Wörter einer Liste. Grundstock-Listen kommen aus den CSV unter docs/domain/reference/ — ihre
 // Wörter lassen sich nur abschalten, eigene kommen dazu. Eigene Listen sind ganz änderbar.
 // Alles bleibt in diesem Browser; „Wortlisten exportieren“ gibt die CSV fürs Repo.
@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { downloadText } from '../../lib/export/download';
 import { listsOfRule } from '../../lib/check';
 import { LISTS_AT_LOAD, wordListsCsv, type WordListView } from '../../lib/rules/wordLists';
-import { useAdmin } from '../../state/admin';
+import { useRules } from '../../state/rules';
 
 const BUTTON =
   'inline-flex h-[28px] cursor-pointer items-center rounded-[var(--r-pill)] border border-line bg-surface px-[12px] font-mono text-[11.5px] text-ink hover:border-line2 disabled:cursor-default disabled:opacity-40';
@@ -77,7 +77,7 @@ function AddWord({ onAdd }: { onAdd: (word: string) => void }) {
 }
 
 function ListDetail({ list, onDeleted }: { list: WordListView; onDeleted: () => void }) {
-  const { rules, addWord, removeWord, setWordOn, renameList, deleteList } = useAdmin();
+  const { rules, addWord, removeWord, setWordOn, renameList, deleteList } = useRules();
   const usedBy = useMemo(
     () => rules.filter((rule) => listsOfRule(rule).includes(list.id)),
     [rules, list.id],
@@ -213,7 +213,7 @@ function ListDetail({ list, onDeleted }: { list: WordListView; onDeleted: () => 
 }
 
 export function WordListsTab() {
-  const { wordLists, wordEntries, addList } = useAdmin();
+  const { wordLists, wordEntries, addList } = useRules();
   const [selectedId, setSelectedId] = useState<string | null>(wordLists[0]?.id ?? null);
   const list = wordLists.find((other) => other.id === selectedId) ?? wordLists[0] ?? null;
   const grundstock = wordLists.filter((other) => other.grundstock);

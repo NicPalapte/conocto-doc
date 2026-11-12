@@ -59,8 +59,8 @@ export interface AboutMenuProps {
   onNotizenLaden?: () => void;
   /** Positionen mit eigener Notiz; „Arbeitsstand sichern" erscheint nur, wenn es welche gibt. */
   notizen?: number;
-  /** „Admin-Werkzeuge" gewählt (Entscheidung 0053); Fenster hängt in der Kopfleiste. */
-  onAdmin: () => void;
+  /** „Einstellungen" gewählt (Entscheidung 0109); das Overlay hängt in der Kopfleiste. */
+  onEinstellungen: () => void;
 }
 
 const THEME_OPTIONS = [
@@ -156,7 +156,7 @@ export function AboutMenu({
   mitnehmen,
   onNotizenLaden,
   notizen,
-  onAdmin,
+  onEinstellungen,
 }: AboutMenuProps) {
   const [open, setOpen] = useState(false);
   const [theme, chooseTheme] = useTheme();
@@ -293,6 +293,16 @@ export function AboutMenu({
             </Gruppe>
           </>
         )}
+        <Trenner />
+        <PopoverRow
+          onClick={() => {
+            setOpen(false);
+            onEinstellungen();
+          }}
+          title="Hervorhebung & Regeln, Wortlisten, Markierfarben"
+        >
+          Einstellungen
+        </PopoverRow>
         <Gruppe name="Hilfe & Feedback" offen={offen} umschalten={umschalten}>
           {onTour !== undefined && (
             <PopoverRow
@@ -349,7 +359,7 @@ export function AboutMenu({
         </div>
         <Trenner />
         {/*
-          Fußzeile: Pflichtangaben und Admin — selten gebraucht, aber auffindbar.
+          Fußzeile: Pflichtangaben — selten gebraucht, aber auffindbar.
           Impressum und Datenschutz stehen als Angabe da, nicht als Link ins
           Leere: die Texte brauchen Angaben des Betreibers (Issues #75, #76).
         */}
@@ -364,16 +374,6 @@ export function AboutMenu({
             title="Conocto: alle Rechte vorbehalten. Dazu die Lizenzen der verwendeten Bausteine"
           >
             Lizenzen ↗
-          </FussLink>
-          <FussLink
-            onClick={() => {
-              setOpen(false);
-              onAdmin();
-            }}
-            title="Admin-Werkzeuge — nur mit Passwort"
-            label="Admin-Werkzeuge"
-          >
-            Admin
           </FussLink>
         </div>
       </Popover>

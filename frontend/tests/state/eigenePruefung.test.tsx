@@ -11,7 +11,7 @@ import type { ReactNode } from 'react';
 import { RULE_SCHEMA, type Rule } from '@core';
 import { runPipeline } from '../../src/lib/pipeline/runPipeline';
 import { readGrundstockOff, readWordLists } from '../../src/lib/persist/lastLv';
-import { AdminProvider, useAdmin } from '../../src/state/admin';
+import { RulesProvider, useRules } from '../../src/state/rules';
 import { ViewerProvider } from '../../src/state/ViewerProvider';
 import { useViewer, useViewerDispatch } from '../../src/state/viewer';
 
@@ -28,9 +28,9 @@ function loadFixture() {
 }
 
 const wrapper = ({ children }: { children: ReactNode }) => (
-  <AdminProvider>
+  <RulesProvider>
     <ViewerProvider>{children}</ViewerProvider>
-  </AdminProvider>
+  </RulesProvider>
 );
 
 const EIGENE: Rule = {
@@ -49,7 +49,7 @@ describe('Prüfung mit eigenen Regeln', () => {
   it('nimmt eigene Prüfhinweise auf und lässt abgeschaltete Grundstock-Regeln weg', async () => {
     const lv = loadFixture();
     const { result } = renderHook(
-      () => ({ admin: useAdmin(), viewer: useViewer(), dispatch: useViewerDispatch() }),
+      () => ({ admin: useRules(), viewer: useViewer(), dispatch: useViewerDispatch() }),
       { wrapper },
     );
     act(() => result.current.dispatch({ type: 'loaded', lv }));
@@ -81,7 +81,7 @@ describe('Prüfung mit eigenen Regeln', () => {
   it('rechnet Grundstock-Regeln mit eigenen Wörtern neu (Entscheidung 0090)', async () => {
     const lv = loadFixture();
     const { result } = renderHook(
-      () => ({ admin: useAdmin(), viewer: useViewer(), dispatch: useViewerDispatch() }),
+      () => ({ admin: useRules(), viewer: useViewer(), dispatch: useViewerDispatch() }),
       { wrapper },
     );
     act(() => result.current.dispatch({ type: 'loaded', lv }));
