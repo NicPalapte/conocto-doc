@@ -26,6 +26,11 @@ const HEAD_HEIGHT = 20;
 /** Kleiner als das liest niemand mehr eine Beschriftung. */
 const LABEL_MIN_WIDTH = 54;
 const LABEL_MIN_HEIGHT = 26;
+/**
+ * Einheiten-Kacheln unter dieser Kantenlänge (px) entfallen; der Abschnitt bleibt klickbar.
+ * Seit nichts mehr zusammengefasst wird (Issue #191), hält das die Zahl der Knoten klein.
+ */
+const CELL_MIN = 3;
 
 export interface TreemapProps {
   groups: readonly TreemapGroup[];
@@ -83,14 +88,16 @@ export function Treemap({
       };
       // Kachel-Koordinaten relativ zur Abschnittsfläche: die Einheiten liegen im
       // `div` des Abschnitts, nicht im äußeren Rahmen.
-      const cells = squarify([...entry.item.cells], body).map((cell) => ({
-        item: cell.item,
-        rect: {
-          ...cell.rect,
-          x: cell.rect.x - entry.rect.x,
-          y: cell.rect.y - entry.rect.y,
-        },
-      }));
+      const cells = squarify([...entry.item.cells], body)
+        .filter((cell) => cell.rect.width >= CELL_MIN && cell.rect.height >= CELL_MIN)
+        .map((cell) => ({
+          item: cell.item,
+          rect: {
+            ...cell.rect,
+            x: cell.rect.x - entry.rect.x,
+            y: cell.rect.y - entry.rect.y,
+          },
+        }));
       return { group: entry.item, rect: entry.rect, cells };
     });
   }, [groups, boxWidth]);

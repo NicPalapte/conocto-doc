@@ -6,7 +6,7 @@
 
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { CheckCard, CheckFlyout } from '../../src/components/overview/CheckCard';
+import { CheckCard, CheckFlyout, CheckPane } from '../../src/components/overview/CheckCard';
 import { ViewerProvider } from '../../src/state/ViewerProvider';
 import { useViewerDispatch } from '../../src/state/viewer';
 import type { ViewerAction } from '../../src/state/viewer';
@@ -142,11 +142,56 @@ describe('CheckCard', () => {
     const v7 = openFlyout('V7');
     expect(within(v7).getByText(/offene Stellen/)).toBeTruthy();
     // Schmal schieben sich die Funde über die Liste, zurück mit „‹ Alle Regeln“ (Issue #191).
-    expect(within(v7).getByRole('button', { name: 'Funde schließen' })).toHaveTextContent(
-      '‹ Alle Regeln',
-    );
-    fireEvent.click(within(v7).getByRole('button', { name: 'Funde schließen' }));
+    fireEvent.click(within(v7).getByRole('button', { name: '‹ Alle Regeln' }));
     expect(screen.queryByRole('region', { name: /^Funde/ })).toBeNull();
+  });
+
+  it('zeigt die Funde im breiten Bereich als Spalte neben den Regeln', () => {
+    const original = globalThis.ResizeObserver;
+    // Meldet beim Beobachten sofort 800 px Breite, wie ein breiter Bereich im Splitscreen.
+    class Wide {
+      private readonly callback: ResizeObserverCallback;
+      constructor(callback: ResizeObserverCallback) {
+        this.callback = callback;
+      }
+      observe(): void {
+        const entry = { contentRect: { width: 800 } } as ResizeObserverEntry;
+        this.callback([entry], this as unknown as ResizeObserver);
+      }
+      unobserve(): void {}
+      disconnect(): void {}
+    }
+    globalThis.ResizeObserver = Wide as unknown as typeof ResizeObserver;
+    try {
+      render(
+        <ViewerProvider>
+          <WithLv>
+            <CheckPane />
+          </WithLv>
+        </ViewerProvider>,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'laden' }));
+      const v7 = openFlyout('V7');
+      expect(within(v7).queryByRole('button', { name: '‹ Alle Regeln' })).toBeNull();
+      expect(sectionOf('V1').closest('[inert]')).toBeNull();
+      fireEvent.click(within(v7).getByRole('button', { name: 'Funde schließen' }));
+      expect(screen.queryByRole('region', { name: /^Funde/ })).toBeNull();
+    } finally {
+      globalThis.ResizeObserver = original;
+    }
+  });
+
+  it('sperrt im schmalen Bereich die Regeln hinter den Funden', () => {
+    render(
+      <ViewerProvider>
+        <WithLv>
+          <CheckPane />
+        </WithLv>
+      </ViewerProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'laden' }));
+    openFlyout('V7');
+    expect(document.querySelector('[inert]')).not.toBeNull();
   });
 
   it('hält höchstens eine Regel offen', () => {

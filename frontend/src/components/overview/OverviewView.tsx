@@ -189,14 +189,20 @@ export function OverviewView() {
               ))}
             </nav>
           )}
-          <Treemap
-            groups={model.groups}
-            measure={model.measure}
-            selectedId={selection.nodeId}
-            activeUnits={activeUnits}
-            onPickSection={openSection}
-            onPickUnit={pickSectionUnit}
-          />
+          {focus !== null && model.groups.length === 0 ? (
+            <p className="m-0 py-[24px] text-center font-mono text-[11.5px] text-mute">
+              Keine Treffer in diesem Abschnitt
+            </p>
+          ) : (
+            <Treemap
+              groups={model.groups}
+              measure={model.measure}
+              selectedId={selection.nodeId}
+              activeUnits={activeUnits}
+              onPickSection={openSection}
+              onPickUnit={pickSectionUnit}
+            />
+          )}
         </Card>
 
         <div className="flex flex-wrap gap-[12px]">
