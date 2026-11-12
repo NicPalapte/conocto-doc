@@ -141,6 +141,10 @@ describe('CheckCard', () => {
     expect(screen.queryByRole('region', { name: /^Funde/ })).toBeNull();
     const v7 = openFlyout('V7');
     expect(within(v7).getByText(/offene Stellen/)).toBeTruthy();
+    // Schmal schieben sich die Funde über die Liste, zurück mit „‹ Alle Regeln“ (Issue #191).
+    expect(within(v7).getByRole('button', { name: 'Funde schließen' })).toHaveTextContent(
+      '‹ Alle Regeln',
+    );
     fireEvent.click(within(v7).getByRole('button', { name: 'Funde schließen' }));
     expect(screen.queryByRole('region', { name: /^Funde/ })).toBeNull();
   });

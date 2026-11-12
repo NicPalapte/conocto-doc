@@ -2,8 +2,8 @@
 // Kachel entspricht ihrem Anteil — an der Summe, und ohne Preise an der Anzahl.
 // Beides steht in jeder Datei; eine Klassifizierung braucht es nicht.
 //
-// Klick: ein Abschnittskopf wählt den Abschnitt an, eine Einheitenkachel wählt
-// ihn an und filtert zusätzlich nach der Einheit. Der Ansichtsmodus bleibt
+// Klick: ein Abschnittskopf öffnet den Abschnitt (Unterabschnitte, Issue #191), eine
+// Einheitenkachel wählt ihn an und filtert zusätzlich nach der Einheit. Der Ansichtsmodus bleibt
 // dabei stehen — ein Filter ist kein Ansichtswechsel (.claude/CLAUDE.md).
 //
 // Gezeichnet wird mit absolut gesetzten `div`s statt SVG: abgeschnittene
@@ -120,8 +120,11 @@ export function Treemap({
               width: rect.width,
               height: rect.height,
               background: color,
-              outline: active ? '2px solid var(--accent)' : '1px solid var(--white)',
+              outline: '1px solid var(--white)',
               outlineOffset: -1,
+              // Auswahl als dünne Linie nach innen: ein Rahmen nach außen lag über den
+              // Nachbarn und wirkte dick (Issue #191).
+              boxShadow: active ? 'inset 0 0 0 2px var(--accent)' : undefined,
             }}
           >
             <button
@@ -147,8 +150,9 @@ export function Treemap({
                   top: cell.y,
                   width: cell.width,
                   height: cell.height,
-                  outline: activeUnits.has(item.key) ? '2px solid var(--accent)' : undefined,
-                  outlineOffset: -2,
+                  boxShadow: activeUnits.has(item.key)
+                    ? 'inset 0 0 0 1.5px var(--accent)'
+                    : undefined,
                 }}
               >
                 {cell.width > LABEL_MIN_WIDTH && cell.height > LABEL_MIN_HEIGHT ? (

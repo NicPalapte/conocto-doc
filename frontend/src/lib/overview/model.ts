@@ -24,8 +24,7 @@ import type { LVNode } from '../../types/lvNode';
 /** Womit die Treemap misst. */
 export type Measure = 'preis' | 'anzahl';
 
-/** Mehr Kacheln liest niemand mehr ab; der Rest wird zusammengefasst. */
-export const MAX_GROUPS = 10;
+/** Mehr Einheiten je Abschnitt liest niemand mehr ab; der Rest wird zusammengefasst. */
 export const MAX_CELLS_PER_GROUP = 12;
 
 /** Stützstellen der Pareto-Kurve — mehr Punkte sieht man auf 300 px nicht. */
@@ -151,20 +150,6 @@ function bucketOf(buckets: Map<string, Bucket>, key: string, label: string, orde
   return created;
 }
 
-/** Gleiche Einheiten aus mehreren Gruppen zu einer Kachel zusammenlegen. */
-function mergeCells(cells: Iterable<TreemapCell>): TreemapCell[] {
-  const merged = new Map<string, TreemapCell>();
-  for (const cell of cells) {
-    const found = merged.get(cell.key);
-    if (found === undefined) merged.set(cell.key, { ...cell });
-    else {
-      found.value += cell.value;
-      found.count += cell.count;
-    }
-  }
-  return [...merged.values()];
-}
-
 /** Kacheln kürzen: die größten einzeln, der Rest als eine Sammelkachel. */
 function trimCells(cells: Iterable<TreemapCell>): TreemapCell[] {
   const sorted = [...cells].sort((a, b) => b.value - a.value);
@@ -181,21 +166,12 @@ function trimCells(cells: Iterable<TreemapCell>): TreemapCell[] {
   return kept;
 }
 
-function trimGroups(groups: TreemapGroup[]): TreemapGroup[] {
-  const sorted = groups.sort((a, b) => b.value - a.value);
-  if (sorted.length <= MAX_GROUPS) return sorted;
-  const kept = sorted.slice(0, MAX_GROUPS - 1);
-  const rest = sorted.slice(MAX_GROUPS - 1);
-  kept.push({
-    key: 'rest',
-    label: `Weitere ${rest.length} Abschnitte`,
-    value: rest.reduce((sum, group) => sum + group.value, 0),
-    count: rest.reduce((sum, group) => sum + group.count, 0),
-    pickable: false,
-    order: -1,
-    cells: trimCells(mergeCells(rest.flatMap((group) => group.cells))),
-  });
-  return kept;
+/**
+ * Abschnitte nach Größe. Kein Zusammenfassen mehr zu „Weitere N Abschnitte“ (Issue #191,
+ * 12.11.2026): das wirkte zufällig. Kleine Kästen zeigen ihren Namen beim Überfahren.
+ */
+function sortGroups(groups: TreemapGroup[]): TreemapGroup[] {
+  return groups.sort((a, b) => b.value - a.value);
 }
 
 function paretoOf(values: readonly number[], total: number): ParetoModel | null {
@@ -252,6 +228,55 @@ export interface OverviewInput {
   /** Trefferbitmaske des aktiven Filters; `null` = kein Filter aktiv. */
   mask: Uint8Array | null;
   parents: ReadonlyMap<string, LVNode | null>;
+  /**
+   * Geöffneter Abschnitt in der Verteilung (Issue #191): dann gliedert die Treemap nach
+   * seinen Unterabschnitten. Kennzahlen und übrige Karten gelten weiter für den ganzen Filter.
+   */
+  focus?: string | null;
+}
+
+/** Schlüssel der Sammelgruppe „direkt im geöffneten Abschnitt“. */
+export const DIRECT_KEY = 'direkt';
+
+/**
+ * Unterabschnitt direkt unter `focus`, in dem die Position liegt. `focus` selbst, wenn sie
+ * direkt darin steht; `null`, wenn sie nicht unter `focus` liegt.
+ */
+function childOf(
+  node: LVNode,
+  focus: string,
+  parents: ReadonlyMap<string, LVNode | null>,
+  cache: Map<string, LVNode | null>,
+): LVNode | null {
+  const parent = parents.get(node.id) ?? null;
+  if (parent === null) return null;
+  const known = cache.get(parent.id);
+  if (known !== undefined) return known;
+  let found: LVNode | null = null;
+  let below: LVNode | null = null;
+  for (let up: LVNode | null = parent; up !== null; up = parents.get(up.id) ?? null) {
+    if (up.id === focus) {
+      found = below ?? up;
+      break;
+    }
+    below = up;
+  }
+  cache.set(parent.id, found);
+  return found;
+}
+
+function addCell(bucket: Bucket, unitKey: string | null, price: number): void {
+  const cellKey = unitKey ?? NO_UNIT;
+  const cell = bucket.cells.get(cellKey) ?? {
+    key: cellKey,
+    label: unitKey === null ? NO_UNIT : unitLabel(unitKey),
+    value: 0,
+    count: 0,
+    collected: false,
+  };
+  cell.count++;
+  cell.value += Number.isFinite(price) ? price : 0;
+  bucket.cells.set(cellKey, cell);
 }
 
 /** Führt irgendeine Position im LV einen EP? Bricht beim ersten Treffer ab. */
@@ -262,13 +287,42 @@ function fileHasPrices(index: PositionIndex): boolean {
   return false;
 }
 
-export function buildOverview({ index, mask, parents }: OverviewInput): OverviewModel {
+export function buildOverview({
+  index,
+  mask,
+  parents,
+  focus = null,
+}: OverviewInput): OverviewModel {
   const buckets = new Map<string, Bucket>();
   const units = new Map<string, UnitTotal>();
   const prices: number[] = [];
   const mainSections = new Map<string, LVNode | null>();
   const slotsByUnit = new Map<string, number[]>();
-  const orderOf = sectionOrder(index, parents, mainSections);
+  const children = new Map<string, LVNode | null>();
+  // Farben im geöffneten Abschnitt nach LV-Reihenfolge der Unterabschnitte, über die ganze
+  // Datei — sonst wanderten sie beim Filtern.
+  const orderOf =
+    focus === null ? sectionOrder(index, parents, mainSections) : new Map<string, number>();
+  if (focus !== null) {
+    for (let slot = 0; slot < index.size; slot++) {
+      const child = childOf(index.nodes[slot], focus, parents, children);
+      if (child === null) continue;
+      const key = child.id === focus ? DIRECT_KEY : child.id;
+      if (!orderOf.has(key)) orderOf.set(key, orderOf.size);
+    }
+  }
+
+  /** Gruppe in der Treemap: Hauptabschnitt, im geöffneten Abschnitt der Unterabschnitt. */
+  const groupOf = (node: LVNode): { key: string; label: string } | null => {
+    if (focus === null) {
+      const main = mainSectionOf(node, parents, mainSections);
+      return { key: main?.id ?? '', label: main === null ? NO_SECTION : headingOf(main) };
+    }
+    const child = childOf(node, focus, parents, children);
+    if (child === null) return null;
+    if (child.id === focus) return { key: DIRECT_KEY, label: `${headingOf(child)} · direkt` };
+    return { key: child.id, label: headingOf(child) };
+  };
 
   let positions = 0;
   let totalPrice = 0;
@@ -293,24 +347,14 @@ export function buildOverview({ index, mask, parents }: OverviewInput): Overview
     }
 
     const unitKey = canonicalUnit(position.unit);
-    const main = mainSectionOf(node, parents, mainSections);
-    const key = main?.id ?? '';
-    const label = main === null ? NO_SECTION : headingOf(main);
-    const bucket = bucketOf(buckets, key, label, orderOf.get(key) ?? buckets.size);
-    bucket.count++;
-    bucket.value += Number.isFinite(price) ? price : 0;
-
-    const cellKey = unitKey ?? NO_UNIT;
-    const cell = bucket.cells.get(cellKey) ?? {
-      key: cellKey,
-      label: unitKey === null ? NO_UNIT : unitLabel(unitKey),
-      value: 0,
-      count: 0,
-      collected: false,
-    };
-    cell.count++;
-    cell.value += Number.isFinite(price) ? price : 0;
-    bucket.cells.set(cellKey, cell);
+    const group = groupOf(node);
+    if (group !== null) {
+      const order = orderOf.get(group.key) ?? buckets.size;
+      const bucket = bucketOf(buckets, group.key, group.label, order);
+      bucket.count++;
+      bucket.value += Number.isFinite(price) ? price : 0;
+      addCell(bucket, unitKey, price);
+    }
 
     const quantity = index.quantity[slot];
     if (unitKey !== null && Number.isFinite(quantity)) {
@@ -337,14 +381,14 @@ export function buildOverview({ index, mask, parents }: OverviewInput): Overview
   const hasPrices = pricedPositions > 0 || fileHasPrices(index);
   const measure: Measure = hasPrices ? 'preis' : 'anzahl';
 
-  const groups = trimGroups(
+  const groups = sortGroups(
     [...buckets.values()].map((bucket) => ({
       key: bucket.key,
       label: bucket.label,
       // Ohne Preise misst die Fläche die Anzahl — sonst stünde überall 0.
       value: measure === 'preis' ? bucket.value : bucket.count,
       count: bucket.count,
-      pickable: bucket.key !== '',
+      pickable: bucket.key !== '' && bucket.key !== DIRECT_KEY,
       order: bucket.order,
       cells: trimCells(
         [...bucket.cells.values()].map((cell) => ({

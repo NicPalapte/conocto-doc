@@ -12,7 +12,7 @@
 // **Ein Filterzustand, alle Ansichten** (.claude/CLAUDE.md): gezählt und gelistet
 // werden nur Funde zu Positionen, die der aktive Filter durchlässt.
 
-import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useJumpToPosition } from '../common/useJumpToPosition';
 import { formatCount } from '../../lib/format';
 import { matchCount } from '../../lib/tree/matchCounts';
@@ -249,7 +249,40 @@ function gruppiere(flags: readonly Flag[]): Array<[string, Array<[string, Flag[]
  * Klappkarte unter der Liste: Hinweistext, Verweis und Funde der aufgeklappten
  * Regel. Ein Fund wählt die Position im Graphen aus.
  */
-export function CheckFlyout() {
+/** Ab dieser Breite stehen die Funde als Spalte neben den Regeln (Issue #191, 12.11.2026). */
+const SIDE_BY_SIDE = 560;
+
+/**
+ * Bereich „Prüfung“: Regeln und Funde. Breit zwei Spalten, schmal schieben sich die Funde
+ * über die Regelliste („‹ Alle Regeln“). Vorher klappten sie unten auf, der Pfeil › an jeder
+ * Regel zeigt aber zur Seite.
+ */
+export function CheckPane() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const element = ref.current;
+    if (element === null || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry !== undefined) setWidth(entry.contentRect.width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const side = width >= SIDE_BY_SIDE;
+  return (
+    <div ref={ref} className="relative flex min-h-0 flex-1">
+      <div className="relative min-h-0 min-w-0 flex-1">
+        <div className="absolute inset-0 overflow-auto px-[14px] py-[14px]">
+          <CheckCard />
+        </div>
+      </div>
+      <CheckFlyout layout={side ? 'side' : 'over'} />
+    </div>
+  );
+}
+
+export function CheckFlyout({ layout = 'over' }: { layout?: 'side' | 'over' }) {
   const {
     lv,
     nodes,
@@ -298,20 +331,34 @@ export function CheckFlyout() {
   return (
     <section
       aria-label={`Funde ${shortName(rule)}`}
-      className="flex max-h-[55%] shrink-0 flex-col overflow-hidden border-t border-line bg-surface"
+      className={`flex flex-col overflow-hidden bg-surface ${
+        layout === 'side' ? 'w-[50%] shrink-0 border-l border-line' : 'absolute inset-0 z-[2]'
+      }`}
     >
       <div className="flex shrink-0 items-center gap-[8px] border-b border-line px-[14px] py-[10px]">
+        {layout === 'over' && (
+          <button
+            type="button"
+            onClick={() => dispatch({ type: 'toggleRuleOpen', id: rule.id })}
+            aria-label="Funde schließen"
+            className="shrink-0 cursor-pointer border-none bg-transparent p-0 font-mono text-[11.5px] text-mute hover:text-ink hover:underline"
+          >
+            ‹ Alle Regeln
+          </button>
+        )}
         <span className="min-w-0 flex-1 truncate font-display text-[14px] font-semibold text-ink">
           {shortName(rule)} · {formatCount(flags.length)} {flags.length === 1 ? 'Fund' : 'Funde'}
         </span>
-        <button
-          type="button"
-          onClick={() => dispatch({ type: 'toggleRuleOpen', id: rule.id })}
-          aria-label="Funde schließen"
-          className="inline-flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-sm)] border-none bg-transparent text-mute hover:bg-sunken hover:text-ink"
-        >
-          ✕
-        </button>
+        {layout === 'side' && (
+          <button
+            type="button"
+            onClick={() => dispatch({ type: 'toggleRuleOpen', id: rule.id })}
+            aria-label="Funde schließen"
+            className="inline-flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-sm)] border-none bg-transparent text-mute hover:bg-sunken hover:text-ink"
+          >
+            ✕
+          </button>
+        )}
       </div>
       <div className="min-h-0 flex-1 overflow-auto px-[14px] pb-[14px] pt-[10px]">
         {rule.hint !== '' && (
