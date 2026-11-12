@@ -469,6 +469,27 @@ Pauschal,psch.|pau.,
       "status": "freigegeben",
       "herkunft": "nutzer",
       "bemerkung": "Eingebaut: findet Betonsorten aus dem LV im Text des PDF (Festigkeits-, Expositions- und Feuchtigkeitsklasse wörtlich gleich). Eindeutig, wenn nur eine Position die Sorte hat, sonst über eigene Wörter aus dem Kurztext, zuerst vor der Klasse. Mehr Positionen als der Wert: kein Vorschlag."
+    },
+    {
+      "schema": "conocto-rule-v1",
+      "id": "pdf-text",
+      "version": 1,
+      "name": "Kurztext im Dokument",
+      "bedingung": {
+        "alle": [
+          {
+            "eingebaut": "text-im-pdf",
+            "parameter": { "kleinste-laenge": 12 }
+          }
+        ],
+        "bereich": "satz",
+        "wo": ["pdf"]
+      },
+      "wirkung": { "verknuepfen": { "ziel": "pdf" } },
+      "geltung": "allgemein",
+      "status": "freigegeben",
+      "herkunft": "nutzer",
+      "bemerkung": "Eingebaut: findet den Kurztext einer Position wörtlich im Text des PDF. Groß/klein, Satzzeichen, Zeilenumbrüche und Umlaute zählen nicht. Nur Kurztexte mit mindestens zwei Wörtern und so vielen Zeichen, die genau eine Position hat."
     }
   ]
 }
