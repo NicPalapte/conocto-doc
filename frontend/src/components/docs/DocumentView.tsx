@@ -1605,6 +1605,7 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
           top={offer.top}
           place={offerIndex < 0 ? null : { index: offerIndex, total: ordered.length }}
           onStep={(step) => stepOffer(step, { left: offer.left, top: offer.top })}
+          bounds={scroller}
           onLink={() => {
             const { suggestion } = offer;
             dispatch({

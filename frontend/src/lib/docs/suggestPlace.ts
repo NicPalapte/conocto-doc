@@ -12,23 +12,26 @@ export interface Box {
 
 /**
  * Platz der Leiste an der markierten Stelle (Nico, 12.11.2026): rechts daneben, sonst
- * darunter, sonst darüber, sonst links. Immer ganz im Fenster.
+ * darunter, sonst darüber, sonst links. Immer ganz in `view`, der PDF-Ansicht: Scrollt die
+ * Stelle hinaus, bleibt die Leiste an deren Rand stehen.
  */
 export function placeNextTo(
   spot: Box,
   size: { width: number; height: number },
-  view: { width: number; height: number },
+  view: Box,
 ): { left: number; top: number } {
-  const clampX = (x: number) => Math.max(GAP, Math.min(x, view.width - size.width - GAP));
-  const clampY = (y: number) => Math.max(GAP, Math.min(y, view.height - size.height - GAP));
-  if (spot.right + GAP + size.width <= view.width - GAP) {
-    return { left: spot.right + GAP, top: clampY(spot.top - GAP) };
+  const clamp = (value: number, low: number, high: number) =>
+    Math.max(low, Math.min(value, Math.max(low, high)));
+  const clampX = (x: number) => clamp(x, view.left + GAP, view.right - size.width - GAP);
+  const clampY = (y: number) => clamp(y, view.top + GAP, view.bottom - size.height - GAP);
+  if (spot.right + GAP + size.width <= view.right - GAP) {
+    return { left: clampX(spot.right + GAP), top: clampY(spot.top - GAP) };
   }
-  if (spot.bottom + GAP + size.height <= view.height - GAP) {
-    return { left: clampX(spot.left), top: spot.bottom + GAP };
+  if (spot.bottom + GAP + size.height <= view.bottom - GAP) {
+    return { left: clampX(spot.left), top: clampY(spot.bottom + GAP) };
   }
-  if (spot.top - GAP - size.height >= GAP) {
-    return { left: clampX(spot.left), top: spot.top - GAP - size.height };
+  if (spot.top - GAP - size.height >= view.top + GAP) {
+    return { left: clampX(spot.left), top: clampY(spot.top - GAP - size.height) };
   }
   return { left: clampX(spot.left - GAP - size.width), top: clampY(spot.top) };
 }

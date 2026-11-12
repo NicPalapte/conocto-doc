@@ -33,6 +33,7 @@ export function SuggestBar({
   onClose,
   place = null,
   onStep,
+  bounds = null,
 }: {
   suggestion: DocSuggestion;
   oz: string;
@@ -50,6 +51,8 @@ export function SuggestBar({
   place?: { index: number; total: number } | null;
   /** Voriger / nächster Vorschlag; auch mit ← und →. */
   onStep?: (step: 1 | -1) => void;
+  /** PDF-Ansicht: die Leiste bleibt in ihr, auch wenn die Stelle hinausscrollt. */
+  bounds?: HTMLElement | null;
 }) {
   const host = useHostWindow();
   const ref = useRef<HTMLDivElement>(null);
@@ -85,6 +88,7 @@ export function SuggestBar({
   const key = suggestionKey(suggestion);
   const [spot, setSpot] = useState<Box>({ left, top: top - GAP, right: left, bottom: top - GAP });
   const [height, setHeight] = useState(HEIGHT);
+  const [view, setView] = useState<Box | null>(null);
   useEffect(() => {
     let frame = 0;
     const follow = (): void => {
@@ -102,17 +106,29 @@ export function SuggestBar({
             : { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom },
         );
       }
+      const area = bounds?.getBoundingClientRect();
+      setView((prev) =>
+        area === undefined
+          ? null
+          : prev !== null &&
+              prev.left === area.left &&
+              prev.top === area.top &&
+              prev.right === area.right &&
+              prev.bottom === area.bottom
+            ? prev
+            : { left: area.left, top: area.top, right: area.right, bottom: area.bottom },
+      );
       const own = ref.current?.offsetHeight;
       if (own !== undefined && own > 0) setHeight(own);
       frame = host.requestAnimationFrame(follow);
     };
     follow();
     return () => host.cancelAnimationFrame(frame);
-  }, [host, key]);
+  }, [host, key, bounds]);
   const at = placeNextTo(
     spot,
     { width: WIDTH, height },
-    { width: host.innerWidth, height: host.innerHeight },
+    view ?? { left: 0, top: 0, right: host.innerWidth, bottom: host.innerHeight },
   );
 
   const { amount, sorte } = suggestion;
