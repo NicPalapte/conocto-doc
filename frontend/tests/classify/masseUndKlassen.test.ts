@@ -27,6 +27,11 @@ describe('Maße im Langtext', () => {
     const { spans } = extractMasse('bis 5 cm unter Oberkante');
     expect(spans).toEqual([]);
   });
+
+  it('„verbreitert“ und „ausgebreitet“ sind keine Breite', () => {
+    const { spans } = extractMasse('Weg verbreitert um 5 cm, Folie ausgebreitet 2 m, Gewicht 5 kg');
+    expect(spans.map((span) => span.key)).toEqual(['gewicht']);
+  });
 });
 
 describe('Betonklassen', () => {
