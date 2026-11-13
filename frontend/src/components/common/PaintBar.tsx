@@ -36,7 +36,7 @@ function useCloseOutside(ref: RefObject<HTMLElement | null>, onClose: () => void
 
 const MENU_WIDTH = 230;
 /** Grobe Höhe des Menüs, damit es unten am Fenster nicht abgeschnitten wird. */
-const MENU_HEIGHT = 380;
+const MENU_HEIGHT = 412;
 /** Höhe jedes weiteren Sucheintrags. */
 const SEARCH_ROW_HEIGHT = 32;
 
@@ -92,6 +92,7 @@ export function PaintBar({
   onLearn,
   onRule = null,
   onLink,
+  onNote,
   onClose,
 }: {
   target: PaintTarget;
@@ -109,6 +110,8 @@ export function PaintBar({
   onRule?: (() => void) | null;
   /** Nur im Begleitdokument (Entscheidung 0072): Stelle mit Positionen verknüpfen. */
   onLink?: () => void;
+  /** Nur im Begleitdokument (Entscheidung 0111): Notiz an die Stelle; Zahl = schon da. */
+  onNote?: { readonly open: () => void; readonly count: number };
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -145,6 +148,19 @@ export function PaintBar({
           >
             Mit Position verknüpfen…
           </button>
+          {onNote !== undefined && (
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={onNote.open}
+              className={`${ROW} font-semibold`}
+            >
+              <span className="min-w-0 flex-1">Notiz…</span>
+              {onNote.count > 0 && (
+                <span className="shrink-0 text-[11px] text-mute">{onNote.count}</span>
+              )}
+            </button>
+          )}
           <span aria-hidden="true" className="mx-[8px] my-[4px] h-px bg-line" />
         </>
       )}

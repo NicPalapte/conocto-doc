@@ -171,7 +171,11 @@ export function paintDocMark(notes: DocNotes, spot: DocSpot, paint: Paint, at: n
 export function unpaintDocMark(notes: DocNotes, spot: DocSpot): DocNotes {
   const known = markAt(notes, spot);
   if (known === null || known.paint === null) return notes;
-  return put(notes, spot, isEmptyMark({ ...known, paint: null }) ? null : { ...known, paint: null });
+  return put(
+    notes,
+    spot,
+    isEmptyMark({ ...known, paint: null }) ? null : { ...known, paint: null },
+  );
 }
 
 /** Ohne Farbe, Verknüpfung und Notiz bleibt von einer Stelle nichts. */
@@ -287,9 +291,7 @@ export function unlinkDocMark(notes: DocNotes, spot: DocSpot, id: string): DocNo
   return put(
     notes,
     spot,
-    isEmptyMark({ ...known, links })
-      ? null
-      : withSources({ ...known, links }, known.sources),
+    isEmptyMark({ ...known, links }) ? null : withSources({ ...known, links }, known.sources),
   );
 }
 

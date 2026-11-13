@@ -158,11 +158,7 @@ function iso(at: number): string | null {
   return at > 0 ? new Date(at).toISOString() : null;
 }
 
-function fileDocSpot(
-  mark: DocMark,
-  toHash: ReadonlyMap<string, string>,
-  id?: string,
-): FileDocSpot {
+function fileDocSpot(mark: DocMark, toHash: ReadonlyMap<string, string>, id?: string): FileDocSpot {
   const notizen = (mark.comments ?? []).map((comment) => ({
     zeit: iso(comment.at),
     text: rekeyMentions(comment.text, toHash),
@@ -223,7 +219,8 @@ export function notesFileText(
   ]);
   // Alle Positionen: @-Verweise (0111) zeigen auch auf Positionen ohne eigene Notiz.
   const toHash = new Map<string, string>();
-  for (const [id, node] of byId) if (node.position !== null) toHash.set(id, node.position.hashes.id);
+  for (const [id, node] of byId)
+    if (node.position !== null) toHash.set(id, node.position.hashes.id);
   const positionen = [...ids].map((id) => {
     const position = byId.get(id)?.position ?? null;
     const abgelehnt = rejectionsOfPosition(documents, id).map(fileRejection);
@@ -242,9 +239,7 @@ export function notesFileText(
         text: mark.text,
         zeit: iso(mark.at),
       })),
-      dokumentstellen: marksOfPosition(documents, id).map((mark) =>
-        fileDocSpot(mark, toHash, id),
-      ),
+      dokumentstellen: marksOfPosition(documents, id).map((mark) => fileDocSpot(mark, toHash, id)),
       ...(abgelehnt.length === 0 ? {} : { abgelehnt }),
       verlauf: (annotations.log.get(id) ?? []).map((entry) => fileEntry(entry, toHash)),
     };
@@ -438,7 +433,9 @@ function readDokumente(file: Record<string, unknown>): DocNotes {
       docs.set(raw.id, { name: raw.name, pages: Math.max(0, pages) });
     }
   }
-  const marks = readDocSpots(file.dokumentstellen, []).filter((mark) => mark.paint !== null);
+  const marks = readDocSpots(file.dokumentstellen, []).filter(
+    (mark) => mark.paint !== null || (mark.comments ?? []).length > 0,
+  );
   if (docs.size === 0 && marks.length === 0) return EMPTY_DOC_NOTES;
   return mergeDocNotes({ docs, marks: [] }, { docs: new Map(), marks });
 }
@@ -509,6 +506,11 @@ export interface NotesMatching {
   /** Hash und Text anders, aber genau eine Position mit dieser OZ. */
   readonly changed: readonly NotesMatch[];
   readonly missing: readonly NotesFilePosition[];
+  /**
+   * Positions-Hash → Knoten-ID aller Positionen des LV: für @-Verweise (0111) auf
+   * Positionen, die selbst keine Notiz in der Datei haben.
+   */
+  readonly byHash: ReadonlyMap<string, string>;
 }
 
 /** Ordnet die Einträge der Datei den Positionen des geladenen LV zu. */
@@ -565,7 +567,8 @@ export function matchNotes(file: NotesFile, nodes: Iterable<LVNode>): NotesMatch
   stufe(byText, (entry) => entry.text, moved);
   stufe(byOz, (entry) => entry.oz, changed);
   missing.push(...offen);
-  return { same, moved, changed, missing };
+  const ids = new Map([...byHash].map(([hash, node]) => [hash, node.id]));
+  return { same, moved, changed, missing, byHash: ids };
 }
 
 function entryKey(entry: LogEntry): string {
@@ -625,6 +628,7 @@ export function mergeNotes(
   matches: readonly NotesMatch[],
   dokumente: DocNotes = EMPTY_DOC_NOTES,
   plaene: PlanNotes = EMPTY_PLAN_NOTES,
+  byHash: ReadonlyMap<string, string> = new Map(),
 ): Annotations {
   const noPlans = isEmptyPlanNotes(plaene);
   if (
@@ -639,7 +643,11 @@ export function mergeNotes(
   const important = new Set(current.important);
   const log = new Map(current.log);
   // @-Verweise (0111) stehen in der Datei mit Hash; zugeordnete werden zur Knoten-ID.
-  const hashToNode = new Map(matches.map(({ entry, nodeId }) => [entry.hash, nodeId]));
+  // Zugeordnete Einträge zuerst (auch umnummerierte), sonst gleicher Hash im LV.
+  const hashToNode = new Map([
+    ...byHash,
+    ...matches.map(({ entry, nodeId }): [string, string] => [entry.hash, nodeId]),
+  ]);
   const local = (item: LogEntry): LogEntry =>
     item.kind === 'comment' ? { ...item, text: rekeyMentions(item.text, hashToNode) } : item;
   const localMark = (mark: DocMark): DocMark =>

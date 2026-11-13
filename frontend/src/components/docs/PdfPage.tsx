@@ -291,7 +291,12 @@ function PdfPageView({
   const items = useMemo<DocHighlightItem[]>(
     () => [
       ...marks.map((mark): DocHighlightItem => ({
-        name: mark.paint === null ? 'doclink' : `docpaint-${mark.paint}`,
+        name:
+          mark.paint !== null
+            ? `docpaint-${mark.paint}`
+            : mark.links.length > 0
+              ? 'doclink'
+              : 'docnote',
         start: mark.start,
         text: mark.text,
       })),
@@ -301,7 +306,7 @@ function PdfPageView({
   );
   useDocHighlights(textRef, items, version);
 
-  // Marken am Rand für verknüpfte Stellen: Höhe der Stelle auf der Seite.
+  // Marken am Rand für verknüpfte Stellen und Notizen (0111): Höhe der Stelle auf der Seite.
   useLayoutEffect(() => {
     const layer = textRef.current;
     const frame = box.current;
@@ -310,7 +315,7 @@ function PdfPageView({
     const top0 = frame.getBoundingClientRect().top;
     const placed: { spot: DocMark; top: number }[] = [];
     for (const mark of marks) {
-      if (mark.links.length === 0) continue;
+      if (mark.links.length === 0 && (mark.comments ?? []).length === 0) continue;
       const start = locateOnPage(text, mark);
       const range = start < 0 ? null : rangeIn(layer, start, start + mark.text.length);
       if (range === null || typeof range.getBoundingClientRect !== 'function') continue;

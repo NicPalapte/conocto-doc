@@ -4,12 +4,79 @@
 // Marker-Wechsel stehen grau dazwischen. useSaveAnnotations schreibt kurz danach
 // in den Speicher der letzten Datei.
 
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Section } from './CardParts';
+import { MentionInput } from './MentionInput';
+import { MentionText } from './MentionText';
 import { PROGRESS_CHOICES, setImportantNow, setProgressNow } from './markers';
 import { useDismiss } from './useDismiss';
-import { formatAt, IMPORTANT_INFO, PROGRESS_INFO, type LogEntry } from '../../lib/annotations';
+import { useJumpToPosition } from './useJumpToPosition';
+import { useOptionalDocuments } from '../docs/DocumentsProvider';
+import {
+  formatAt,
+  IMPORTANT_INFO,
+  mentionsOf,
+  PROGRESS_INFO,
+  type LogEntry,
+  type Mention,
+} from '../../lib/annotations';
+import { isWholeDoc } from '../../lib/docs/docNotes';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
+
+const TEXT = 'm-0 whitespace-pre-wrap break-words font-mono text-[13px] leading-[1.5] text-ink';
+
+/**
+ * Eine Notiz, die diese Position erwähnt (Entscheidung 0111): oben die Quelle, ein Tipp
+ * öffnet sie — die Dokumentstelle (wenn das PDF offen ist) oder die andere Position.
+ */
+function MentionEntry({ mention }: { mention: Mention }) {
+  const { annotations, index } = useViewer();
+  const documents = useOptionalDocuments();
+  const jump = useJumpToPosition();
+  const { source } = mention;
+  let where: string;
+  let open: (() => void) | null;
+  if (source.kind === 'doc') {
+    const { mark } = source;
+    const name = annotations.documents.docs.get(mark.doc)?.name ?? 'Dokument';
+    where = `${name} · ${isWholeDoc(mark) ? 'ganzes Dokument' : `S. ${mark.page}`}`;
+    const isOpen = documents?.docs.some((entry) => entry.id === mark.doc) ?? false;
+    open = isOpen && documents !== null ? () => documents.jumpTo(mark) : null;
+  } else {
+    const slot = index.slotOf.get(source.id);
+    const position = slot === undefined ? null : index.positions[slot];
+    where =
+      position === null
+        ? 'Position'
+        : `Position ${position.lv === undefined ? '' : `${position.lv} · `}${position.oz}`;
+    open = position === null ? null : () => jump(source.id, { stayInView: true });
+  }
+  return (
+    <li className="flex flex-col gap-[2px] rounded-[var(--r-md)] border border-line bg-surface px-[10px] py-[7px]">
+      <div className="flex items-center gap-[8px] font-mono text-[11px] text-mute">
+        {open === null ? (
+          <span className="min-w-0 truncate font-semibold">
+            {where}
+            {source.kind === 'doc' && <span className="text-amber"> · nicht geöffnet</span>}
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={open}
+            title={source.kind === 'doc' ? 'Stelle im Dokument zeigen' : 'Position zeigen'}
+            className={`min-w-0 cursor-pointer truncate border-none bg-transparent p-0 text-left font-mono text-[11px] font-semibold hover:underline [@media(pointer:coarse)]:py-[4px] ${
+              source.kind === 'doc' ? 'text-cyan' : 'text-dim'
+            }`}
+          >
+            {where}
+          </button>
+        )}
+        <span className="ml-auto shrink-0">{formatAt(mention.at)}</span>
+      </div>
+      <MentionText text={mention.text} className={TEXT} />
+    </li>
+  );
+}
 
 function entryLine(entry: Exclude<LogEntry, { kind: 'comment' }>): string {
   if (entry.kind === 'important') return entry.on ? 'Wichtig' : 'Nicht mehr wichtig';
@@ -21,6 +88,13 @@ export function NoteBlock({ positionId }: { positionId: string }) {
   const dispatch = useViewerDispatch();
   const [draft, setDraft] = useState('');
   const entries = annotations.log.get(positionId) ?? [];
+  const mentions = useMemo(() => mentionsOf(annotations, positionId), [annotations, positionId]);
+  // Eigene Einträge und Erwähnungen in einer Liste nach Zeit (Nico, 14.11.2026).
+  const rows = useMemo(() => {
+    const own = entries.map((entry, i) => ({ at: entry.at, own: { entry, i } as const }));
+    const other = mentions.map((mention) => ({ at: mention.at, mention }));
+    return [...own, ...other].sort((a, b) => a.at - b.at);
+  }, [entries, mentions]);
 
   const send = (): void => {
     if (draft.trim() === '') return;
@@ -30,56 +104,51 @@ export function NoteBlock({ positionId }: { positionId: string }) {
 
   return (
     <Section title="Verlauf">
-      {entries.length > 0 && (
+      {rows.length > 0 && (
         <ol aria-label="Verlauf" className="m-0 flex list-none flex-col gap-[6px] p-0">
-          {entries.map((entry, i) =>
-            entry.kind !== 'comment' ? (
+          {rows.map((row) =>
+            'mention' in row ? (
+              <MentionEntry key={`m-${row.at}-${row.mention.text}`} mention={row.mention} />
+            ) : row.own.entry.kind !== 'comment' ? (
               <li
-                key={`${entry.at}-${i}`}
+                key={`${row.at}-${row.own.i}`}
                 className="flex gap-[8px] px-[2px] font-mono text-[11px] text-mute"
               >
-                <span>{formatAt(entry.at)}</span>
-                <span>{entryLine(entry)}</span>
+                <span>{formatAt(row.at)}</span>
+                <span>{entryLine(row.own.entry)}</span>
               </li>
             ) : (
               <li
-                key={`${entry.at}-${i}`}
+                key={`${row.at}-${row.own.i}`}
                 className="group flex flex-col gap-[2px] rounded-[var(--r-md)] border border-line bg-panel px-[10px] py-[7px]"
               >
                 <div className="flex items-center gap-[8px] font-mono text-[11px] text-mute">
-                  <span>{formatAt(entry.at)}</span>
+                  <span>{formatAt(row.at)}</span>
                   <button
                     type="button"
                     aria-label="Kommentar löschen"
                     title="Kommentar löschen"
-                    onClick={() => dispatch({ type: 'removeComment', id: positionId, position: i })}
-                    className="ml-auto cursor-pointer border-none bg-transparent p-0 text-mute opacity-0 hover:text-ink focus-visible:opacity-100 group-hover:opacity-100"
+                    onClick={() =>
+                      dispatch({ type: 'removeComment', id: positionId, position: row.own.i })
+                    }
+                    className="ml-auto cursor-pointer border-none bg-transparent p-0 text-mute opacity-0 hover:text-ink focus-visible:opacity-100 group-hover:opacity-100 [@media(pointer:coarse)]:opacity-100"
                   >
                     ✕
                   </button>
                 </div>
-                <p className="m-0 whitespace-pre-wrap break-words font-mono text-[13px] leading-[1.5] text-ink">
-                  {entry.text}
-                </p>
+                <MentionText text={row.own.entry.text} className={TEXT} />
               </li>
             ),
           )}
         </ol>
       )}
       <div className="flex items-end gap-[8px]">
-        <textarea
+        <MentionInput
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-              event.preventDefault();
-              send();
-            }
-          }}
-          placeholder="Kommentar schreiben"
-          aria-label="Kommentar zur Position"
-          rows={2}
-          className="min-w-0 flex-1 resize-y rounded-[var(--r-md)] border border-line bg-panel px-[10px] py-[8px] font-mono text-[13px] leading-[1.5] text-ink outline-none placeholder:text-mute focus:border-accent"
+          onChange={setDraft}
+          onSubmit={send}
+          label="Kommentar zur Position"
+          placeholder="Kommentar … (@ für Position)"
         />
         <button
           type="button"

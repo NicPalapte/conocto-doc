@@ -45,6 +45,8 @@ import { attrString, attrStrings } from '../../lib/attributes';
 import { facetOptionLabel, FACETS_BY_ID } from '../../lib/facets';
 import { formatCount, formatEuro, formatNumber } from '../../lib/format';
 import { createPositionFilter } from '../../lib/index/positionIndex';
+import { plainMentions } from '../../lib/mentions';
+import { MentionText } from '../common/MentionText';
 import { searchSnippet } from '../../lib/searchSnippet';
 import { headingOf } from '../../lib/tree/heading';
 import { sumsByUnit } from '../../lib/units';
@@ -238,6 +240,8 @@ type FillColumn = 'progress' | 'important';
 /** Was die Zellen der Notiz-Spalten zum Zeichnen brauchen. */
 interface NoteCells {
   annotations: Annotations;
+  /** OZ zu einer Knoten-ID, für @-Verweise im Kommentar (Entscheidung 0111). */
+  ozOf: (id: string) => string | null;
   /** Zellen, die das laufende Ziehen gerade abdeckt. */
   filling: { column: FillColumn; ids: ReadonlySet<string> } | null;
   openMenu: (kind: 'progress' | 'comment', id: string, anchor: HTMLElement) => void;
@@ -380,7 +384,9 @@ function annotationRender(key: string, cells: NoteCells): Column<Row>['render'] 
             <span className="note-add text-mute">+ Kommentar</span>
           ) : (
             <>
-              <span className="min-w-0 truncate text-accent">{newest.text}</span>
+              <span className="min-w-0 truncate text-accent">
+                {plainMentions(newest.text, cells.ozOf)}
+              </span>
               {comments.length > 1 && (
                 <span className="shrink-0 rounded-[var(--r-pill)] border border-line2 px-[5px] text-[11px] text-dim">
                   +{comments.length - 1}
@@ -467,9 +473,10 @@ function CommentEditor({
           {comments.map((comment, i) => (
             <li key={`${comment.at}-${i}`} className="border-t border-grid pt-[6px]">
               <span className="block font-mono text-[11px] text-mute">{formatAt(comment.at)}</span>
-              <p className="m-0 whitespace-pre-wrap break-words font-mono text-[13px] leading-[1.5] text-ink">
-                {comment.text}
-              </p>
+              <MentionText
+                text={comment.text}
+                className="m-0 whitespace-pre-wrap break-words font-mono text-[13px] leading-[1.5] text-ink"
+              />
             </li>
           ))}
         </ol>
@@ -734,6 +741,13 @@ export function PositionsTable({ root }: { root: LVNode }) {
   // schlägt den Treffer im flachen Positions-Index nach (WP-I, Schritt 3).
   // `active` kommt aus dem Provider — eine Aufbereitung für alle Ansichten.
   const matchesPosition = useMemo(() => createPositionFilter(index, active), [index, active]);
+  const ozOf = useCallback(
+    (id: string): string | null => {
+      const slot = index.slotOf.get(id);
+      return slot === undefined ? null : index.positions[slot].oz;
+    },
+    [index],
+  );
   const filtering = active.filtering;
   const lvRoot = tree ?? root;
 
@@ -902,6 +916,7 @@ export function PositionsTable({ root }: { root: LVNode }) {
 
   const columns = useMemo<Column<Row>[]>(() => {
     const cells: NoteCells = {
+      ozOf,
       annotations,
       filling,
       openMenu: (kind, id, element) => {
@@ -927,7 +942,7 @@ export function PositionsTable({ root }: { root: LVNode }) {
     return at < 0
       ? [...shown, ...plan]
       : [...shown.slice(0, at + 1), ...plan, ...shown.slice(at + 1)];
-  }, [columnConfig, active.query, annotations, filling, dispatch, startFill]);
+  }, [columnConfig, active.query, annotations, filling, dispatch, startFill, ozOf]);
 
   // Kopfzeile je Abschnitt: Name, Anzahl der gezeigten Positionen, davon erledigt.
   const heads = useMemo(() => {
@@ -1110,7 +1125,7 @@ export function PositionsTable({ root }: { root: LVNode }) {
               ? row.position.shortText
               : column.key === 'note'
                 ? latestCommentsOf(annotations, row.node.id)
-                    .map((comment) => comment.text)
+                    .map((comment) => plainMentions(comment.text, ozOf))
                     .join('\n') || undefined
                 : undefined
           }

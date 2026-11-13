@@ -40,6 +40,8 @@ import { usePageInfo } from './usePageInfo';
 import { pageMaskOf, snapAt, type PageMask, type Snap } from './pageMask';
 import type { DocHighlightItem } from './docHighlights';
 import { PaintBar, PaintNamesDialog } from '../common/PaintBar';
+import { DocNoteDialog } from './DocNoteDialog';
+import { NoteBadge } from './NoteBadge';
 import {
   paintSelection,
   searchTermOf,
@@ -50,6 +52,7 @@ import { useHostWindow } from '../common/hostWindow';
 import { useJumpToPosition } from '../common/useJumpToPosition';
 import {
   isWholeDoc,
+  markAt,
   marksOfDoc,
   nextMarkIndex,
   wholeDocSpot,
@@ -245,6 +248,8 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
   const [scrolled, setCurrent] = useState(1);
   const [picked, setPicked] = useState<Picked | null>(null);
   const [linking, setLinking] = useState<{ spot: DocSpot; left: number; top: number } | null>(null);
+  // Notiz an einer Stelle (Entscheidung 0111).
+  const [noting, setNoting] = useState<{ spot: DocSpot; left: number; top: number } | null>(null);
   const [naming, setNaming] = useState<{ left: number; top: number } | null>(null);
   const [offer, setOffer] = useState<{
     suggestion: DocSuggestion;
@@ -1124,6 +1129,20 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
     );
   };
   const touchedNow = picked === null ? [] : touched(picked);
+  /**
+   * Stelle für „Notiz…“: berührt die Auswahl eine eigene Stelle, gehört die Notiz dorthin
+   * (die mit Notiz zuerst) — sonst entstünde beim ungenauen Markieren am Tablet eine zweite.
+   */
+  const noteSpotOf = (choice: Picked): DocMark | DocSpot => {
+    const end = choice.target.start + choice.target.text.length;
+    const near = (byPage.get(choice.page) ?? []).filter(
+      (mark) => mark.start < end && mark.start + mark.text.length > choice.target.start,
+    );
+    return near.find((mark) => (mark.comments ?? []).length > 0) ?? near[0] ?? spotOf(choice);
+  };
+  const noteSpot = picked === null ? null : noteSpotOf(picked);
+  const noteCount =
+    noteSpot === null ? 0 : (markAt(annotations.documents, noteSpot)?.comments?.length ?? 0);
   const positionOf = (id: string) => {
     const slot = index.slotOf.get(id);
     return slot === undefined ? null : index.nodes[slot].position;
@@ -1132,18 +1151,24 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
   // Stabil, damit `PdfPage` (memo) beim Scrollen nicht alle Seiten neu rendert.
   const badge = useCallback(
     (marks: readonly DocMark[]) => (
-      <LinkBadge
-        spots={marks}
-        ozOf={(id) => {
-          const slot = index.slotOf.get(id);
-          return slot === undefined ? '?' : (index.nodes[slot].position?.oz ?? '?');
-        }}
-        titleOf={(id) => {
-          const slot = index.slotOf.get(id);
-          return slot === undefined ? '' : (index.nodes[slot].position?.shortText ?? '');
-        }}
-        onPick={(id) => jumpToPosition(id, { stayInView: true })}
-      />
+      <div className="flex items-start gap-[3px]">
+        <NoteBadge
+          marks={marks}
+          onOpen={(spot, box) => setNoting({ spot, left: box.right - 340, top: box.bottom + 4 })}
+        />
+        <LinkBadge
+          spots={marks}
+          ozOf={(id) => {
+            const slot = index.slotOf.get(id);
+            return slot === undefined ? '?' : (index.nodes[slot].position?.oz ?? '?');
+          }}
+          titleOf={(id) => {
+            const slot = index.slotOf.get(id);
+            return slot === undefined ? '' : (index.nodes[slot].position?.shortText ?? '');
+          }}
+          onPick={(id) => jumpToPosition(id, { stayInView: true })}
+        />
+      </div>
     ),
     [index, jumpToPosition],
   );
@@ -1608,7 +1633,33 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
             });
             setPicked(null);
           }}
+          onNote={{
+            count: noteCount,
+            open: () => {
+              if (noteSpot === null) return;
+              setNoting({
+                spot: {
+                  doc: noteSpot.doc,
+                  page: noteSpot.page,
+                  start: noteSpot.start,
+                  text: noteSpot.text,
+                },
+                left: picked.target.left,
+                top: picked.target.top,
+              });
+              host.getSelection()?.removeAllRanges();
+              setPicked(null);
+            },
+          }}
           onClose={() => setPicked(null)}
+        />
+      )}
+      {noting !== null && (
+        <DocNoteDialog
+          spot={noting.spot}
+          left={noting.left}
+          top={noting.top}
+          onClose={() => setNoting(null)}
         />
       )}
       {linking !== null && (

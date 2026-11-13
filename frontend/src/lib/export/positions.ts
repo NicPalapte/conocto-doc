@@ -21,6 +21,7 @@ import { attributeLabel, attrString, attrStrings } from '../attributes';
 import { materialKatalog } from '../classify/material/katalog';
 import { canonicalUnit, unitLabel } from '../units';
 import { csvText } from './csvText';
+import { plainMentions } from '../mentions';
 import type { PositionIndex } from '../index/positionIndex';
 
 function progressLabel(notes: Annotations, id: string): string {
@@ -40,12 +41,17 @@ function paintText(notes: Annotations, id: string, names: PaintNames): string {
 }
 
 /** Alle Kommentare einer Position, je Zeile mit Zeitpunkt, älteste zuerst. */
-function commentText(notes: Annotations, id: string): string {
+function commentText(index: PositionIndex, notes: Annotations, id: string): string {
+  const ozOf = (other: string): string | null => {
+    const slot = index.slotOf.get(other);
+    return slot === undefined ? null : index.positions[slot].oz;
+  };
   const lines: string[] = [];
   for (const entry of notes.log.get(id) ?? []) {
     if (entry.kind !== 'comment') continue;
     const at = formatAt(entry.at);
-    lines.push(at === '' ? entry.text : `${at} ${entry.text}`);
+    const text = plainMentions(entry.text, ozOf);
+    lines.push(at === '' ? text : `${at} ${text}`);
   }
   return lines.join('\n');
 }
@@ -80,7 +86,7 @@ const COLUMNS: ReadonlyArray<{
   // Eigene Notizen (Entscheidungen 0047, 0053) — stehen in der Tabelle, also auch hier.
   { head: 'Fortschritt', of: (index, i, notes) => progressLabel(notes, index.nodes[i].id) },
   { head: 'Wichtig', of: (index, i, notes) => importantLabel(notes, index.nodes[i].id) },
-  { head: 'Kommentar', of: (index, i, notes) => commentText(notes, index.nodes[i].id) },
+  { head: 'Kommentar', of: (index, i, notes) => commentText(index, notes, index.nodes[i].id) },
   {
     head: 'Textmarkierungen',
     of: (index, i, notes, names) => paintText(notes, index.nodes[i].id, names),
