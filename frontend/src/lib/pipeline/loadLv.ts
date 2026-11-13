@@ -9,7 +9,12 @@ import {
   type PipelineRequest,
   type PipelineResponse,
 } from './messages';
-import { classifyAndBuild, parseToDraft, type LoadedLV } from './runPipeline';
+import {
+  classifyAndBuildParts,
+  parseToDraft,
+  type LoadedLV,
+  type PipelinePart,
+} from './runPipeline';
 import { fileExtension, fileIdOf, isGaebExtension } from '@core';
 import { measureAsync } from '../perf';
 import type { LVDraft } from '@core';
@@ -105,9 +110,7 @@ function createWorker(): Worker | null {
 }
 
 function classifyInWorker(
-  draft: LVDraft,
-  fileName: string,
-  fileId: string,
+  parts: PipelinePart[],
   onNotice: ((message: string) => void) | undefined,
 ): Promise<LoadedLV> | null {
   const worker = createWorker();
@@ -126,7 +129,7 @@ function classifyInWorker(
       // lassen, und es sagen: die Wartezeit ist sonst unerklärlich.
       onNotice?.(WORKER_AUSFALL_HINWEIS);
       try {
-        resolve(classifyAndBuild(draft, fileName, fileId));
+        resolve(classifyAndBuildParts(parts));
       } catch (error) {
         reject(error);
       }
@@ -142,7 +145,7 @@ function classifyInWorker(
     // Die Antwort ließ sich nicht deserialisieren: ohne diesen Handler bliebe
     // der Import für immer im Ladezustand hängen.
     worker.onmessageerror = rechneWeiter;
-    const request: PipelineRequest = { draft, fileName, fileId };
+    const request: PipelineRequest = { parts };
     worker.postMessage(request);
   });
 }
@@ -170,28 +173,96 @@ async function parseClassifyBuild(
   fileName: string,
   options: LoadOptions,
 ): Promise<LoadedLV> {
-  // Datei-ID für teilbare Links (Entscheidung 0055) — aus denselben Bytes wie der Parser.
-  // Läuft wie der Parser im Haupt-Thread: der Worker bekommt nur den Draft, nicht die
-  // Bytes. Gemessen ~60 ms für 5 MB (≈ 10k Positionen), ~0,5 s für die Obergrenze 50 MB.
+  return classifyParts([parsePart(bytes, fileName, 'LV1')], options);
+}
+
+/**
+ * Datei-ID und Draft einer Datei. Datei-ID für teilbare Links (Entscheidung 0055) — aus
+ * denselben Bytes wie der Parser. Läuft wie der Parser im Haupt-Thread: der Worker bekommt
+ * nur den Draft, nicht die Bytes. Gemessen ~60 ms für 5 MB (≈ 10k Positionen), ~0,5 s für
+ * die Obergrenze 50 MB.
+ *
+ * @throws {LVLoadError}
+ */
+function parsePart(bytes: ArrayBuffer, fileName: string, key: string): PipelinePart {
   const fileId = fileIdOf(bytes);
-  let draft: LVDraft;
   try {
     // Bytes, nicht Text — das Encoding steht in der XML-Deklaration.
-    draft = parseToDraft(bytes, fileName);
+    return { draft: parseToDraft(bytes, fileName), fileName, fileId, key };
   } catch (error) {
     throw toLoadError(toPipelineError(error), error);
   }
+}
 
+async function classifyParts(parts: PipelinePart[], options: LoadOptions): Promise<LoadedLV> {
   try {
-    if (countPositions(draft) >= WORKER_THRESHOLD_POSITIONS) {
-      const viaWorker = classifyInWorker(draft, fileName, fileId, options.onNotice);
+    const total = parts.reduce((sum, part) => sum + countPositions(part.draft), 0);
+    if (total >= WORKER_THRESHOLD_POSITIONS) {
+      const viaWorker = classifyInWorker(parts, options.onNotice);
       if (viaWorker !== null) return await viaWorker;
     }
-    return classifyAndBuild(draft, fileName, fileId);
+    return classifyAndBuildParts(parts);
   } catch (error) {
     if (error instanceof LVLoadError) throw error;
     throw toLoadError(toPipelineError(error), error);
   }
+}
+
+/** Eine GAEB-Datei unter mehreren, mit ihrer Kennung („LV2", Entscheidung 0110). */
+export interface LvSource {
+  readonly key: string;
+  readonly fileName: string;
+  readonly bytes: ArrayBuffer;
+}
+
+export interface LoadedLvs {
+  readonly lv: LoadedLV;
+  /** Die Quellen, die im LV stecken — ohne die unlesbaren und doppelten. */
+  readonly sources: readonly LvSource[];
+  /** Unlesbare Dateien mit Meldung; die übrigen sind trotzdem geladen. */
+  readonly failed: ReadonlyArray<{ fileName: string; message: string }>;
+  /** Dateien, deren Inhalt schon geladen ist (gleiche Datei-ID). */
+  readonly duplicates: readonly string[];
+}
+
+/**
+ * Mehrere GAEB-Dateien zu einem LV (Entscheidung 0110). Eine kaputte Datei bricht die
+ * anderen nicht ab; nur wenn keine lesbar ist, scheitert das Laden mit der ersten Meldung.
+ *
+ * @throws {LVLoadError}
+ */
+export async function loadLvsFromBytes(
+  sources: readonly LvSource[],
+  options: LoadOptions = {},
+): Promise<LoadedLvs> {
+  return measureAsync('LVs laden', async () => {
+    const parts: PipelinePart[] = [];
+    const kept: LvSource[] = [];
+    const failed: Array<{ fileName: string; message: string }> = [];
+    const duplicates: string[] = [];
+    let firstError: LVLoadError | null = null;
+    for (const source of sources) {
+      try {
+        pruefeGroesse(source.bytes.byteLength, source.fileName);
+        const part = parsePart(source.bytes, source.fileName, source.key);
+        if (parts.some((known) => known.fileId === part.fileId)) {
+          duplicates.push(source.fileName);
+          continue;
+        }
+        parts.push(part);
+        kept.push(source);
+      } catch (error) {
+        const loadError =
+          error instanceof LVLoadError ? error : toLoadError(toPipelineError(error), error);
+        firstError ??= loadError;
+        failed.push({ fileName: source.fileName, message: loadError.message });
+      }
+    }
+    if (parts.length === 0) {
+      throw firstError ?? new LVLoadError('leer', 'Keine GAEB-Datei zum Lesen.');
+    }
+    return { lv: await classifyParts(parts, options), sources: kept, failed, duplicates };
+  });
 }
 
 /**

@@ -8,7 +8,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadLv, LVLoadError } from '../../src/lib/pipeline/loadLv';
 import type { PipelineRequest, PipelineResponse } from '../../src/lib/pipeline/messages';
-import { classifyAndBuild } from '../../src/lib/pipeline/runPipeline';
+import { classifyAndBuildParts } from '../../src/lib/pipeline/runPipeline';
 import { gaebMitPositionen } from '../../../packages/core/tests/support/gaebXml';
 
 afterEach(() => {
@@ -61,7 +61,7 @@ function sende(worker: WorkerErsatz, data: PipelineResponse): void {
 describe('Worker-Pfad', () => {
   it('übernimmt das Ergebnis des Workers und beendet ihn', async () => {
     const protokoll = stubWorker((worker, request) =>
-      sende(worker, { ok: true, result: classifyAndBuild(request.draft, request.fileName) }),
+      sende(worker, { ok: true, result: classifyAndBuildParts(request.parts) }),
     );
     const hinweise: string[] = [];
 
@@ -70,7 +70,7 @@ describe('Worker-Pfad', () => {
     });
 
     expect(protokoll.gestartet).toBe(1);
-    expect(protokoll.anfragen[0].fileName).toBe('viele.x83');
+    expect(protokoll.anfragen[0].parts[0].fileName).toBe('viele.x83');
     expect(protokoll.beendet).toBe(1);
     expect(lv.fileName).toBe('viele.x83');
     expect(lv.tree).not.toBeNull();

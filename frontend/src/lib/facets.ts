@@ -62,7 +62,21 @@ function single(value: string | null): string[] {
   return value === null ? [] : [value];
 }
 
+/** „LV2" vor „LV10": nach der Zahl, nicht nach dem Text. */
+function byLvNumber(values: string[]): string[] {
+  const number = (value: string): number => Number(value.replace(/\D/g, '')) || 0;
+  return [...values].sort((a, b) => number(a) - number(b));
+}
+
 export const FACETS: readonly Facet[] = [
+  // Mehrere LVs (Entscheidung 0110): ein LV ein- und ausblenden. Bei nur einer Datei
+  // hat keine Position den Wert, die Facette erscheint dann nirgends.
+  {
+    id: 'lv',
+    label: 'LV',
+    get: (p) => single(p.lv ?? null),
+    sortValues: byLvNumber,
+  },
   {
     id: 'positionsart',
     label: 'Positionsart',

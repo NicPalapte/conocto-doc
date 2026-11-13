@@ -4,13 +4,12 @@
 // weil `DOMParser` im Worker-Scope nicht existiert (siehe runPipeline.ts).
 
 import { toPipelineError, type PipelineRequest, type PipelineResponse } from './messages';
-import { classifyAndBuild } from './runPipeline';
+import { classifyAndBuildParts } from './runPipeline';
 
 self.onmessage = (event: MessageEvent<PipelineRequest>) => {
-  const { draft, fileName, fileId } = event.data;
   let response: PipelineResponse;
   try {
-    response = { ok: true, result: classifyAndBuild(draft, fileName, fileId) };
+    response = { ok: true, result: classifyAndBuildParts(event.data.parts) };
   } catch (error) {
     response = { ok: false, ...toPipelineError(error) };
   }
