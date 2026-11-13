@@ -1,27 +1,28 @@
 // PDF auf die App ziehen: öffnet es als Begleitdokument im Bereich „Dokument“
 // (Entscheidung 0072). Gilt für die ganze Arbeitsfläche, nicht nur für den leeren
-// Bereich „Dokument“ — der muss dafür nicht erst offen sein.
+// Bereich „Dokument“ — der muss dafür nicht erst offen sein. Seit Entscheidung 0110 auch
+// GAEB-Dateien: sie kommen als weiteres LV dazu, gemischt mit PDFs.
 //
 // Lauscht am Fenster, damit kein Bereich etwas dafür tun muss. Hat ein Bereich den
 // Abwurf schon selbst genommen (`defaultPrevented`, z. B. der leere Bereich
 // „Dokument“), bleibt es dabei.
 
 import { useEffect, useRef, useState } from 'react';
-import { useDocuments } from './DocumentsProvider';
+import { useLvFiles } from './LvFilesProvider';
 
-type Over = 'pdf' | 'other' | null;
+type Over = 'files' | null;
 
-/** Was gezogen wird: PDF, sicher kein PDF oder (ohne Angabe des Typs) vermutlich PDF. */
+/**
+ * Ob Dateien gezogen werden. Den Namen und damit die Endung nennt der Browser erst beim
+ * Abwerfen; GAEB-Dateien haben meist keinen Typ. Was nicht passt, meldet `addFiles`.
+ */
 function overOf(transfer: DataTransfer | null): Over {
   if (transfer === null || !transfer.types.includes('Files')) return null;
-  const files = [...transfer.items].filter((item) => item.kind === 'file');
-  // Manche Browser nennen den Typ erst beim Abwerfen — dann wohlwollend „PDF“.
-  if (files.length === 0 || files.some((item) => item.type === 'application/pdf')) return 'pdf';
-  return files.every((item) => item.type !== '') ? 'other' : 'pdf';
+  return 'files';
 }
 
 export function PdfDrop() {
-  const { openFiles } = useDocuments();
+  const { addFiles } = useLvFiles();
   const [over, setOver] = useState<Over>(null);
   const timer = useRef(0);
 
@@ -38,7 +39,7 @@ export function PdfDrop() {
       // Ohne `preventDefault` öffnete der Browser die Datei und verwürfe die Sitzung.
       event.preventDefault();
       if (event.dataTransfer !== null) {
-        event.dataTransfer.dropEffect = kind === 'pdf' ? 'copy' : 'none';
+        event.dataTransfer.dropEffect = 'copy';
       }
       setOver(kind);
       hideSoon();
@@ -49,7 +50,7 @@ export function PdfDrop() {
       setOver(null);
       if (event.defaultPrevented) return;
       event.preventDefault();
-      void openFiles([...event.dataTransfer.files]);
+      void addFiles([...event.dataTransfer.files]);
     };
     window.addEventListener('dragover', onDragOver);
     window.addEventListener('drop', onDrop);
@@ -58,7 +59,7 @@ export function PdfDrop() {
       window.removeEventListener('drop', onDrop);
       window.clearTimeout(timer.current);
     };
-  }, [openFiles]);
+  }, [addFiles]);
 
   if (over === null) return null;
   return (
@@ -67,14 +68,8 @@ export function PdfDrop() {
       className="pointer-events-none fixed inset-0 z-[60] grid place-items-center border-2 border-dashed border-accent bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
     >
       <div className="flex flex-col items-center gap-[4px] rounded-[var(--r-md)] bg-surface px-[22px] py-[16px] text-center shadow-[var(--shadow-sm)]">
-        <b className="font-display text-[16px] font-semibold text-ink">
-          {over === 'pdf' ? 'PDF loslassen' : 'Nur PDF-Dateien'}
-        </b>
-        <span className="text-[12.5px] text-mute">
-          {over === 'pdf'
-            ? 'öffnet sich im Bereich „Dokument“'
-            : 'Ein anderes LV öffnest du über das Logo-Menü.'}
-        </span>
+        <b className="font-display text-[16px] font-semibold text-ink">Dokumente loslassen</b>
+        <span className="text-[12.5px] text-mute">PDF oder GAEB, auch gemischt</span>
       </div>
     </div>
   );

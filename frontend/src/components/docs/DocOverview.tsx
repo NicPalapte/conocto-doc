@@ -1,12 +1,13 @@
 // Übersicht im Bereich „Dokument“ (Entscheidung 0094): alle offenen PDFs als Miniatur der
 // ersten Seite, mit Suche im Namen und Sortierung. Ein Klick öffnet das PDF zum Lesen.
 // Jede Karte trägt ihre Dokumentart (0096); nach Art sortiert, mit Überschrift je Art.
+// Darüber die offenen LVs als Kennzeichen (Entscheidung 0110).
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { DocKindChip, KindDot } from './DocKindChip';
 import { kindLabel } from '../../lib/docs/docKindLook';
 import { useDocuments } from './DocumentsProvider';
-import { DOC_TOOL, PdfInput } from './PdfInput';
+import { LvList } from './LvList';
 import {
   DOC_SORT_LABEL,
   docRows,
@@ -114,7 +115,6 @@ export function DocOverview() {
   const {
     docs,
     active,
-    openFiles,
     setOverview,
     busy,
     error,
@@ -149,6 +149,8 @@ export function DocOverview() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      {/* Verwaltung aller Dokumente (Entscheidung 0110): LVs oben, „+ Hinzufügen“ für beide. */}
+      <LvList />
       <div className="flex shrink-0 flex-wrap items-center gap-[6px] border-b border-line px-[10px] py-[6px]">
         <div
           role="group"
@@ -195,11 +197,7 @@ export function DocOverview() {
             ))}
           </select>
         </label>
-        <PdfInput
-          label={busy ? 'Öffnet…' : '+ PDF hinzufügen'}
-          onFiles={(files) => void openFiles(files)}
-          className={`${DOC_TOOL} border-dashed border-line2 text-dim`}
-        />
+        {busy && <span className="font-mono text-[11.5px] text-mute">Öffnet…</span>}
       </div>
       {ansatzOz !== null && (
         <div

@@ -214,7 +214,7 @@ describe('Notiz-Datei Version 4', () => {
   });
 });
 
-describe('PDF öffnen', () => {
+describe('Dokument öffnen', () => {
   it('erkennt ein PDF an seiner Kennung', () => {
     expect(looksLikePdf(new TextEncoder().encode('%PDF-1.7\n…').buffer)).toBe(true);
     expect(looksLikePdf(new TextEncoder().encode('<GAEB>').buffer)).toBe(false);

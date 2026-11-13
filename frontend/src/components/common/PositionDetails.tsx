@@ -2,6 +2,7 @@
 // Kopf mit OZ und Hauptabschnitt, Kennzahlen (Menge · EP · Positionsart), Hinweise,
 // Langtext mit Fundstellen und eine Eigenschaftstabelle.
 
+import { LvBadge } from './LvBadge';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { CardHead, DASHED, GroupPill, PropTable, Section, StatRow } from './CardParts';
 import { Highlighted } from './Highlighted';
@@ -303,6 +304,7 @@ export function PositionDetails({ node, position }: { node: LVNode; position: Po
       <CardHead
         meta={
           <>
+            <LvBadge lv={position.lv} />
             <span
               className={`shrink-0 font-mono text-[12px] text-dim ${match?.oz === true ? DASHED : ''}`}
             >

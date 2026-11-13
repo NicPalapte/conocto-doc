@@ -46,10 +46,16 @@ async function warteAufLink(): Promise<void> {
 describe('Ladefehler auf der Startseite (Issues #92, #93)', () => {
   it('nennt bei einem fremden Dateityp den Dateityp, nicht „kein XML"', async () => {
     render(<App />);
-    legeAb(new File(['%PDF-1.7'], 'bericht.pdf'));
+    legeAb(new File(['PK'], 'bericht.docx'));
     const meldung = await screen.findByRole('alert');
-    expect(meldung).toHaveTextContent(/bericht\.pdf/);
+    expect(meldung).toHaveTextContent(/bericht\.docx/);
     expect(meldung).toHaveTextContent(/Dateityp/);
+  });
+
+  it('verlangt zu PDFs mindestens eine GAEB-Datei (Entscheidung 0110)', async () => {
+    render(<App />);
+    legeAb(new File(['%PDF-1.7'], 'bericht.pdf', { type: 'application/pdf' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/mindestens eine GAEB-Datei/);
   });
 
   it('meldet eine leere Datei als leer', async () => {
@@ -93,17 +99,19 @@ describe('Ladefehler auf der Startseite (Issues #92, #93)', () => {
   });
 });
 
-describe('Hinweisleiste: mehrere Dateien (Issue #94)', () => {
-  it('liest die erste Datei und sagt, dass die anderen nicht gelesen werden', async () => {
+describe('Hinweisleiste: mehrere Dateien (Issue #94, Entscheidung 0110)', () => {
+  it('liest alle Dateien, ohne Hinweis', async () => {
     render(<App />);
     legeAb(fixtureDatei('gaeb-xml-beispiel.x83'), fixtureDatei('sample.X83'));
     await warteAufLv();
+    expect(hinweisleiste()).toBeNull();
+  });
 
-    const leiste = hinweisleiste();
-    expect(leiste).not.toBeNull();
-    expect(leiste).toHaveTextContent('2 Dateien');
-    expect(leiste).toHaveTextContent('gaeb-xml-beispiel.x83');
-    expect(leiste).toHaveTextContent('Es wird immer nur eine Datei gelesen');
+  it('liest die guten Dateien und nennt die kaputte', async () => {
+    render(<App />);
+    legeAb(fixtureDatei('gaeb-xml-beispiel.x83'), new File([''], 'leer.x83'));
+    await warteAufLv();
+    expect(hinweisleiste()).toHaveTextContent('Die Datei leer.x83 ist leer.');
   });
 
   it('zeigt bei einer einzelnen Datei keinen Hinweis', async () => {
@@ -115,7 +123,7 @@ describe('Hinweisleiste: mehrere Dateien (Issue #94)', () => {
 
   it('lässt sich schließen', async () => {
     render(<App />);
-    legeAb(fixtureDatei('gaeb-xml-beispiel.x83'), fixtureDatei('sample.X83'));
+    legeAb(fixtureDatei('gaeb-xml-beispiel.x83'), new File([''], 'leer.x83'));
     await warteAufLv();
 
     fireEvent.click(

@@ -54,7 +54,7 @@ async function ladeApp(): Promise<void> {
 
 async function oeffnePdf(name: string, id?: string): Promise<void> {
   openPdf.mockResolvedValue(scheinPdf(name, id));
-  fireEvent.change(screen.getByLabelText('PDF auswählen'), {
+  fireEvent.change(screen.getByLabelText('Dokument auswählen'), {
     target: { files: [new File(['%PDF'], name, { type: 'application/pdf' })] },
   });
   await waitFor(() => expect(screen.getAllByTitle(name).length).toBeGreaterThan(0), {

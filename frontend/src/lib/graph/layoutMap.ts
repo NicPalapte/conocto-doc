@@ -406,10 +406,7 @@ function layoutByLv(
     islands.set(key, island);
   }
 
-  const lots = new Map<
-    string,
-    { lot: LVNode | null; file: LVNode | null; blocks: Block[] }
-  >();
+  const lots = new Map<string, { lot: LVNode | null; file: LVNode | null; blocks: Block[] }>();
   for (const island of islands.values()) {
     const inner = packGroups(island.groups);
     const block: Block = { x: 0, y: 0, r: inner, groups: island.groups, hulls: [] };

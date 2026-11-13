@@ -8,6 +8,7 @@ import { KindDot } from './DocKindChip';
 import { kindLabel } from '../../lib/docs/docKindLook';
 import { useDocuments } from './DocumentsProvider';
 import { DOC_TOOL, PdfInput } from './PdfInput';
+import { DOCUMENT_ACCEPT, useOptionalLvFiles } from './LvFilesProvider';
 import { useDismiss } from '../common/useDismiss';
 import { Popover } from '../ui/Popover';
 import { docRows, groupByKind, linkedSpotsByDoc, type DocRow } from '../../lib/docs/docList';
@@ -22,6 +23,7 @@ const FOOT_BUTTON =
 
 export function DocPicker({ doc }: { doc: OpenedPdf }) {
   const { docs, activate, openFiles, busy, docSort, kindOf } = useDocuments();
+  const lvFiles = useOptionalLvFiles();
   const { annotations } = useViewer();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -128,10 +130,11 @@ export function DocPicker({ doc }: { doc: OpenedPdf }) {
           </ul>
           <div className="mt-[6px] flex gap-[6px] border-t border-line px-[4px] pt-[8px]">
             <PdfInput
-              label={busy ? 'Öffnet…' : '+ PDF hinzufügen'}
+              label={busy ? 'Öffnet…' : '+ Dokument hinzufügen'}
+              accept={lvFiles === null ? undefined : DOCUMENT_ACCEPT}
               onFiles={(files) => {
                 hide();
-                void openFiles(files);
+                void (lvFiles === null ? openFiles(files) : lvFiles.addFiles(files));
               }}
               className={`${FOOT_BUTTON} border border-dashed border-line2 bg-surface text-dim hover:text-ink`}
             />

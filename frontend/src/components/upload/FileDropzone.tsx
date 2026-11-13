@@ -21,16 +21,21 @@ import {
   persistIdOf,
   readLastLv,
   readLastLvMeta,
-  saveLastLv,
+  storedSources,
   touchLastLv,
   type LastLvInfo,
 } from '../../lib/persist/lastLv';
 import {
-  loadLvFromBytes,
+  loadLvsFromBytes,
   LVLoadError,
   MAX_FILE_BYTES,
   readLvFile,
+  type LoadedLvs,
+  type LvSource,
 } from '../../lib/pipeline/loadLv';
+import { isPdfFile } from '../../lib/docs/pdf';
+import { saveProject } from '../../lib/persist/project';
+import { MANY_FILES, MANY_POSITIONS } from '../docs/LvFilesProvider';
 import { indexNodes } from '../../lib/tree/buildTree';
 import { UNEXPECTED_FAILURE } from '../../lib/pipeline/messages';
 import { countEvent } from '../../lib/usage/count';
@@ -47,12 +52,15 @@ interface Geladen {
   lv: LoadedLV;
   annotations?: Annotations;
   persistId?: string | null;
+  /** Bytes der LVs, damit in der Sitzung weitere dazukommen können (Entscheidung 0110). */
+  sources?: readonly LvSource[];
 }
 
 // Der Dateidialog unterscheidet Groß- und Kleinschreibung der Endung je nach System.
-const ACCEPT = GAEB_ENDUNGEN.flatMap((endung) => [`.${endung}`, `.${endung.toUpperCase()}`]).join(
-  ',',
-);
+// PDFs dürfen mit (Entscheidung 0110): sie öffnen neben dem LV im Bereich „Dokument“.
+const ACCEPT = [...GAEB_ENDUNGEN, 'pdf']
+  .flatMap((endung) => [`.${endung}`, `.${endung.toUpperCase()}`])
+  .join(',');
 const MAX_MB = MAX_FILE_BYTES / (1024 * 1024);
 const DATEI_BLEIBT =
   'Kein Server, kein Upload, kein Konto. Die zuletzt geöffnete Datei bleibt in diesem ' +
@@ -92,8 +100,10 @@ export function FileDropzone() {
       dispatch({ type: 'loading' });
       const notices = [...vorab];
       try {
-        const { lv, annotations, persistId } = await load((message) => notices.push(message));
-        dispatch({ type: 'loaded', lv, notices, annotations, persistId });
+        const { lv, annotations, persistId, sources } = await load((message) =>
+          notices.push(message),
+        );
+        dispatch({ type: 'loaded', lv, notices, annotations, persistId, sources });
         return lv;
       } catch (cause) {
         countEvent('laden-fehlgeschlagen');
@@ -121,9 +131,9 @@ export function FileDropzone() {
   const runDemo = useCallback(
     (demo: DemoProjekt): void => {
       void run(async (onNotice) => {
-        const { lv, annotations, docs } = await loadDemoLv(demo, { onNotice });
+        const { lv, annotations, docs, bytes } = await loadDemoLv(demo, { onNotice });
         handOverDocs(lv, docs);
-        return { lv, annotations };
+        return { lv, annotations, sources: [{ key: 'LV1', fileName: lv.fileName, bytes }] };
       }).then((lv) => {
         if (lv !== null) countEvent('demo-geoeffnet');
       });
@@ -141,33 +151,54 @@ export function FileDropzone() {
 
   const handleFiles = useCallback(
     async (files: readonly File[]): Promise<void> => {
-      const file = files[0];
-      if (file === undefined) return;
-      // Mehr als eine Datei: die erste wird gelesen, und es wird gesagt (Issue #94).
-      // Ein Versionsvergleich oder Merge ist laut docs/scope.md bewusst draußen.
-      const vorab =
-        files.length > 1
-          ? [
-              `Es wurden ${files.length} Dateien abgelegt. Gelesen wird nur „${file.name}". ` +
-                'Es wird immer nur eine Datei gelesen.',
-            ]
-          : [];
+      // Gemischt ablegen (Entscheidung 0110): GAEB-Dateien werden LVs, PDFs öffnen danach
+      // im Bereich „Dokument“. Die Art erkennt die App an der Endung.
+      const pdfs = files.filter(isPdfFile);
+      const gaeb = files.filter((file) => !isPdfFile(file));
+      if (gaeb.length === 0) {
+        if (pdfs.length > 0) {
+          dispatch({
+            type: 'error',
+            message: 'Bitte mindestens eine GAEB-Datei mit auswählen. PDFs kommen zum LV dazu.',
+          });
+        }
+        return;
+      }
       // Die Bytes einmal lesen und für Laden und Speichern teilen: eine Datei bis
       // 50 MB nicht zweimal im Speicher, und kein zweites Lesen, das scheitern kann.
-      let bytes: ArrayBuffer | null = null;
+      // In einem Behälter: TypeScript sieht die Zuweisung im Ladeweg sonst nicht.
+      const halter: { geladen: LoadedLvs | null } = { geladen: null };
       const lv = await run(async (onNotice) => {
-        bytes = await readLvFile(file);
-        return { lv: await loadLvFromBytes(bytes, file.name, { onNotice }) };
-      }, vorab);
+        const sources: LvSource[] = [];
+        let ersterFehler: unknown = null;
+        for (const [i, file] of gaeb.entries()) {
+          try {
+            sources.push({ key: `LV${i + 1}`, fileName: file.name, bytes: await readLvFile(file) });
+          } catch (fehler) {
+            // Eine unlesbare Datei bricht die anderen nicht ab (Entscheidung 0110).
+            ersterFehler ??= fehler;
+            if (gaeb.length > 1 && fehler instanceof LVLoadError) onNotice(fehler.message);
+          }
+        }
+        if (sources.length === 0) throw ersterFehler;
+        const geladen = await loadLvsFromBytes(sources, { onNotice });
+        halter.geladen = geladen;
+        meldeLadeHinweise(geladen, onNotice);
+        handOverDocs(geladen.lv, pdfs);
+        return { lv: geladen.lv, sources: geladen.sources };
+      });
       // Erst nach erfolgreichem Laden merken: eine kaputte Datei soll nicht die
       // letzte gute ersetzen. Demo-LVs werden nie gespeichert.
-      if (lv === null || bytes === null) return;
+      const ergebnis = halter.geladen;
+      if (lv === null || ergebnis === null) return;
       countEvent('datei-geoeffnet');
       const persistId = newPersistId();
       // Die Kennung erst nach dem Speichern setzen: scheitert es (volle oder
       // gesperrte IndexedDB), bleiben Notizen sichtbar in der Sitzung. Was schon
       // während des Speicherns entstand, schreibt useSaveAnnotations danach.
-      if (await merke(lv, bytes, persistId)) dispatch({ type: 'persisted', lv, persistId });
+      if (await saveProject(lv, ergebnis.sources, persistId, false)) {
+        dispatch({ type: 'persisted', lv, persistId });
+      }
     },
     [run, dispatch],
   );
@@ -198,15 +229,16 @@ export function FileDropzone() {
             'Die zuletzt geöffnete Datei ist in diesem Browser nicht mehr gespeichert.',
           );
         }
-        const lv = await loadLvFromBytes(gespeichert.bytes, gespeichert.meta.fileName, {
-          onNotice,
-        });
+        const geladen = await loadLvsFromBytes(storedSources(gespeichert), { onNotice });
+        meldeLadeHinweise(geladen, onNotice);
+        const { lv } = geladen;
         // Gespeichert unter dem Positions-Hash, in der Sitzung unter der Knoten-ID.
         const keys = storageKeys(indexNodes(lv.tree).values());
         return {
           lv,
           annotations: rekey(gespeichert.annotations, keys.toNode),
           persistId: persistIdOf(gespeichert.meta),
+          sources: geladen.sources,
         };
       });
       // Zeitpunkt auffrischen, damit „gestern 16:42" das letzte Öffnen meint.
@@ -243,7 +275,7 @@ export function FileDropzone() {
       const gespeichert = await readLastLv();
       if (gespeichert === null) throw new Error('Keine gespeicherte Datei');
       // OZ und Kurztext stehen nur in der Datei selbst — also einmal einlesen.
-      const lv = await loadLvFromBytes(gespeichert.bytes, gespeichert.meta.fileName);
+      const { lv } = await loadLvsFromBytes(storedSources(gespeichert));
       const knoten = [...indexNodes(lv.tree).values()];
       const annotations = rekey(gespeichert.annotations, storageKeys(knoten).toNode);
       downloadText(
@@ -326,11 +358,12 @@ export function FileDropzone() {
               >
                 {loading ? 'Wird gelesen…' : 'Datei auswählen'}
               </button>
-              <span className="start-meta">x81 – x86 · xml · bis {MAX_MB} MB</span>
+              <span className="start-meta">x81 – x86 · xml · auch mehrere, gern mit PDF · bis {MAX_MB} MB</span>
               <input
                 ref={inputRef}
                 type="file"
                 accept={ACCEPT}
+                multiple
                 className="hidden"
                 aria-label="GAEB-Datei auswählen"
                 onClick={(event) => event.stopPropagation()}
@@ -351,7 +384,7 @@ export function FileDropzone() {
                 }}
                 onForget={vergiss}
                 onSaveNotes={sichereNotizen}
-                neueDatei={wartend?.[0]?.name ?? null}
+                neueDatei={wartend === null ? null : dateiNamen(wartend)}
                 onReplace={() => {
                   const dateien = wartend;
                   setWartend(null);
@@ -415,12 +448,19 @@ export function FileDropzone() {
   );
 }
 
-/** Speichert das geladene LV als „letzte Datei"; Fehler beim Speichern bleiben still. */
-async function merke(lv: LoadedLV, bytes: ArrayBuffer, id: string): Promise<boolean> {
-  return saveLastLv(
-    { fileName: lv.fileName, positionCount: lv.summary.positionCount, savedAt: Date.now(), id },
-    bytes,
-  );
+/** Unlesbare und doppelte Dateien beim Laden mehrerer LVs als Hinweis (Entscheidung 0110). */
+function meldeLadeHinweise(geladen: LoadedLvs, onNotice: (message: string) => void): void {
+  for (const { fileName, message } of geladen.failed) {
+    onNotice(message.startsWith(fileName) ? message : `${fileName}: ${message}`);
+  }
+  for (const fileName of geladen.duplicates) onNotice(`${fileName} ist doppelt und fehlt daher.`);
+  const { files, summary } = geladen.lv;
+  if (files.length > 1 && (files.length >= MANY_FILES || summary.positionCount >= MANY_POSITIONS)) {
+    onNotice(
+      `${files.length} LVs mit zusammen ${summary.positionCount.toLocaleString('de-DE')} ` +
+        'Positionen sind offen. Die App kann dabei langsamer werden.',
+    );
+  }
 }
 
 interface LetzteDateiProps {
@@ -435,6 +475,21 @@ interface LetzteDateiProps {
   onReplace: () => void;
   /** Frage „Ersetzen?" verwerfen; die gespeicherte Datei bleibt. */
   onKeepOld: () => void;
+}
+
+/** „Rohbau.x83" oder „Rohbau.x83 + 2 weitere" (Entscheidung 0110). */
+function mitWeiteren(erste: string, anzahl: number): string {
+  return anzahl > 1 ? `${erste} + ${anzahl - 1} weitere` : erste;
+}
+
+function dateiNamen(dateien: readonly File[]): string {
+  const gaeb = dateien.filter((datei) => !isPdfFile(datei));
+  return mitWeiteren(gaeb[0]?.name ?? dateien[0]?.name ?? '', gaeb.length);
+}
+
+/** Name des gespeicherten Projekts für die Startseite. */
+function projektName(meta: LastLvInfo): string {
+  return mitWeiteren(meta.fileName, meta.files?.length ?? 1);
 }
 
 /** „⚑ 4 mit Marker · ✎ 7 Kommentare" — leer ohne Notizen. */
@@ -478,7 +533,7 @@ function LetzteDatei({
       >
         <span className="start-recent-q">
           <b>
-            {neueDatei} ersetzt {meta.fileName}
+            {neueDatei} ersetzt {projektName(meta)}
           </b>
           <br />
           {notizen} gehen mit.
@@ -488,7 +543,7 @@ function LetzteDatei({
             Ersetzen
           </button>
           <button type="button" className="start-btn" onClick={onOpen}>
-            ↺ {meta.fileName} öffnen
+            ↺ {projektName(meta)} öffnen
           </button>
           <button type="button" className="start-btn" onClick={onKeepOld}>
             Abbrechen
@@ -578,8 +633,8 @@ function LetzteDatei({
         ↺
       </span>
       <span className="start-recent-txt">
-        <span className="start-recent-name" title={meta.fileName}>
-          {meta.fileName}
+        <span className="start-recent-name" title={projektName(meta)}>
+          {projektName(meta)}
         </span>
         <span className="start-recent-meta">
           <span>{formatPositions(meta.positionCount)}</span>
@@ -598,7 +653,7 @@ function LetzteDatei({
       <button
         type="button"
         className="start-btn primary"
-        aria-label={`Letzte Datei öffnen: ${meta.fileName}`}
+        aria-label={`Letzte Datei öffnen: ${projektName(meta)}`}
         onClick={(event) => {
           event.stopPropagation();
           onOpen();

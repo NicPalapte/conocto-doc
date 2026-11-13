@@ -17,6 +17,7 @@ import { PrintView } from '../components/print/PrintView';
 import { Workspace } from '../components/shell/Workspace';
 import { WorkspaceProvider } from '../components/shell/WorkspaceProvider';
 import { DocumentsProvider } from '../components/docs/DocumentsProvider';
+import { LvFilesProvider } from '../components/docs/LvFilesProvider';
 import { PdfDrop } from '../components/docs/PdfDrop';
 import { FileDropzone } from '../components/upload/FileDropzone';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
@@ -72,50 +73,52 @@ export function ViewerPage() {
       <PrintView />
       <WorkspaceProvider>
         <DocumentsProvider>
-          <SearchNavProvider>
-            <PositionMenuProvider>
-              {/* Am LV, nicht am Baum: Der Baum kann einen Moment später stehen. */}
-              {lv !== null && <PdfDrop />}
-              <div className="nur-bildschirm flex h-full flex-col bg-paper">
-                {/* Über der Arbeitsfläche: die Listen der Filterleiste liegen über Fenstern. */}
-                <header className="relative z-[20]">
-                  <TopBar />
-                  <FilterBar />
-                  <NoticeBar />
-                </header>
+          <LvFilesProvider>
+            <SearchNavProvider>
+              <PositionMenuProvider>
+                {/* Am LV, nicht am Baum: Der Baum kann einen Moment später stehen. */}
+                {lv !== null && <PdfDrop />}
+                <div className="nur-bildschirm flex h-full flex-col bg-paper">
+                  {/* Über der Arbeitsfläche: die Listen der Filterleiste liegen über Fenstern. */}
+                  <header className="relative z-[20]">
+                    <TopBar />
+                    <FilterBar />
+                    <NoticeBar />
+                  </header>
 
-                {/*
+                  {/*
           Zweites, engeres Netz (Issue #73): stürzt eine Ansicht ab, bleiben
           Kopfleiste, Filter und die übrigen Ansichten bedienbar. Der `key`
           sorgt dafür, dass ein Ansichtswechsel mit einem frischen Netz
           beginnt — sonst bliebe die Fehlerseite der Matrix im Graphen stehen.
         */}
-                <ErrorBoundary
-                  key={tree === null ? 'leer' : viewMode}
-                  bereich={tree === null ? 'start' : viewMode}
-                  dateiGeladen={tree !== null}
-                >
-                  {tree === null && (
-                    <main
-                      aria-label="LV-Ansicht"
-                      className="relative flex-1 overflow-hidden bg-paper"
-                    >
-                      <FileDropzone />
-                    </main>
-                  )}
+                  <ErrorBoundary
+                    key={tree === null ? 'leer' : viewMode}
+                    bereich={tree === null ? 'start' : viewMode}
+                    dateiGeladen={tree !== null}
+                  >
+                    {tree === null && (
+                      <main
+                        aria-label="LV-Ansicht"
+                        className="relative flex-1 overflow-hidden bg-paper"
+                      >
+                        <FileDropzone />
+                      </main>
+                    )}
 
-                  {tree !== null && viewMode === 'graph' && (
-                    <main
-                      aria-label="Bubble-Graph"
-                      className="relative flex-1 overflow-hidden bg-paper"
-                    >
-                      <Workspace root={tree} />
-                    </main>
-                  )}
-                </ErrorBoundary>
-              </div>
-            </PositionMenuProvider>
-          </SearchNavProvider>
+                    {tree !== null && viewMode === 'graph' && (
+                      <main
+                        aria-label="Bubble-Graph"
+                        className="relative flex-1 overflow-hidden bg-paper"
+                      >
+                        <Workspace root={tree} />
+                      </main>
+                    )}
+                  </ErrorBoundary>
+                </div>
+              </PositionMenuProvider>
+            </SearchNavProvider>
+          </LvFilesProvider>
         </DocumentsProvider>
       </WorkspaceProvider>
     </ViewTiming>

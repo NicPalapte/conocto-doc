@@ -62,8 +62,8 @@ describe('PDF hinzufügen', () => {
     expect(dokumentBereich()).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Über diese App' }));
-    const zeile = screen.getByRole('button', { name: 'PDF hinzufügen…' });
-    const auswahl = screen.getByLabelText<HTMLInputElement>('PDF auswählen');
+    const zeile = screen.getByRole('button', { name: 'Dokument hinzufügen…' });
+    const auswahl = screen.getByLabelText<HTMLInputElement>('Dokument auswählen');
     const klick = vi.spyOn(auswahl, 'click');
     fireEvent.click(zeile);
     expect(klick).toHaveBeenCalled();
@@ -99,7 +99,7 @@ describe('PDF hinzufügen', () => {
       },
     });
     await ladeApp();
-    fireEvent.change(screen.getByLabelText('PDF auswählen'), {
+    fireEvent.change(screen.getByLabelText('Dokument auswählen'), {
       target: { files: [pdf('kaputt.pdf'), pdf('gut.pdf')] },
     });
     await waitFor(() => expect(openPdf).toHaveBeenCalledTimes(2));

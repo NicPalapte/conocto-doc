@@ -10,6 +10,7 @@
 // öffnet es. Das Menü hängt am Dokument des Klicks — die abgekoppelte Tabelle
 // (Entscheidung 0039) bekommt es in ihrem eigenen Fenster.
 
+import { fileIdOfPosition } from './useShareLink';
 import {
   useCallback,
   useEffect,
@@ -247,7 +248,11 @@ function Menu({ target, onClose }: { target: MenuTarget; onClose: () => void }) 
           type="button"
           role="menuitem"
           onClick={run(() => {
-            const link = positionLink(target.doc, position.hashes.id, lv?.fileId ?? null);
+            const link = positionLink(
+              target.doc,
+              position.hashes.id,
+              lv === null ? null : fileIdOfPosition(lv, position.lv),
+            );
             const failed = (): void =>
               dispatch({ type: 'notice', message: 'Link konnte nicht kopiert werden.' });
             // Ohne sicheren Kontext fehlt die Zwischenablage; writeText kann auch sofort werfen.

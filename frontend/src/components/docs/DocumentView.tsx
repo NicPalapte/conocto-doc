@@ -25,6 +25,8 @@ import { useDocuments } from './DocumentsProvider';
 import { LinkBadge } from './LinkBadge';
 import { LinkDialog } from './LinkDialog';
 import { DOC_TOOL as TOOL, PdfInput } from './PdfInput';
+import { DOCUMENT_ACCEPT, useOptionalLvFiles } from './LvFilesProvider';
+import { LvList } from './LvList';
 import { PdfPage, type PageSize } from './PdfPage';
 import { SuggestBar } from './SuggestBar';
 import { StepNav, type StepMode } from './StepNav';
@@ -115,7 +117,10 @@ interface Picked {
 
 /** Ohne offenes Dokument: hineinziehen oder wählen; dazu, was schon verknüpft war. */
 function EmptyDocument() {
-  const { openFiles, busy, error } = useDocuments();
+  const { openFiles: openPdfs, busy, error } = useDocuments();
+  // PDF oder GAEB, auch gemischt (Entscheidung 0110); ohne Provider nur PDFs.
+  const lvFiles = useOptionalLvFiles();
+  const openFiles = lvFiles?.addFiles ?? openPdfs;
   const { annotations } = useViewer();
   const [over, setOver] = useState(false);
   const { docs, marks } = annotations.documents;
@@ -130,53 +135,59 @@ function EmptyDocument() {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-[12px] overflow-auto p-[16px]">
-      <div
-        onDragOver={(event) => {
-          event.preventDefault();
-          setOver(true);
-        }}
-        onDragLeave={() => setOver(false)}
-        onDrop={drop}
-        className={`flex min-h-[180px] flex-1 flex-col items-center justify-center gap-[10px] rounded-[var(--r-md)] border-2 border-dashed text-center ${
-          over ? 'border-accent bg-accent-soft' : 'border-line2'
-        }`}
-      >
-        <span className="font-sans text-[14px] text-ink">PDFs hierher ziehen</span>
-        <PdfInput
-          label={busy ? 'Öffnet…' : 'PDF öffnen'}
-          onFiles={(files) => void openFiles(files)}
-        />
-        <span className="font-mono text-[11px] text-mute">Bleibt in diesem Browser.</span>
-        {error !== null && (
-          <span role="alert" className="font-mono text-[12px] text-red">
-            {error}
+    <div className="flex min-h-0 flex-1 flex-col">
+      <LvList />
+      <div className="flex min-h-0 flex-1 flex-col gap-[12px] overflow-auto p-[16px]">
+        <div
+          onDragOver={(event) => {
+            event.preventDefault();
+            setOver(true);
+          }}
+          onDragLeave={() => setOver(false)}
+          onDrop={drop}
+          className={`flex min-h-[180px] flex-1 flex-col items-center justify-center gap-[10px] rounded-[var(--r-md)] border-2 border-dashed text-center ${
+            over ? 'border-accent bg-accent-soft' : 'border-line2'
+          }`}
+        >
+          <span className="font-sans text-[14px] text-ink">
+            {lvFiles === null ? 'PDFs hierher ziehen' : 'PDFs oder weitere LVs hierher ziehen'}
           </span>
+          <PdfInput
+            label={busy ? 'Öffnet…' : lvFiles === null ? 'PDF öffnen' : 'Dokument öffnen'}
+            accept={lvFiles === null ? undefined : DOCUMENT_ACCEPT}
+            onFiles={(files) => void openFiles(files)}
+          />
+          <span className="font-mono text-[11px] text-mute">Bleibt in diesem Browser.</span>
+          {error !== null && (
+            <span role="alert" className="font-mono text-[12px] text-red">
+              {error}
+            </span>
+          )}
+        </div>
+        {known.length > 0 && (
+          <ul
+            aria-label="Dokumente mit Notizen"
+            className="m-0 flex list-none flex-col gap-[6px] p-0"
+          >
+            {known.map(([id, info]) => (
+              <li
+                key={id}
+                className="flex items-center gap-[10px] rounded-[var(--r-md)] border border-line px-[12px] py-[8px]"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-sans text-[13px] font-semibold text-ink">
+                    {info.name}
+                  </span>
+                  <span className="font-mono text-[11px] text-mute">
+                    {counts.get(id)} {counts.get(id) === 1 ? 'Stelle' : 'Stellen'}
+                  </span>
+                </span>
+                <PdfInput label="Erneut öffnen" onFiles={(files) => void openFiles(files)} />
+              </li>
+            ))}
+          </ul>
         )}
       </div>
-      {known.length > 0 && (
-        <ul
-          aria-label="Dokumente mit Notizen"
-          className="m-0 flex list-none flex-col gap-[6px] p-0"
-        >
-          {known.map(([id, info]) => (
-            <li
-              key={id}
-              className="flex items-center gap-[10px] rounded-[var(--r-md)] border border-line px-[12px] py-[8px]"
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-sans text-[13px] font-semibold text-ink">
-                  {info.name}
-                </span>
-                <span className="font-mono text-[11px] text-mute">
-                  {counts.get(id)} {counts.get(id) === 1 ? 'Stelle' : 'Stellen'}
-                </span>
-              </span>
-              <PdfInput label="Erneut öffnen" onFiles={(files) => void openFiles(files)} />
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

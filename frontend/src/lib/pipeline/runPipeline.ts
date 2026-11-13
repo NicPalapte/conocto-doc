@@ -104,18 +104,16 @@ export function classifyAndBuildParts(parts: readonly PipelinePart[]): LoadedLV 
   // Beziehungen für das Vergleichsfenster (CompareWindow: ähnliche Positionen).
   const relations = measure('Beziehungen', () => buildRelations(index));
   const several = parts.length > 1;
-  const files = classified.map(
-    (part): LvFile => ({
-      key: part.key,
-      fileName: part.fileName,
-      fileId: part.fileId,
-      projectName: part.draft.projectName,
-      positionCount: several
-        ? (tree.children.find((child) => child.code === part.key)?.positionCount ?? 0)
-        : tree.positionCount,
-      nodeId: several ? fileNodeId(part.key) : tree.id,
-    }),
-  );
+  const files = classified.map((part): LvFile => ({
+    key: part.key,
+    fileName: part.fileName,
+    fileId: part.fileId,
+    projectName: part.draft.projectName,
+    positionCount: several
+      ? (tree.children.find((child) => child.code === part.key)?.positionCount ?? 0)
+      : tree.positionCount,
+    nodeId: several ? fileNodeId(part.key) : tree.id,
+  }));
   return {
     tree,
     projectName: classified[0].draft.projectName,

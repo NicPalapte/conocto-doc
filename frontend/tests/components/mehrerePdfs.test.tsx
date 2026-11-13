@@ -52,7 +52,7 @@ async function ladeApp(): Promise<void> {
 const pdf = (name: string): File => new File(['%PDF'], name, { type: 'application/pdf' });
 
 function oeffne(names: string[]): void {
-  fireEvent.change(screen.getByLabelText('PDF auswählen'), {
+  fireEvent.change(screen.getByLabelText('Dokument auswählen'), {
     target: { files: names.map(pdf) },
   });
 }
@@ -126,7 +126,7 @@ describe('Mehrere PDFs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Dokument' }));
     const bereich = await screen.findByRole('region', { name: 'Dokument — Bereich' });
 
-    fireEvent.change(within(bereich).getByLabelText('PDF öffnen'), {
+    fireEvent.change(within(bereich).getByLabelText('Dokument öffnen'), {
       target: { files: [pdf('baubeschreibung.pdf'), pdf('lageplan.pdf')] },
     });
     await waitFor(() => expect(openPdf).toHaveBeenCalledTimes(2));
