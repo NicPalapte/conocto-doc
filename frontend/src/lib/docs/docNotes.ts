@@ -18,6 +18,7 @@
 import { isDocKind, type DocKind } from '@core';
 import { isPaint, MAX_PAINT_LENGTH, type Paint } from '../paints';
 import { isLinkSource, type DocSuggestion, type LinkSource } from './docSuggest';
+import { hasMention, rekeyMentions } from '../mentions';
 
 /** Ein Begleitdokument, das in diesem LV schon einmal offen war. */
 export interface DocInfo {
@@ -43,7 +44,18 @@ export interface DocMark extends DocSpot {
   /** Herkunft je Verknüpfung aus einem Vorschlag; von Hand verknüpfte fehlen hier. */
   readonly sources?: Readonly<Record<string, LinkSource>>;
   readonly at: number;
+  /** Eigene Notizen an der Stelle, älteste zuerst (Entscheidung 0111); fehlt = keine. */
+  readonly comments?: readonly DocComment[];
 }
+
+/** Eine Notiz an einer Dokumentstelle; darin `@[id]`-Verweise (lib/mentions.ts). */
+export interface DocComment {
+  readonly at: number;
+  readonly text: string;
+}
+
+/** Längste Notiz in Zeichen — eine Notiz, kein Dokument. */
+export const MAX_DOC_COMMENT_LENGTH = 4000;
 
 /** Abgelehnter Vorschlag: diese Stelle nicht mit dieser Position (`id`). */
 export interface DocRejection extends DocSpot {
@@ -148,7 +160,10 @@ export function paintDocMark(notes: DocNotes, spot: DocSpot, paint: Paint, at: n
   return put(
     notes,
     spot,
-    withSources({ ...spotOf(spot), paint, links: known?.links ?? [], at }, known?.sources),
+    withSources(
+      { ...spotOf(spot), paint, links: known?.links ?? [], at, ...commentsOf(known) },
+      known?.sources,
+    ),
   );
 }
 
@@ -156,10 +171,19 @@ export function paintDocMark(notes: DocNotes, spot: DocSpot, paint: Paint, at: n
 export function unpaintDocMark(notes: DocNotes, spot: DocSpot): DocNotes {
   const known = markAt(notes, spot);
   if (known === null || known.paint === null) return notes;
-  return put(notes, spot, known.links.length === 0 ? null : { ...known, paint: null });
+  return put(
+    notes,
+    spot,
+    isEmptyMark({ ...known, paint: null }) ? null : { ...known, paint: null },
+  );
 }
 
-/** Herkunft nur für verknüpfte Positionen; leer fällt das Feld weg. */
+/** Ohne Farbe, Verknüpfung und Notiz bleibt von einer Stelle nichts. */
+function isEmptyMark(mark: DocMark): boolean {
+  return mark.paint === null && mark.links.length === 0 && (mark.comments ?? []).length === 0;
+}
+
+/** Herkunft nur für verknüpfte Positionen; leer fällt das Feld weg. Notizen bleiben. */
 function withSources(
   mark: DocMark,
   sources: Readonly<Record<string, LinkSource>> | undefined,
@@ -177,6 +201,7 @@ function withSources(
     paint: mark.paint,
     links: mark.links,
     at: mark.at,
+    ...((mark.comments ?? []).length === 0 ? {} : { comments: mark.comments }),
   };
   return Object.keys(own).length === 0 ? base : { ...base, sources: own };
 }
@@ -203,10 +228,59 @@ export function linkDocMark(
     notes,
     spot,
     withSources(
-      { ...spotOf(spot), paint: known?.paint ?? null, links, at: known?.at ?? at },
+      {
+        ...spotOf(spot),
+        paint: known?.paint ?? null,
+        links,
+        at: known?.at ?? at,
+        ...commentsOf(known),
+      },
       sources,
     ),
   );
+}
+
+function commentsOf(mark: DocMark | null): { comments?: readonly DocComment[] } {
+  const comments = mark?.comments ?? [];
+  return comments.length === 0 ? {} : { comments };
+}
+
+/** Hängt eine Notiz an die Stelle; legt sie ohne Farbe an, wenn es sie noch nicht gibt. */
+export function addDocComment(notes: DocNotes, spot: DocSpot, text: string, at: number): DocNotes {
+  const trimmed = text.trim();
+  if (!validSpot(spot) || trimmed === '' || trimmed.length > MAX_DOC_COMMENT_LENGTH) return notes;
+  const known = markAt(notes, spot);
+  const comments = [...(known?.comments ?? []), { at, text: trimmed }];
+  const base: DocMark = known ?? { ...spotOf(spot), paint: null, links: [], at };
+  return put(notes, spot, withSources({ ...base, comments }, base.sources));
+}
+
+/** Entfernt die Notiz an Stelle `position`; bleibt nichts, fällt die Stelle weg. */
+export function removeDocComment(notes: DocNotes, spot: DocSpot, position: number): DocNotes {
+  const known = markAt(notes, spot);
+  const comments = known?.comments ?? [];
+  if (known === null || position < 0 || position >= comments.length) return notes;
+  const next: DocMark = { ...known, comments: comments.filter((_, i) => i !== position) };
+  return put(notes, spot, isEmptyMark(next) ? null : withSources(next, known.sources));
+}
+
+/** Stellen mit eigener Notiz. */
+export function commentedMarks(notes: DocNotes): DocMark[] {
+  return notes.marks.filter((mark) => (mark.comments ?? []).length > 0);
+}
+
+/** Notizen in Dokumenten, die die Position `id` erwähnen, mit ihrer Stelle. */
+export function docMentionsOf(
+  notes: DocNotes,
+  id: string,
+): Array<{ readonly mark: DocMark; readonly comment: DocComment }> {
+  const out: Array<{ mark: DocMark; comment: DocComment }> = [];
+  for (const mark of notes.marks) {
+    for (const comment of mark.comments ?? []) {
+      if (hasMention(comment.text, id)) out.push({ mark, comment });
+    }
+  }
+  return out;
 }
 
 /** Löst die Verknüpfung mit einer Position; ohne Farbe und Verknüpfung fällt die Stelle weg. */
@@ -217,9 +291,7 @@ export function unlinkDocMark(notes: DocNotes, spot: DocSpot, id: string): DocNo
   return put(
     notes,
     spot,
-    links.length === 0 && known.paint === null
-      ? null
-      : withSources({ ...known, links }, known.sources),
+    isEmptyMark({ ...known, links }) ? null : withSources({ ...known, links }, known.sources),
   );
 }
 
@@ -326,14 +398,24 @@ function spotOf(spot: DocSpot): DocSpot {
   return { doc: spot.doc, page: spot.page, start: spot.start, text: spot.text };
 }
 
-/** Schlüssel der Verknüpfungen austauschen; Unbekannte bleiben (wie `rekey`). */
+function rekeyComments(mark: DocMark, keys: ReadonlyMap<string, string>): DocMark {
+  const comments = mark.comments ?? [];
+  if (comments.length === 0) return mark;
+  return {
+    ...mark,
+    comments: comments.map((comment) => ({ ...comment, text: rekeyMentions(comment.text, keys) })),
+  };
+}
+
+/** Schlüssel der Verknüpfungen und @-Verweise austauschen; Unbekannte bleiben (wie `rekey`). */
 export function rekeyDocNotes(notes: DocNotes, keys: ReadonlyMap<string, string>): DocNotes {
   const rejected = notes.rejected ?? [];
   if (notes.marks.length === 0 && rejected.length === 0) return notes;
   const key = (id: string): string => keys.get(id) ?? id;
   const out: DocNotes = {
     ...notes,
-    marks: notes.marks.map((mark) => {
+    marks: notes.marks.map((raw) => {
+      const mark = rekeyComments(raw, keys);
       if (mark.links.length === 0) return mark;
       const links = [...new Set(mark.links.map(key))];
       if (mark.sources === undefined) return { ...mark, links };
@@ -347,7 +429,18 @@ export function rekeyDocNotes(notes: DocNotes, keys: ReadonlyMap<string, string>
     : { ...out, rejected: rejected.map((entry) => ({ ...entry, id: key(entry.id) })) };
 }
 
-/** Stellen aus einer Notiz-Datei dazunehmen: Farbe aus `more`, Verknüpfungen vereinigt. */
+/** Notizen vereinigen, gleiche (Zeit + Text) einmal, nach Zeit; `null`: nichts Neues. */
+function mergeComments(
+  own: readonly DocComment[],
+  more: readonly DocComment[],
+): DocComment[] | null {
+  const seen = new Set(own.map((comment) => `${comment.at}\u0000${comment.text}`));
+  const added = more.filter((comment) => !seen.has(`${comment.at}\u0000${comment.text}`));
+  if (added.length === 0) return null;
+  return [...own, ...added].sort((a, b) => a.at - b.at);
+}
+
+/** Stellen aus einer Notiz-Datei dazunehmen: Farbe aus `more`, Verknüpfungen und Notizen vereinigt. */
 export function mergeDocNotes(notes: DocNotes, more: DocNotes): DocNotes {
   let out = notes;
   for (const [id, info] of more.docs) {
@@ -372,9 +465,22 @@ export function mergeDocNotes(notes: DocNotes, more: DocNotes): DocNotes {
     let known = byKey.get(key) ?? null;
     if (mark.paint !== null && known?.paint !== mark.paint) {
       known = withSources(
-        { ...spotOf(mark), paint: mark.paint, links: known?.links ?? [], at: mark.at },
+        {
+          ...spotOf(mark),
+          paint: mark.paint,
+          links: known?.links ?? [],
+          at: mark.at,
+          ...commentsOf(known),
+        },
         known?.sources,
       );
+      byKey.set(key, known);
+      changed = true;
+    }
+    const comments = mergeComments(known?.comments ?? [], mark.comments ?? []);
+    if (comments !== null) {
+      const base: DocMark = known ?? { ...spotOf(mark), paint: null, links: [], at: mark.at };
+      known = withSources({ ...base, comments }, base.sources);
       byKey.set(key, known);
       changed = true;
     }
@@ -385,7 +491,13 @@ export function mergeDocNotes(notes: DocNotes, more: DocNotes): DocNotes {
     byKey.set(
       key,
       withSources(
-        { ...spotOf(mark), paint: known?.paint ?? null, links, at: known?.at ?? mark.at },
+        {
+          ...spotOf(mark),
+          paint: known?.paint ?? null,
+          links,
+          at: known?.at ?? mark.at,
+          ...commentsOf(known),
+        },
         { ...mark.sources, ...known?.sources },
       ),
     );
@@ -428,7 +540,8 @@ export function toDocMark(value: unknown): DocMark | null {
     ? [...new Set(raw.links.filter((id): id is string => typeof id === 'string' && id !== ''))]
     : [];
   const ownPaint = isPaint(paint) && !isWholeDoc(spot) ? paint : null;
-  if (ownPaint === null && links.length === 0) return null;
+  const comments = toDocComments(raw.comments);
+  if (ownPaint === null && links.length === 0 && comments.length === 0) return null;
   const at = typeof raw.at === 'number' && Number.isFinite(raw.at) ? raw.at : 0;
   const sources: Record<string, LinkSource> = {};
   if (typeof raw.sources === 'object' && raw.sources !== null) {
@@ -436,7 +549,26 @@ export function toDocMark(value: unknown): DocMark | null {
       if (isLinkSource(source)) sources[id] = source;
     }
   }
-  return withSources({ ...spot, paint: ownPaint, links, at }, sources);
+  return withSources(
+    { ...spot, paint: ownPaint, links, at, ...(comments.length === 0 ? {} : { comments }) },
+    sources,
+  );
+}
+
+/** Notizen einer Stelle aus Speicher oder Datei; Unbrauchbares fällt weg. */
+export function toDocComments(value: unknown): DocComment[] {
+  if (!Array.isArray(value)) return [];
+  const out: DocComment[] = [];
+  for (const item of value as unknown[]) {
+    if (typeof item !== 'object' || item === null) continue;
+    const raw = item as Record<string, unknown>;
+    if (typeof raw.text !== 'string') continue;
+    const text = raw.text.trim();
+    if (text === '' || text.length > MAX_DOC_COMMENT_LENGTH) continue;
+    const at = typeof raw.at === 'number' && Number.isFinite(raw.at) ? raw.at : 0;
+    out.push({ at, text });
+  }
+  return out.sort((a, b) => a.at - b.at);
 }
 
 /** Ein abgelehnter Vorschlag aus Speicher oder Notiz-Datei; Unbrauchbares wird `null`. */
