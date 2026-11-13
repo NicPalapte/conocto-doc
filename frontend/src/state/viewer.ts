@@ -52,6 +52,8 @@ import {
   rejectSuggestion,
   showSuggestions,
   unlinkDocMark,
+  addDocComment,
+  removeDocComment,
   unpaintDocMark,
   type DocNotes,
   type DocSpot,
@@ -185,6 +187,9 @@ type LvAction =
   /** Stelle mit Positionen verknüpfen (Knoten-IDs); `source` bei übernommenem Vorschlag. */
   | { type: 'docLink'; spot: DocSpot; ids: readonly string[]; at: number; source?: LinkSource }
   | { type: 'docUnlink'; spot: DocSpot; id: string }
+  /** Notiz an einer Dokumentstelle (Entscheidung 0111); `@[id]`-Verweise mit Knoten-IDs. */
+  | { type: 'docComment'; spot: DocSpot; text: string; at: number }
+  | { type: 'docUncomment'; spot: DocSpot; position: number }
   /** Vorschlag abgelehnt: Stelle gehört nicht zu dieser Position (Entscheidung 0080). */
   | { type: 'docReject'; spot: DocSpot; id: string; at: number }
   /** Eine Art von Vorschlag im Dokument zeigen oder ausblenden, für dieses LV (0087). */
@@ -315,6 +320,8 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
     case 'docPaint':
     case 'docLink':
     case 'docUnlink':
+    case 'docComment':
+    case 'docUncomment':
     case 'docReject':
     case 'docSuggest': {
       const before = state.annotations.documents;
@@ -606,7 +613,15 @@ type DocAction = Extract<
   LvAction,
   {
     type:
-      'docRegister' | 'docKind' | 'docPaint' | 'docLink' | 'docUnlink' | 'docReject' | 'docSuggest';
+      | 'docRegister'
+      | 'docKind'
+      | 'docPaint'
+      | 'docLink'
+      | 'docUnlink'
+      | 'docComment'
+      | 'docUncomment'
+      | 'docReject'
+      | 'docSuggest';
   }
 >;
 
@@ -644,6 +659,10 @@ function docNotesReducer(notes: DocNotes, action: DocAction): DocNotes {
       return linkDocMark(notes, action.spot, action.ids, action.at, action.source);
     case 'docUnlink':
       return unlinkDocMark(notes, action.spot, action.id);
+    case 'docComment':
+      return addDocComment(notes, action.spot, action.text, action.at);
+    case 'docUncomment':
+      return removeDocComment(notes, action.spot, action.position);
     case 'docReject':
       return rejectSuggestion(notes, action.spot, action.id, action.at);
     case 'docSuggest':

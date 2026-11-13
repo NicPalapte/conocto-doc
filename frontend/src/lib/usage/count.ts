@@ -48,6 +48,8 @@ export const USAGE_EVENTS = [
   'dokument-geoeffnet',
   'dokument-anstreichung',
   'dokument-verknuepft',
+  // Notiz an einer Dokumentstelle (Entscheidung 0111): nur das Ereignis, nie Text.
+  'dokument-notiz',
   // Dokumentart von Hand (Entscheidung 0096): nur das Ereignis, nie die Art oder der Name.
   'dokument-art',
   // Pläne messen (Entscheidung 0095): nur das Ereignis, nie Werte oder Positionen.
@@ -117,6 +119,8 @@ export function usageEventOf(action: ViewerAction): UsageEvent | null {
       return action.kind === null ? null : 'dokument-art';
     case 'docLink':
       return action.ids.length === 0 ? null : 'dokument-verknuepft';
+    case 'docComment':
+      return action.text.trim() === '' ? null : 'dokument-notiz';
     case 'planScale':
       return action.scale === null ? null : 'plan-massstab';
     case 'planMeasure':
