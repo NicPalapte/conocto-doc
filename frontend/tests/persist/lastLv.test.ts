@@ -14,7 +14,9 @@ import {
   readWorkspace,
   saveAnnotations,
   saveLastLv,
+  saveLastLvFiles,
   saveLearnedTerms,
+  storedSources,
   saveWorkspace,
   touchLastLv,
 } from '../../src/lib/persist/lastLv';
@@ -247,5 +249,56 @@ describe('alter Speicher vor Entscheidung 0091', () => {
     const namen = (await indexedDB.databases()).map((db) => db.name);
     expect(namen).not.toContain('bubble');
     expect(namen).toContain('conocto');
+  });
+});
+
+describe('mehrere LVs in einem Projekt (Entscheidung 0110)', () => {
+  const files = [
+    { key: 'LV1', fileName: 'rohbau.x83', positionCount: 12 },
+    { key: 'LV2', fileName: 'ausbau.x83', positionCount: 5 },
+  ];
+  const more = [{ key: 'LV2', fileName: 'ausbau.x83', bytes: bytesOf('<ausbau/>') }];
+
+  it('merkt alle LVs und gibt sie in Ladereihenfolge zurück', async () => {
+    const id = newPersistId();
+    expect(await saveLastLv({ ...meta, id, files }, bytesOf('<rohbau/>'), more)).toBe(true);
+    const last = await readLastLv();
+    expect(last?.meta.files).toEqual(files);
+    expect(last === null ? [] : storedSources(last).map((source) => source.key)).toEqual([
+      'LV1',
+      'LV2',
+    ]);
+    expect(new TextDecoder().decode(last?.more[0]?.bytes)).toBe('<ausbau/>');
+  });
+
+  it('nimmt ein LV dazu, ohne die Notizen zu verlieren', async () => {
+    const id = newPersistId();
+    await saveLastLv({ ...meta, id }, bytesOf('<rohbau/>'));
+    await saveAnnotations(id, addComment(EMPTY_ANNOTATIONS, 'abc123', 'Notiz', 1));
+    expect(await saveLastLvFiles({ ...meta, id, files }, bytesOf('<rohbau/>'), more)).toBe(true);
+    const last = await readLastLv();
+    expect(last?.more).toHaveLength(1);
+    expect(commentsOf(last?.annotations ?? EMPTY_ANNOTATIONS, 'abc123')).toEqual(['Notiz']);
+  });
+
+  it('schreibt nicht über ein anderes Projekt', async () => {
+    await saveLastLv({ ...meta, id: 'anderes' }, bytesOf('<anderes/>'));
+    expect(await saveLastLvFiles({ ...meta, id: 'meins', files }, bytesOf('<x/>'), more)).toBe(
+      false,
+    );
+    expect((await readLastLv())?.more).toEqual([]);
+  });
+
+  it('liest Einträge mit einer Datei weiter als LV1', async () => {
+    await saveLastLv(meta, bytesOf('<rohbau/>'));
+    const last = await readLastLv();
+    expect(last === null ? [] : storedSources(last).map((source) => source.key)).toEqual(['LV1']);
+  });
+
+  it('löscht beim Löschen auch die weiteren LVs', async () => {
+    await saveLastLv({ ...meta, files }, bytesOf('<rohbau/>'), more);
+    await clearLastLv();
+    await saveLastLv(meta, bytesOf('<neu/>'));
+    expect((await readLastLv())?.more).toEqual([]);
   });
 });
