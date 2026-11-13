@@ -38,9 +38,11 @@
   Suchtreffern.
 - **Graph „nach LV“:** um jedes LV eine eigene Insel (durchgezogene Linie), darin Lose und
   Hauptabschnitte wie bisher.
-- **Bereich „Dokument“:** oben eine Zeile mit allen LVs. Antippen blendet ein LV ein oder
-  aus (das ist die Facette „LV“, also auch Tabelle und Suche). × schließt ein LV. Das letzte
-  LV bleibt, dafür gibt es „Anderes LV öffnen“. Keine Lesefassung des LV.
+- **Bereich „Dokument“:** jedes LV ist eine Karte unter der Kategorie „LV“, neben den PDFs
+  (Nico, 13.11.2026: LVs ganz normal als Dokumente). Bei Sortierung nach Art steht sie bei
+  PDFs der Art „LV“, sonst als eigene Gruppe vorn. Antippen blendet ein LV ein oder aus (das
+  ist die Facette „LV“, also auch Tabelle und Suche). Der Papierkorb schließt ein LV. Das
+  letzte LV bleibt, dafür gibt es „Anderes LV öffnen“. Keine Lesefassung, nur ein Symbol.
 - **Prüfung, Beziehungen, Betonsorten, Summen** rechnen über alle LVs zusammen. Ein LV
   dazu oder weg rechnet den Baum neu (wie beim Laden, im Worker ab 500 Positionen).
 - **Notizen:** Schlüssel bleibt der Positions-Hash. Die Hashes werden über alle LVs in

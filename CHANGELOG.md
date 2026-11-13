@@ -16,8 +16,9 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
   Datei hält die anderen nicht auf, sie steht als Hinweis oben.
 - **„Dokument hinzufügen…“** im Logo-Menü ersetzt „PDF hinzufügen…“. Derselbe Dialog
   nimmt PDFs und weitere LVs. Ablegen auf der App geht auch.
-- **Bereich „Dokument“ als Verwaltung:** Oben stehen alle LVs als „LV1“, „LV2“ …
-  Antippen blendet ein LV ein oder aus, × schließt es. „+ Hinzufügen“ nimmt PDFs und LVs.
+- **Bereich „Dokument“ als Verwaltung:** Jedes LV steht als Karte „LV1“, „LV2“ … unter der
+  Kategorie „LV“, neben den PDFs. Antippen blendet ein LV ein oder aus, der Papierkorb
+  schließt es. „+ Hinzufügen“ nimmt PDFs und LVs.
 - **Eine Insel je LV im Graphen**, darin Lose und Abschnitte wie bisher.
 - **„LV“ als Filter und als Achse der Matrix.** Positionskarte, Tabelle und Suche zeigen,
   aus welchem LV eine Position kommt.

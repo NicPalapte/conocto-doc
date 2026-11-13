@@ -7,7 +7,11 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 import { DocKindChip, KindDot } from './DocKindChip';
 import { kindLabel } from '../../lib/docs/docKindLook';
 import { useDocuments } from './DocumentsProvider';
-import { LvList } from './LvList';
+import { LvCard, useLvCards } from './LvList';
+import { DOCUMENT_ACCEPT, useOptionalLvFiles } from './LvFilesProvider';
+import { DOC_TOOL, PdfInput } from './PdfInput';
+import type { DocKind } from '@core';
+import type { LvFile } from '../../lib/pipeline/runPipeline';
 import {
   DOC_SORT_LABEL,
   docRows,
@@ -19,6 +23,15 @@ import {
 import type { OpenedPdf } from '../../lib/docs/pdf';
 import { THUMB_WIDTH, thumbnailOf } from '../../lib/docs/thumbnail';
 import { useViewer } from '../../state/viewer';
+
+/** Gruppe in der Übersicht: PDFs einer Art, dazu bei „LV“ die geladenen LVs. */
+interface ShownGroup {
+  kind: DocKind | null;
+  rows: readonly DocRow[];
+  lvs: readonly LvFile[];
+  /** Überschrift; `null` = keine (ohne Sortierung nach Art und ohne LVs). */
+  label: string | null;
+}
 
 const SORTS: readonly DocSort[] = ['art', 'geoeffnet', 'name', 'verknuepft'];
 
@@ -126,7 +139,7 @@ export function DocOverview() {
     docSort: sort,
     setDocSort: setSort,
   } = useDocuments();
-  const { annotations, index } = useViewer();
+  const { annotations, index, lv } = useViewer();
   // Ansatz ohne Plan gestartet: hier wird der Plan gewählt; danach kein Rücksprung mehr.
   useEffect(() => {
     if (planWanted) donePlanWanted();
@@ -146,11 +159,30 @@ export function DocOverview() {
     [rows, sort],
   );
   const byId = useMemo(() => new Map(docs.map((doc) => [doc.id, doc])), [docs]);
+  // LVs stehen als Karten unter der Kategorie „LV“ (Nico, 13.11.2026, Entscheidung 0110):
+  // nach Art sortiert zusammen mit PDFs dieser Art, sonst als eigene Gruppe vorn.
+  const lvFiles = useOptionalLvFiles();
+  const lvCards = useLvCards(query);
+  const shown = useMemo((): ShownGroup[] => {
+    const base: ShownGroup[] = groups.map((group) => ({
+      ...group,
+      lvs: [],
+      label: sort === 'art' ? kindLabel(group.kind) : null,
+    }));
+    if (lvCards.length === 0) return base;
+    const own = sort === 'art' ? base.find((group) => group.kind === 'lv') : undefined;
+    if (own !== undefined) {
+      own.lvs = lvCards;
+      return base;
+    }
+    const rest = base.map((group) =>
+      group.label === null && group.rows.length > 0 ? { ...group, label: 'PDF' } : group,
+    );
+    return [{ kind: 'lv', rows: [], lvs: lvCards, label: kindLabel('lv') }, ...rest];
+  }, [groups, lvCards, sort]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Verwaltung aller Dokumente (Entscheidung 0110): LVs oben, „+ Hinzufügen“ für beide. */}
-      <LvList />
       <div className="flex shrink-0 flex-wrap items-center gap-[6px] border-b border-line px-[10px] py-[6px]">
         <div
           role="group"
@@ -162,7 +194,7 @@ export function DocOverview() {
             aria-pressed="true"
             className="h-[22px] cursor-default rounded-[5px] border border-line bg-surface px-[10px] font-mono text-[11.5px] font-semibold text-ink shadow-[var(--shadow-sm)]"
           >
-            Übersicht · {docs.length}
+            Übersicht · {docs.length + (lv?.files.length ?? 0)}
           </button>
           <button
             type="button"
@@ -197,7 +229,16 @@ export function DocOverview() {
             ))}
           </select>
         </label>
-        {busy && <span className="font-mono text-[11.5px] text-mute">Öffnet…</span>}
+        {lvFiles === null ? (
+          busy && <span className="font-mono text-[11.5px] text-mute">Öffnet…</span>
+        ) : (
+          <PdfInput
+            label={busy || lvFiles.busy ? 'Öffnet…' : '+ Hinzufügen'}
+            accept={DOCUMENT_ACCEPT}
+            onFiles={(files) => void lvFiles.addFiles(files)}
+            className={`${DOC_TOOL} border-dashed border-line2 text-dim`}
+          />
+        )}
       </div>
       {ansatzOz !== null && (
         <div
@@ -224,18 +265,21 @@ export function DocOverview() {
           className="m-0 grid list-none gap-[14px] p-0"
           style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${THUMB_WIDTH}px, 1fr))` }}
         >
-          {groups.map((group) => (
+          {shown.map((group) => (
             <Fragment key={group.kind ?? 'ohne'}>
-              {sort === 'art' && (
+              {group.label !== null && (
                 <li
                   role="presentation"
                   className="col-span-full mt-[4px] flex items-center gap-[8px] font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-mute first:mt-0"
                 >
                   <KindDot kind={group.kind} />
-                  {kindLabel(group.kind)}
-                  <span className="font-normal">{group.rows.length}</span>
+                  {group.label}
+                  <span className="font-normal">{group.lvs.length + group.rows.length}</span>
                 </li>
               )}
+              {group.lvs.map((file) => (
+                <LvCard key={file.key} file={file} />
+              ))}
               {group.rows.map((row) => {
                 const doc = byId.get(row.id);
                 return doc === undefined ? null : (
@@ -245,7 +289,9 @@ export function DocOverview() {
             </Fragment>
           ))}
         </ul>
-        {rows.length === 0 && <p className="m-0 font-mono text-[12px] text-mute">Kein Treffer</p>}
+        {rows.length + lvCards.length === 0 && (
+          <p className="m-0 font-mono text-[12px] text-mute">Kein Treffer</p>
+        )}
       </div>
     </div>
   );

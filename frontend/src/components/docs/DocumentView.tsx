@@ -26,7 +26,9 @@ import { LinkBadge } from './LinkBadge';
 import { LinkDialog } from './LinkDialog';
 import { DOC_TOOL as TOOL, PdfInput } from './PdfInput';
 import { DOCUMENT_ACCEPT, useOptionalLvFiles } from './LvFilesProvider';
-import { LvList } from './LvList';
+import { LvCard, useLvCards } from './LvList';
+import { KindDot } from './DocKindChip';
+import { THUMB_WIDTH } from '../../lib/docs/thumbnail';
 import { PdfPage, type PageSize } from './PdfPage';
 import { SuggestBar } from './SuggestBar';
 import { StepNav, type StepMode } from './StepNav';
@@ -121,6 +123,7 @@ function EmptyDocument() {
   // PDF oder GAEB, auch gemischt (Entscheidung 0110); ohne Provider nur PDFs.
   const lvFiles = useOptionalLvFiles();
   const openFiles = lvFiles?.addFiles ?? openPdfs;
+  const lvCards = useLvCards('');
   const { annotations } = useViewer();
   const [over, setOver] = useState(false);
   const { docs, marks } = annotations.documents;
@@ -136,7 +139,26 @@ function EmptyDocument() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <LvList />
+      {lvCards.length > 0 && (
+        // Die LVs als Dokumente unter ihrer Kategorie (Entscheidung 0110), auch ohne PDF.
+        <ul
+          aria-label="Offene Dokumente"
+          className="m-0 grid shrink-0 list-none gap-[14px] border-b border-line bg-panel p-[16px]"
+          style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${THUMB_WIDTH}px, 1fr))` }}
+        >
+          <li
+            role="presentation"
+            className="col-span-full flex items-center gap-[8px] font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-mute"
+          >
+            <KindDot kind="lv" />
+            LV
+            <span className="font-normal">{lvCards.length}</span>
+          </li>
+          {lvCards.map((file) => (
+            <LvCard key={file.key} file={file} />
+          ))}
+        </ul>
+      )}
       <div className="flex min-h-0 flex-1 flex-col gap-[12px] overflow-auto p-[16px]">
         <div
           onDragOver={(event) => {

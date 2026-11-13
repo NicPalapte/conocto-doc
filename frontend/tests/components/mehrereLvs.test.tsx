@@ -42,7 +42,8 @@ describe('Mehrere LVs', () => {
   it('blendet ein LV im Bereich „Dokument“ aus und wieder ein', async () => {
     await ladeApp(fixture('gaeb-xml-beispiel.x83'), fixture('sample.X83'));
     const bereich = await dokumentBereich();
-    const liste = within(bereich).getByRole('region', { name: 'Leistungsverzeichnisse' });
+    // Die LVs stehen als Dokumente unter der Kategorie „LV“ (Nico, 13.11.2026).
+    const liste = within(bereich).getByRole('list', { name: 'Offene Dokumente' });
     const lv2 = within(liste).getByRole('button', { name: /^LV2(?! schließen)/ });
     expect(lv2).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(lv2);
