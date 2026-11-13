@@ -2,7 +2,7 @@
 // (am Tablet langes Drücken) auf die markierte Stelle → „Notiz…“ oder über die Marke am
 // Rand. Oben die Stelle, darunter die Notizen, unten das Feld mit @-Verweisen.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { MentionInput } from '../common/MentionInput';
 import { MentionText } from '../common/MentionText';
@@ -13,6 +13,8 @@ import { useViewer, useViewerDispatch } from '../../state/viewer';
 
 const WIDTH = 340;
 const HEIGHT = 440;
+/** Abstand nach oben, wenn das Fenster über der Stelle steht (Zeilenhöhe + Luft). */
+const ABOVE_GAP = 36;
 
 export function DocNoteDialog({
   spot,
@@ -53,8 +55,21 @@ export function DocNoteDialog({
     setDraft('');
   };
 
+  // Unter die Stelle; passt es dort nicht, darüber — so bleibt die Stelle sichtbar.
+  const [height, setHeight] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el === null) return;
+    setHeight(el.offsetHeight);
+    const view = host as Window & typeof globalThis;
+    if (typeof view.ResizeObserver === 'undefined') return;
+    const observer = new view.ResizeObserver(() => setHeight(el.offsetHeight));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [host]);
   const x = Math.max(8, Math.min(left, host.innerWidth - WIDTH - 8));
-  const y = Math.max(8, Math.min(top, host.innerHeight - HEIGHT - 8));
+  const below = top + height <= host.innerHeight - 8;
+  const y = below ? top : Math.max(8, top - height - ABOVE_GAP);
 
   return createPortal(
     <div

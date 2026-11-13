@@ -9,6 +9,17 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.64.0 — 14.11.2026 · Notizen in PDFs und @-Verweise
+
+- **Notizen im PDF:** Text markieren, Rechtsklick (am Tablet: markieren und kurz warten)
+  → „Notiz…“. Am Seitenrand zeigt „✎“ mit Zahl, wo Notizen stehen; ein Tipp öffnet sie.
+- **@ für Positionen:** In Notizen und Kommentaren „@“ tippen (oder den Knopf „@“) und
+  eine Position nach OZ oder Kurztext wählen, aus allen geladenen LVs. Der Verweis ist
+  antippbar und springt zur Position.
+- **Positionskarte:** Im Verlauf stehen jetzt auch Notizen, die die Position erwähnen,
+  mit ihrer Quelle (PDF und Seite oder andere Position). Ein Tipp öffnet die Quelle.
+- Notizen und Verweise bleiben im Browser und gehen in die Arbeitsstand-Datei mit.
+
 ## 0.63.0 — 13.11.2026 · Mehrere LVs
 
 - **Mehrere LVs auf einmal:** Auf der Startseite gehen mehrere GAEB-Dateien zugleich, gern

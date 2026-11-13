@@ -6,7 +6,7 @@
 // Die Liste steht unter dem Feld im Fluss, nicht schwebend: so schneidet kein Bereich mit
 // Bildlauf sie ab, und die Bildschirmtastatur am Tablet verdeckt sie nicht.
 
-import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import {
   canMention,
   insertMention,
@@ -49,6 +49,16 @@ export function MentionInput({
     setQueryState(next);
   };
   const [active, setActive] = useState(0);
+  // Cursor nach dem Einsetzen: gleich nach dem Neuzeichnen setzen, vor dem nächsten Tastendruck.
+  const cursorAfter = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const el = area.current;
+    const at = cursorAfter.current;
+    if (el === null || at === null) return;
+    cursorAfter.current = null;
+    el.focus();
+    el.setSelectionRange(at, at);
+  }, [value]);
 
   const candidates = useMemo<MentionCandidate[]>(() => {
     const out: MentionCandidate[] = [];
@@ -81,13 +91,9 @@ export function MentionInput({
     if (open === null || el === null) return;
     const cursor = open.start + 1 + open.query.length;
     const next = insertMention(value, cursor, open, candidate.id);
+    cursorAfter.current = next.cursor;
     onChange(next.text);
     setQuery(null);
-    // Nach dem Neuzeichnen steht der Text; erst dann den Cursor setzen.
-    requestAnimationFrame(() => {
-      el.focus();
-      el.setSelectionRange(next.cursor, next.cursor);
-    });
   };
 
   const startMention = (): void => {
@@ -98,13 +104,10 @@ export function MentionInput({
     const lead = before === '' || /\s$/.test(before) ? '@' : ' @';
     const text = before + lead + value.slice(el.selectionEnd);
     const cursor = at + lead.length;
+    cursorAfter.current = cursor;
     onChange(text);
     setQuery({ start: cursor - 1, query: '' });
     setActive(0);
-    requestAnimationFrame(() => {
-      el.focus();
-      el.setSelectionRange(cursor, cursor);
-    });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): void => {

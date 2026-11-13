@@ -50,7 +50,7 @@ _Linting/Formatierung laufen automatisch via Claude Code Hook nach jedem Edit/Wr
   (Original-Bytes + Angaben der zuletzt geöffneten eigenen Datei(en), weitere LVs unter
   `weitereLvs`, Entscheidung 0110, + Marker, Kommentar-Verlauf
   und Textmarkierungen je Positions-Hash `hashes.id`, `lib/annotations.ts`, Entscheidung 0057,
-  dazu Stellen in Begleit-PDFs und ausgeblendete Vorschlagsarten `lib/docs/docNotes.ts`,
+  dazu Stellen in Begleit-PDFs samt Notizen (`comments`, 0111) und ausgeblendete Vorschlagsarten `lib/docs/docNotes.ts`,
   0072, 0087),
   löschbar auf der Startseite. Dazu, unabhängig von der Datei, der Altbestand gelernter
   Begriffe (`readLearnedTerms`, beim Start einmal zu eigenen Regeln, 0088), die eigenen Namen
@@ -157,7 +157,7 @@ Vergleich (max. 4 Positionen, `docs/decisions/0037-vergleichsfenster.md`) darüb
 gemerkt: `docs/decisions/0073-splitscreen-frei-teilen-und-merken.md`) · Beziehungen zwischen Positionen nur als
 ähnliche Positionen im Vergleich, keine wertende Prüfregel (`docs/decisions/0049`) · eigene Marker (Fortschritt Offen/In Bearbeitung/Fertig + Wichtig, `docs/decisions/0062`) + Kommentar-Verlauf je Position zur letzten
 Datei (`docs/decisions/0047-kommentare-und-markierungen.md`, `docs/decisions/0053`) ·
-eigene Textmarkierungen im Langtext (6 feste Farben mit eigenen Namen, `docs/decisions/0063`) ·
+Notizen an PDF-Stellen über Rechtsklick „Notiz…“ und @-Verweise auf Positionen in Notizen und Kommentaren, im Text als `@[Knoten-ID]`, gespeichert als `@[hash]`, nur Hinweis, keine Verknüpfung, Anzeige im Verlauf der Positionskarte (`lib/mentions.ts`, `docs/decisions/0111`) · eigene Textmarkierungen im Langtext (6 feste Farben mit eigenen Namen, `docs/decisions/0063`) ·
 gelernte Hervorhebungen im Langtext über Rechtsklick „Begriff lernen…“, je Begriff eine eigene
 Regel (0053, 0088) · Regeleditor in Logo-Menü → „Einstellungen“ (Overlay, für alle, kein
 Passwort, kein Bereich im Splitscreen, `components/settings/`, `docs/decisions/0109`;
@@ -194,7 +194,7 @@ Befehlspalette (`docs/decisions/0038-keine-befehlspalette.md`).
 Session hinaus (außer 0046/0047/0053/0073), Auth/SSO (kein Passwort, auch nicht als
 Sichtschutz, 0109), **Versionsvergleich und x83+x84-Merge** (perspektivisch gewollt, jetzt
 draußen; mehrere LVs nebeneinander erlaubt, 0110; Begleit-PDF erlaubt, 0072), Aufgaben, Notizen außer
-Markierung/Kommentar je Position, Vergabepakete, NU-Anfragen, Bieterfragen **verwalten**, Zuständigkeit/Zuweisung,
+Markierung/Kommentar je Position und Notiz an PDF-Stelle (0111), Vergabepakete, NU-Anfragen, Bieterfragen **verwalten**, Zuständigkeit/Zuweisung,
 Status-**Änderung**, EP-Kalkulation, Excel-/Manuell-Import, Multi-Tenant, GAEB-Export,
 LLM-Klassifizierung. Details → @docs/scope.md #out-of-scope
 

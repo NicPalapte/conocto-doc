@@ -115,8 +115,9 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0106 | [Beton im Dokument: Vorschläge über Betonsorten](0106-beton-im-dokument.md)                                    | akzeptiert                         | 2026-11-10 |
 | 0107 | [Graph und Tabelle am selben Platz wechseln (Taste T)](0107-graph-tabelle-am-selben-platz.md)                  | akzeptiert                         | 2026-11-10 |
 | 0108 | [Vorschläge nach dem Praxistest](0108-vorschlaege-nach-praxistest.md)                                          | akzeptiert                         | 2026-11-12 |
-| 0109 | [Einstellungen statt Admin-Werkzeuge](0109-einstellungen-statt-admin.md)                                      | akzeptiert                         | 2026-11-12 |
-| 0110 | [Mehrere LVs gleichzeitig laden](0110-mehrere-lvs.md)                                                         | akzeptiert                         | 2026-11-13 |
+| 0109 | [Einstellungen statt Admin-Werkzeuge](0109-einstellungen-statt-admin.md)                                       | akzeptiert                         | 2026-11-12 |
+| 0110 | [Mehrere LVs gleichzeitig laden](0110-mehrere-lvs.md)                                                          | akzeptiert                         | 2026-11-13 |
+| 0111 | [Notizen an PDF-Stellen und @-Verweise](0111-notizen-in-pdfs-und-verweise.md)                                  | akzeptiert                         | 2026-11-14 |
 
 ## Wann schreibe ich eine neue Datei?
 
