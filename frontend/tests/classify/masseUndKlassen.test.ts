@@ -43,6 +43,18 @@ describe('Betonklassen', () => {
     expect(istFestigkeitsklasse('C30/35')).toBe(false);
   });
 
+  it('hochfeste Betone ab C55/67 und LC55/60, auch mit Leerzeichen', () => {
+    const hochfest = ['C55/67', 'C60/75', 'C70/85', 'C80/95', 'C90/105', 'C100/115'];
+    for (const klasse of [...hochfest, 'LC55/60', 'LC60/66', 'LC70/77', 'LC80/88']) {
+      const text = klasse.toLowerCase();
+      expect(extractBetonklassen(`beton ${text}, xc1`).beton).toBe(klasse);
+      expect(extractBetonklassen(`beton ${text.replace(/^(l?c)/, '$1 ')}`).beton).toBe(klasse);
+    }
+    // Keine Regelklassen in Deutschland (Nico, 13.11.2026).
+    expect(istFestigkeitsklasse('C28/35')).toBe(false);
+    expect(istFestigkeitsklasse('C32/40')).toBe(false);
+  });
+
   it('Asphaltbinder „C100/0“ ist keine Betonsorte', () => {
     expect(extractBetonklassen('asphaltbinderschicht ac 16 b s, c100/0').beton).toBeNull();
     expect(extractBetonklassen('beton c100/0 und c25/30, xc2').beton).toBe('C25/30');
