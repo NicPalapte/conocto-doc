@@ -3,15 +3,13 @@
 // nicht, `instanceof` funktioniert jenseits der Worker-Grenze also nicht.
 
 import { GAEBParseError, GAEBValidationError, GAEBVersionError } from '@core';
-import type { LVDraft } from '@core';
-import type { LoadedLV } from './runPipeline';
+import type { LoadedLV, PipelinePart } from './runPipeline';
 
 export type PipelineErrorCode = 'parse' | 'validation' | 'version' | 'unknown';
 
 export interface PipelineRequest {
-  draft: LVDraft;
-  fileName: string;
-  fileId: string | null;
+  /** Ein oder mehrere LVs (Entscheidung 0110). */
+  parts: PipelinePart[];
 }
 
 export type PipelineResponse = { ok: true; result: LoadedLV } | ({ ok: false } & PipelineFailure);

@@ -8,7 +8,14 @@ import type { LVNode } from '../../types/lvNode';
 
 export function NodeDetails({ node }: { node: LVNode }) {
   const { lv } = useViewer();
-  const kind = node.kind === 'lot' ? 'Los' : node.kind === 'project' ? 'Projekt' : 'Abschnitt';
+  const kind =
+    node.kind === 'lot'
+      ? 'Los'
+      : node.kind === 'project'
+        ? 'Projekt'
+        : node.kind === 'file'
+          ? 'LV'
+          : 'Abschnitt';
   const children = node.children.filter((child) => child.kind !== 'position');
   const positions = node.children.filter((child) => child.kind === 'position');
   const priced = (lv?.tree.totalPrice ?? 0) > 0;

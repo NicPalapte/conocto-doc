@@ -214,7 +214,7 @@ export function SearchNavProvider({ children }: { children: ReactNode }) {
           const position = index.positions[slot];
           return {
             at: from + k,
-            lead: position.oz,
+            lead: position.lv === undefined ? position.oz : `${position.lv} · ${position.oz}`,
             text:
               searchSnippet(position.shortText, filter.search) ??
               searchSnippet(position.longText, filter.search) ??

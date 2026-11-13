@@ -1,6 +1,7 @@
 // Zuletzt geöffnete GAEB-Datei im Browser behalten (Entscheidung 0046).
 //
-// Genau ein Projekt: die Original-Bytes und ein paar Angaben für die Startseite.
+// Genau ein Projekt: die Original-Bytes und ein paar Angaben für die Startseite. Seit
+// Entscheidung 0110 kann ein Projekt mehrere LVs haben; sie werden zusammen gemerkt.
 // Das geparste LV wird nicht gespeichert; es entsteht beim Öffnen neu aus den Bytes,
 // damit eine neue App-Version nie einen veralteten Baum zeigt.
 //
@@ -44,6 +45,8 @@ const STORE = 'letztesLv';
 const KEY_META = 'meta';
 const KEY_BYTES = 'bytes';
 const KEY_NOTES = 'notizen';
+/** Weitere LVs desselben Projekts, Bytes in Ladereihenfolge (Entscheidung 0110). */
+const KEY_MORE = 'weitereLvs';
 const KEY_TERMS = 'begriffe';
 /** Eigene Namen der Markierfarben (Entscheidung 0063), unabhängig von der Datei. */
 const KEY_PAINT_NAMES = 'farbnamen';
@@ -73,6 +76,26 @@ export interface LastLvMeta {
    * Fehlt bei Einträgen aus v0.14.
    */
   readonly id?: string;
+  /**
+   * Alle LVs des Projekts in Ladereihenfolge (Entscheidung 0110); das erste liegt unter
+   * `bytes`, die übrigen unter `weitereLvs`. Fehlt bei Einträgen mit nur einer Datei
+   * aus der Zeit davor — dann ist es „LV1".
+   */
+  readonly files?: readonly StoredLvFile[];
+}
+
+/** Ein LV im gespeicherten Projekt. `fileName` und `positionCount` oben gelten fürs erste. */
+export interface StoredLvFile {
+  readonly key: string;
+  readonly fileName: string;
+  readonly positionCount: number;
+}
+
+/** Ein weiteres LV samt Bytes. */
+export interface StoredLvBytes {
+  readonly key: string;
+  readonly fileName: string;
+  readonly bytes: ArrayBuffer;
 }
 
 /** Angaben für die Startseite, mit Anzahl der eigenen Notizen. */
@@ -89,6 +112,14 @@ export interface LastLv {
   readonly meta: LastLvMeta;
   readonly bytes: ArrayBuffer;
   readonly annotations: Annotations;
+  /** Weitere LVs desselben Projekts (Entscheidung 0110); leer bei einer Datei. */
+  readonly more: readonly StoredLvBytes[];
+}
+
+/** Alle LVs des Eintrags mit Bytes, das erste vorn. */
+export function storedSources(last: LastLv): StoredLvBytes[] {
+  const key = last.meta.files?.[0]?.key ?? 'LV1';
+  return [{ key, fileName: last.meta.fileName, bytes: last.bytes }, ...last.more];
 }
 
 /** Kennung, unter der Notizen zu diesem Eintrag gespeichert werden. */
@@ -142,6 +173,16 @@ async function openDb(): Promise<IDBDatabase | null> {
   }
 }
 
+function isStoredFile(value: unknown): value is StoredLvFile {
+  if (typeof value !== 'object' || value === null) return false;
+  const file = value as Record<string, unknown>;
+  return (
+    typeof file.key === 'string' &&
+    typeof file.fileName === 'string' &&
+    typeof file.positionCount === 'number'
+  );
+}
+
 function isMeta(value: unknown): value is LastLvMeta {
   if (typeof value !== 'object' || value === null) return false;
   const meta = value as Record<string, unknown>;
@@ -149,7 +190,21 @@ function isMeta(value: unknown): value is LastLvMeta {
     typeof meta.fileName === 'string' &&
     typeof meta.positionCount === 'number' &&
     typeof meta.savedAt === 'number' &&
-    (meta.id === undefined || typeof meta.id === 'string')
+    (meta.id === undefined || typeof meta.id === 'string') &&
+    (meta.files === undefined || (Array.isArray(meta.files) && meta.files.every(isStoredFile)))
+  );
+}
+
+/** Weitere LVs aus dem Speicher; Unbrauchbares fällt weg. */
+function toMore(value: unknown): StoredLvBytes[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (entry): entry is StoredLvBytes =>
+      typeof entry === 'object' &&
+      entry !== null &&
+      typeof (entry as Record<string, unknown>).key === 'string' &&
+      typeof (entry as Record<string, unknown>).fileName === 'string' &&
+      isArrayBuffer((entry as Record<string, unknown>).bytes),
   );
 }
 
@@ -191,16 +246,18 @@ export async function readLastLv(): Promise<LastLv | null> {
   if (db === null) return null;
   try {
     const store = db.transaction(STORE, 'readonly').objectStore(STORE);
-    const [meta, bytes, notes]: unknown[] = await Promise.all([
+    const [meta, bytes, notes, more]: unknown[] = await Promise.all([
       requestResult(store.get(KEY_META)),
       requestResult(store.get(KEY_BYTES)),
       requestResult(store.get(KEY_NOTES)),
+      requestResult(store.get(KEY_MORE)),
     ]);
     if (!isMeta(meta) || !isArrayBuffer(bytes)) return null;
     return {
       meta,
       bytes,
       annotations: notes === undefined ? EMPTY_ANNOTATIONS : fromStored(notes),
+      more: toMore(more),
     };
   } catch {
     return null;
@@ -213,7 +270,11 @@ export async function readLastLv(): Promise<LastLv | null> {
  * Ersetzt das gespeicherte Projekt. Gibt zurück, ob es geklappt hat; ein voller
  * Speicher oder gesperrte Website-Daten sind kein Ladefehler.
  */
-export async function saveLastLv(meta: LastLvMeta, bytes: ArrayBuffer): Promise<boolean> {
+export async function saveLastLv(
+  meta: LastLvMeta,
+  bytes: ArrayBuffer,
+  more: readonly StoredLvBytes[] = [],
+): Promise<boolean> {
   const db = await openDb();
   if (db === null) return false;
   try {
@@ -222,7 +283,8 @@ export async function saveLastLv(meta: LastLvMeta, bytes: ArrayBuffer): Promise<
     // Eine Transaktion für alle Schlüssel: nie Angaben oder Notizen zu einer
     // anderen Datei. Die neue Datei beginnt ohne Notizen.
     store.put(bytes, KEY_BYTES);
-    store.put({ ...meta }, KEY_META);
+    store.put(plainMeta(meta), KEY_META);
+    putMore(store, more);
     store.delete(KEY_NOTES);
     await transactionDone(tx);
     return true;
@@ -231,6 +293,58 @@ export async function saveLastLv(meta: LastLvMeta, bytes: ArrayBuffer): Promise<
   } finally {
     db.close();
   }
+}
+
+/**
+ * LVs des gespeicherten Projekts `meta.id` ersetzen — eins dazu oder eins weg
+ * (Entscheidung 0110). Die Notizen bleiben. Ist inzwischen ein anderes Projekt
+ * gespeichert (zweiter Tab), wird nichts geschrieben.
+ */
+export async function saveLastLvFiles(
+  meta: LastLvMeta,
+  bytes: ArrayBuffer,
+  more: readonly StoredLvBytes[],
+): Promise<boolean> {
+  const db = await openDb();
+  if (db === null) return false;
+  let written = false;
+  try {
+    const tx = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    const request = store.get(KEY_META);
+    // Prüfen und Schreiben in derselben Transaktion (siehe touchLastLv).
+    request.onsuccess = () => {
+      const stored: unknown = request.result;
+      if (!isMeta(stored) || persistIdOf(stored) !== persistIdOf(meta)) return;
+      store.put(bytes, KEY_BYTES);
+      store.put(plainMeta(meta), KEY_META);
+      putMore(store, more);
+      written = true;
+    };
+    await transactionDone(tx);
+    return written;
+  } catch {
+    return false;
+  } finally {
+    db.close();
+  }
+}
+
+/** Nur reine Daten in den Speicher, keine geteilten Referenzen. */
+function plainMeta(meta: LastLvMeta): LastLvMeta {
+  return {
+    ...meta,
+    ...(meta.files === undefined ? {} : { files: meta.files.map((f) => ({ ...f })) }),
+  };
+}
+
+function putMore(store: IDBObjectStore, more: readonly StoredLvBytes[]): void {
+  if (more.length === 0) store.delete(KEY_MORE);
+  else
+    store.put(
+      more.map(({ key, fileName, bytes }) => ({ key, fileName, bytes })),
+      KEY_MORE,
+    );
 }
 
 /**
@@ -298,7 +412,7 @@ export async function clearLastLv(): Promise<boolean> {
     const tx = db.transaction(STORE, 'readwrite');
     const store = tx.objectStore(STORE);
     // Nicht `clear()`: die gelernten Begriffe gehören zu keiner Datei.
-    for (const key of [KEY_META, KEY_BYTES, KEY_NOTES]) store.delete(key);
+    for (const key of [KEY_META, KEY_BYTES, KEY_NOTES, KEY_MORE]) store.delete(key);
     await transactionDone(tx);
     return true;
   } catch {

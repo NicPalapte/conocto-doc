@@ -10,10 +10,13 @@ export function PdfInput({
   label,
   onFiles,
   className = DOC_TOOL,
+  accept = 'application/pdf,.pdf',
 }: {
   label: string;
   onFiles: (files: File[]) => void;
   className?: string;
+  /** Erlaubte Dateien im Dialog; „Dokument hinzufügen" nimmt auch GAEB (0110). */
+  accept?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
   return (
@@ -24,7 +27,7 @@ export function PdfInput({
       <input
         ref={input}
         type="file"
-        accept="application/pdf,.pdf"
+        accept={accept}
         multiple
         className="hidden"
         aria-label={label}

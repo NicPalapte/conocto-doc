@@ -9,6 +9,25 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.63.0 — 13.11.2026 · Mehrere LVs
+
+- **Mehrere LVs auf einmal:** Auf der Startseite gehen mehrere GAEB-Dateien zugleich, gern
+  zusammen mit PDFs. Die App erkennt selbst, was ein LV und was ein PDF ist. Eine kaputte
+  Datei hält die anderen nicht auf, sie steht als Hinweis oben.
+- **„Dokument hinzufügen…“** im Logo-Menü ersetzt „PDF hinzufügen…“. Derselbe Dialog
+  nimmt PDFs und weitere LVs. Ablegen auf der App geht auch.
+- **Bereich „Dokument“ als Verwaltung:** Jedes LV steht als Karte „LV1“, „LV2“ … unter der
+  Kategorie „LV“, neben den PDFs. Antippen blendet ein LV ein oder aus, der Papierkorb
+  schließt es. „+ Hinzufügen“ nimmt PDFs und LVs.
+- **Eine Insel je LV im Graphen**, darin Lose und Abschnitte wie bisher.
+- **„LV“ als Filter und als Achse der Matrix.** Positionskarte, Tabelle und Suche zeigen,
+  aus welchem LV eine Position kommt.
+- **Alles wird zusammen gemerkt:** Alle LVs eines Projekts bleiben im Browser, samt
+  Notizen. Ein geschlossenes LV nimmt seine Notizen nicht mit; sie kommen zurück, wenn es
+  wieder dazukommt.
+- Ab 8 LVs oder 10.000 Positionen zusammen gibt es einen Hinweis, dass es langsamer
+  werden kann.
+
 ## 0.62.0 — 12.11.2026 · Verteilung und Prüfung
 
 - **Verteilung im Überblick fasst nichts mehr zusammen:** Jeder Hauptabschnitt hat seinen

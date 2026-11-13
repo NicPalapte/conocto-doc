@@ -167,7 +167,7 @@ const NO_FOUND = { needle: '', hits: NO_SEARCH_HITS };
 const NO_SUGGESTIONS: ReadonlyMap<string, readonly DocSuggestion[]> = new Map();
 
 export function DocumentsProvider({ children }: { children: ReactNode }) {
-  const { lv, index, annotations, filter } = useViewer();
+  const { lv, session, index, annotations, filter } = useViewer();
   const { rules } = useRules();
   const dispatch = useViewerDispatch();
   const [docs, setDocs] = useState<OpenedPdf[]>([]);
@@ -201,13 +201,14 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     docsRef.current = docs;
   }, [docs]);
 
-  // Neues LV oder Startseite: alle Dokumente zu. Als Layout-Effekt, damit `lvRef` schon
-  // beim Anzeigen des neuen LV stimmt: Ein sofort gewähltes PDF galt sonst als „während
-  // des Lesens anderes LV geladen“ und verschwand still.
-  const lvRef = useRef(lv);
+  // Neues LV oder Startseite: alle Dokumente zu. Als Layout-Effekt, damit `sessionRef`
+  // schon beim Anzeigen des neuen LV stimmt: Ein sofort gewähltes PDF galt sonst als
+  // „während des Lesens anderes LV geladen“ und verschwand still. Kommt nur ein weiteres
+  // LV dazu (Entscheidung 0110), bleibt die Sitzung und die PDFs bleiben offen.
+  const sessionRef = useRef(session);
   useLayoutEffect(() => {
-    if (lvRef.current === lv) return;
-    lvRef.current = lv;
+    if (sessionRef.current === session) return;
+    sessionRef.current = session;
     for (const doc of docsRef.current) void doc.pdf.loadingTask.destroy();
     texts.current.clear();
     openIds.current.clear();
@@ -219,7 +220,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     setPlanWanted(false);
     setOverview(false);
     setGuesses(new Map());
-  }, [lv]);
+  }, [session]);
   useEffect(
     () => () => {
       for (const doc of docsRef.current) void doc.pdf.loadingTask.destroy();
@@ -235,11 +236,11 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       // Bereich gleich zeigen: Wer ein PDF wählt, sieht dort, dass es lädt — oder
       // warum es nicht geht.
       dispatch({ type: 'showPane', pane: 'doc' });
-      const startLv = lvRef.current;
+      const startSession = sessionRef.current;
       try {
         const opened = await openPdf(file);
         // Während des Lesens ein anderes LV geladen: Das PDF gehört nicht mehr dazu.
-        if (lvRef.current !== startLv) {
+        if (sessionRef.current !== startSession) {
           void opened.pdf.loadingTask.destroy();
           return null;
         }

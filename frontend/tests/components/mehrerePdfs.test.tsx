@@ -52,7 +52,7 @@ async function ladeApp(): Promise<void> {
 const pdf = (name: string): File => new File(['%PDF'], name, { type: 'application/pdf' });
 
 function oeffne(names: string[]): void {
-  fireEvent.change(screen.getByLabelText('PDF auswählen'), {
+  fireEvent.change(screen.getByLabelText('Dokument auswählen'), {
     target: { files: names.map(pdf) },
   });
 }
@@ -67,13 +67,14 @@ describe('Mehrere PDFs', () => {
     await ladeApp();
     oeffne(['baubeschreibung.pdf', 'lageplan.pdf', 'gutachten.pdf']);
 
-    const liste = await screen.findByRole('list', { name: 'Offene Dokumente' });
+    // Das LV steht als eigene Karte mit in der Übersicht (Entscheidung 0110).
+    expect(await screen.findByRole('button', { name: 'Übersicht · 4' })).toBeInTheDocument();
+    const liste = screen.getByRole('list', { name: 'Offene Dokumente' });
     const karten = () =>
       within(liste)
         .getAllByRole('button')
-        .filter((knopf) => !knopf.hasAttribute('aria-label'));
+        .filter((knopf) => !knopf.hasAttribute('aria-label') && knopf.title.endsWith('.pdf'));
     expect(karten()).toHaveLength(3);
-    expect(screen.getByRole('button', { name: 'Übersicht · 3' })).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Sortieren' }), {
       target: { value: 'name' },
@@ -108,10 +109,10 @@ describe('Mehrere PDFs', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Zur Übersicht' }));
     const liste = await screen.findByRole('list', { name: 'Offene Dokumente' });
-    expect(screen.getByRole('button', { name: 'Übersicht · 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Übersicht · 3' })).toBeInTheDocument();
 
     fireEvent.click(within(liste).getByRole('button', { name: 'gutachten.pdf entfernen' }));
-    expect(await screen.findByRole('button', { name: 'Übersicht · 1' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Übersicht · 2' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Lesen' }));
     expect(screen.queryByRole('list', { name: 'Offene Dokumente' })).toBeNull();
@@ -126,7 +127,7 @@ describe('Mehrere PDFs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Dokument' }));
     const bereich = await screen.findByRole('region', { name: 'Dokument — Bereich' });
 
-    fireEvent.change(within(bereich).getByLabelText('PDF öffnen'), {
+    fireEvent.change(within(bereich).getByLabelText('Dokument öffnen'), {
       target: { files: [pdf('baubeschreibung.pdf'), pdf('lageplan.pdf')] },
     });
     await waitFor(() => expect(openPdf).toHaveBeenCalledTimes(2));

@@ -53,6 +53,9 @@ export const USAGE_EVENTS = [
   // Pläne messen (Entscheidung 0095): nur das Ereignis, nie Werte oder Positionen.
   'plan-massstab',
   'plan-gemessen',
+  // Mehrere LVs (Entscheidung 0110): nur das Ereignis, nie Dateiname oder Anzahl.
+  'lv-hinzugefuegt',
+  'lv-geschlossen',
 ] as const;
 
 export type UsageEvent = (typeof USAGE_EVENTS)[number];

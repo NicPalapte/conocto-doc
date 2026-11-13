@@ -1166,7 +1166,13 @@ export function BubbleGraph({ root }: { root: LVNode }) {
                     fill={hull.kind === 'lot' ? 'var(--los-fill)' : 'transparent'}
                     stroke={chosen ? 'var(--accent)' : 'var(--line2)'}
                     strokeWidth={(chosen ? 2.5 : 1.5) / Math.max(k, 0.3)}
-                    strokeDasharray={chosen ? undefined : hull.kind === 'lot' ? '2 6' : '6 6'}
+                    strokeDasharray={
+                      chosen || hull.kind === 'file'
+                        ? undefined
+                        : hull.kind === 'lot'
+                          ? '2 6'
+                          : '6 6'
+                    }
                     strokeLinecap="round"
                   />
                   <rect

@@ -40,10 +40,10 @@ export interface AboutMenuProps {
   /** „Anderes LV öffnen" — zurück zur Startseite. Fehlt, solange kein LV geladen ist. */
   onAnderesLv?: () => void;
   /**
-   * „PDF hinzufügen…" gewählt (Entscheidung 0072); der Dateidialog hängt in der
-   * Kopfleiste. Fehlt, solange kein LV geladen ist.
+   * „Dokument hinzufügen…" gewählt: PDF (Entscheidung 0072) oder weiteres LV (0110) im
+   * selben Dialog; der hängt in der Kopfleiste. Fehlt, solange kein LV geladen ist.
    */
-  onPdfHinzufuegen?: () => void;
+  onDokumentHinzufuegen?: () => void;
   /** „Tour" gewählt. Fehlt, solange kein LV geladen ist — die Tour zeigt auf den Graphen. */
   onTour?: () => void;
   /** „Feedback geben" gewählt (Entscheidung 0071). Fehlt, solange kein LV geladen ist. */
@@ -152,7 +152,7 @@ export function AboutMenu({
   onTour,
   onFeedback,
   onAnderesLv,
-  onPdfHinzufuegen,
+  onDokumentHinzufuegen,
   mitnehmen,
   onNotizenLaden,
   notizen,
@@ -227,15 +227,15 @@ export function AboutMenu({
             Anderes LV öffnen
           </PopoverRow>
         )}
-        {onPdfHinzufuegen !== undefined && (
+        {onDokumentHinzufuegen !== undefined && (
           <PopoverRow
             onClick={() => {
               setOpen(false);
-              onPdfHinzufuegen();
+              onDokumentHinzufuegen();
             }}
-            title="Baubeschreibung, Gutachten o. Ä. neben dem LV lesen — oder PDF auf die App ziehen"
+            title="PDF neben dem LV lesen oder ein weiteres LV dazunehmen — oder auf die App ziehen"
           >
-            PDF hinzufügen…
+            Dokument hinzufügen…
           </PopoverRow>
         )}
         {mitnehmen !== undefined && (

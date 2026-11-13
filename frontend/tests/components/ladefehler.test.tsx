@@ -12,7 +12,7 @@ vi.mock('../../src/lib/pipeline/runPipeline', async (importOriginal) => {
   const original = await importOriginal<typeof import('../../src/lib/pipeline/runPipeline')>();
   return {
     ...original,
-    classifyAndBuild: vi.fn(() => {
+    classifyAndBuildParts: vi.fn(() => {
       throw new RangeError('Maximum call stack size exceeded');
     }),
   };

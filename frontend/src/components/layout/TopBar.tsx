@@ -19,7 +19,7 @@ import { AboutMenu } from './AboutMenu';
 import { useMitnehmen } from '../common/useMitnehmen';
 import { WorkspaceBar } from '../shell/WorkspaceBar';
 import { SearchPill } from './SearchPill';
-import { useOptionalDocuments } from '../docs/DocumentsProvider';
+import { DOCUMENT_ACCEPT, useOptionalLvFiles } from '../docs/LvFilesProvider';
 import { NotesFileError, notesCount, readNotesFile, type NotesFile } from '../../lib/notesFile';
 import { useRules } from '../../state/rules';
 import { useSurvey } from '../../state/survey';
@@ -58,7 +58,7 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
   /** „Arbeitsstand laden…": versteckter Dateidialog, danach das Ergebnisfenster (0061). */
   const notizDateiRef = useRef<HTMLInputElement>(null);
   const pdfDateiRef = useRef<HTMLInputElement>(null);
-  const documents = useOptionalDocuments();
+  const lvFiles = useOptionalLvFiles();
   const [notizDatei, setNotizDatei] = useState<{ file: NotesFile; name: string } | null>(null);
   const notizenLesen = async (datei: File | undefined): Promise<void> => {
     if (datei === undefined) return;
@@ -125,8 +125,8 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
           onFeedback={loaded && !popout ? survey.show : undefined}
           onAnderesLv={loaded ? () => dispatch({ type: 'clear' }) : undefined}
           mitnehmen={loaded ? mitnehmen : undefined}
-          onPdfHinzufuegen={
-            loaded && documents !== null ? () => pdfDateiRef.current?.click() : undefined
+          onDokumentHinzufuegen={
+            loaded && lvFiles !== null ? () => pdfDateiRef.current?.click() : undefined
           }
           onNotizenLaden={loaded ? () => notizDateiRef.current?.click() : undefined}
           notizen={notizAnzahl}
@@ -147,14 +147,14 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
         <input
           ref={pdfDateiRef}
           type="file"
-          accept="application/pdf,.pdf"
+          accept={DOCUMENT_ACCEPT}
           multiple
           className="hidden"
-          aria-label="PDF auswählen"
+          aria-label="Dokument auswählen"
           onChange={(event) => {
             const files = [...(event.target.files ?? [])];
             event.target.value = '';
-            void documents?.openFiles(files);
+            void lvFiles?.addFiles(files);
           }}
         />
         {loaded && (
@@ -172,8 +172,11 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
               >
                 {lv.projectName ?? lv.fileName}
               </b>
-              <span className="truncate font-mono text-[11px] text-mute" title={lv.fileName}>
-                {lv.fileName}
+              <span
+                className="truncate font-mono text-[11px] text-mute"
+                title={lv.files.map((file) => file.fileName).join(', ')}
+              >
+                {lv.files.length > 1 ? `${lv.files.length} LVs` : lv.fileName}
                 {lv.client !== null && ` · ${lv.client}`}
               </span>
             </div>

@@ -78,6 +78,8 @@ import type { PositionIndex } from '../lib/index/positionIndex';
 import type { LVSummary } from '../lib/index/summary';
 import type { ActiveFilters } from '../lib/matchPos';
 import type { LoadedLV } from '../lib/pipeline/runPipeline';
+import type { LvSource } from '../lib/pipeline/loadLv';
+import { indexNodes, indexParents } from '../lib/tree/buildTree';
 import type { SharedState } from '../lib/share/urlState';
 import type { MatchIndex } from '../lib/tree/matchCounts';
 import type { SectionColors } from '../lib/tree/mainSection';
@@ -99,6 +101,17 @@ export type {
 
 export interface ViewerState {
   lv: LoadedLV | null;
+  /**
+   * Bytes der geladenen GAEB-Dateien mit ihrer Kennung (Entscheidung 0110): ein LV dazu
+   * oder weg rechnet den Baum aus allen neu. Leer bei Demo-LVs und Tests ohne Bytes.
+   */
+  sources: readonly LvSource[];
+  /**
+   * Zählt bei jedem neuen Laden und beim Schließen hoch, nicht aber, wenn nur ein LV
+   * dazukommt oder geht. Wer „anderes Projekt" erkennen muss (offene PDFs, Link in der
+   * Adresszeile), vergleicht dies statt `lv`.
+   */
+  session: number;
   loading: boolean;
   error: string | null;
   /**
@@ -134,6 +147,19 @@ type LvAction =
       notices?: readonly string[];
       annotations?: Annotations;
       persistId?: string | null;
+      sources?: readonly LvSource[];
+    }
+  /**
+   * Ein LV kam dazu oder ging (Entscheidung 0110). Filter, Auswahl und Ansicht bleiben;
+   * `annotations` sind schon auf den neuen Baum umgeschlüsselt (`carryOver`).
+   */
+  | {
+      type: 'lvsChanged';
+      lv: LoadedLV;
+      sources: readonly LvSource[];
+      annotations: Annotations;
+      /** Alte → neue Knoten-ID der Positionen (`positionMoves`): IDs können sich verschieben. */
+      moved: ReadonlyMap<string, string>;
     }
   /**
    * Datei ist gespeichert, ab jetzt gehen Notizen mit (Entscheidung 0047). Gilt nur,
@@ -195,6 +221,8 @@ export type ViewerAction = LvAction | FilterAction | SelectionAction | ViewActio
 
 export const INITIAL_VIEWER_STATE: ViewerState = {
   lv: null,
+  sources: [],
+  session: 0,
   loading: false,
   error: null,
   notices: [],
@@ -218,6 +246,8 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
       return {
         ...INITIAL_VIEWER_STATE,
         lv: action.lv,
+        sources: action.sources ?? [],
+        session: state.session + 1,
         notices: action.notices ?? [],
         annotations: action.annotations ?? EMPTY_ANNOTATIONS,
         loadedAnnotations: action.annotations ?? EMPTY_ANNOTATIONS,
@@ -226,6 +256,8 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
         selection: INITIAL_SELECTION_STATE,
         view: viewStateForNewLv(state.view),
       };
+    case 'lvsChanged':
+      return lvsChanged(state, action);
     case 'persisted':
       return state.lv === action.lv ? { ...state, persistId: action.persistId } : state;
     // Ein geteilter Link (WP-P, Schritt 2): Ansicht, Filter und Auswahl in
@@ -322,6 +354,7 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
     case 'clear':
       return {
         ...INITIAL_VIEWER_STATE,
+        session: state.session + 1,
         filter: { ...INITIAL_FILTER_STATE, hideMode: state.filter.hideMode },
         view: viewStateForNewLv(state.view),
       };
@@ -518,6 +551,55 @@ export function useViewerDispatch(): Dispatch<ViewerAction> {
     throw new Error('useViewerDispatch muss innerhalb von <ViewerProvider> stehen');
   }
   return dispatch;
+}
+
+/**
+ * Neuer Baum, gleiche Sitzung. Auswahl und Vergleich behalten nur, was es noch gibt;
+ * ein Filterwert „LV" für ein geschlossenes LV fällt weg.
+ */
+function lvsChanged(
+  state: ViewerState,
+  action: Extract<LvAction, { type: 'lvsChanged' }>,
+): ViewerState {
+  const nodes = indexNodes(action.lv.tree);
+  const parents = indexParents(action.lv.tree);
+  const position = (id: string | null): string | null =>
+    id === null ? null : (action.moved.get(id) ?? null);
+  const keys = new Set(action.lv.files.map((file) => file.key));
+  const shown = state.filter.filters.facets.lv;
+  const facets =
+    shown === undefined
+      ? state.filter.filters.facets
+      : {
+          ...state.filter.filters.facets,
+          lv: new Set([...shown].filter((key) => keys.has(key))),
+        };
+  const { selection } = state;
+  const positionId = position(selection.positionId);
+  return {
+    ...state,
+    lv: action.lv,
+    sources: action.sources,
+    annotations: action.annotations,
+    filter: { ...state.filter, filters: { ...state.filter.filters, facets } },
+    selection: {
+      ...selection,
+      // Abschnitte haben keinen Hash: mit Position gilt ihr Elternknoten, sonst bleibt die
+      // Auswahl nur, wenn es den Knoten noch gibt.
+      nodeId:
+        positionId === null
+          ? selection.nodeId !== null && nodes.has(selection.nodeId)
+            ? selection.nodeId
+            : null
+          : (parents.get(positionId)?.id ?? null),
+      positionId,
+      hoveredNodeId: null,
+      compare: selection.compare.flatMap((id) => {
+        const moved = position(id);
+        return moved === null ? [] : [moved];
+      }),
+    },
+  };
 }
 
 type DocAction = Extract<

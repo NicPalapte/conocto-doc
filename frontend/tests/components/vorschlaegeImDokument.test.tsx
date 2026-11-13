@@ -69,7 +69,7 @@ async function ladeAppMitPdf(seiten: readonly string[] = SEITEN): Promise<void> 
   });
   await screen.findByRole('main', { name: 'Bubble-Graph' }, { timeout: 5000 });
   openPdf.mockResolvedValue(scheinPdf(seiten));
-  fireEvent.change(screen.getByLabelText('PDF auswählen'), {
+  fireEvent.change(screen.getByLabelText('Dokument auswählen'), {
     target: { files: [new File(['%PDF'], 'baubeschreibung.pdf', { type: 'application/pdf' })] },
   });
   // Lokal ~1 s. Frühere Ausreißer über 15 s waren kein Zeitproblem: Ein PDF direkt nach

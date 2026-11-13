@@ -24,6 +24,9 @@ class IdFactory {
   /** Inhalts-Hashes je Position aus dem Kern (Entscheidung 0055). */
   readonly hashes: Map<PositionDraft, PositionHashes>;
 
+  /** Kennung des LV, das gerade gebaut wird; nur bei mehreren LVs (Entscheidung 0110). */
+  lv: string | undefined;
+
   constructor(hashes: Map<PositionDraft, PositionHashes>) {
     this.hashes = hashes;
   }
@@ -84,6 +87,7 @@ function buildPosition(
       attributes: position.attributes,
       // Jede Position steht in der Map; der Fallback ist nur Typ-Sicherheit.
       hashes: ids.hashes.get(position) ?? hashPosition(position),
+      ...(ids.lv === undefined ? {} : { lv: ids.lv }),
     },
   };
 }
@@ -147,6 +151,62 @@ export function buildTree(draft: LVDraft): LVNode {
     code: '',
     ownCode: '',
     label: draft.projectName,
+    ...aggregate(children),
+    children,
+    position: null,
+  };
+}
+
+/** Ein LV unter mehreren: Draft, Kennung („LV1") und Dateiname. */
+export interface TreePart {
+  readonly draft: LVDraft;
+  readonly key: string;
+  readonly fileName: string;
+}
+
+/** Knoten-ID des LV `key` im Baum mehrerer LVs. */
+export function fileNodeId(key: string): string {
+  return `file:${key}`;
+}
+
+/**
+ * Baum über mehrere LVs (Entscheidung 0110): Projekt → je Datei ein Knoten `file` → Lose.
+ * Mit einer Datei genau `buildTree`, damit IDs und Hashes wie bisher bleiben.
+ *
+ * Hashes über alle Dateien in einem Lauf: eine gleiche Position in zwei LVs bekommt so
+ * „-2" und damit eigene Notizen. Ebenso eine IdFactory für alle — die erste Datei behält
+ * ihre bisherigen Knoten-IDs.
+ */
+export function buildTreeOfParts(parts: readonly TreePart[]): LVNode {
+  if (parts.length === 1) return buildTree(parts[0].draft);
+  const all: LVDraft = {
+    projectName: null,
+    client: null,
+    lots: parts.flatMap((part) => part.draft.lots),
+  };
+  const ids = new IdFactory(hashPositions(all));
+  const children = parts.map((part): LVNode => {
+    ids.lv = part.key;
+    const lots = part.draft.lots.map((lot, index) => buildLot(lot, ids, index));
+    return {
+      id: fileNodeId(part.key),
+      kind: 'file',
+      code: part.key,
+      ownCode: part.key,
+      label: part.draft.projectName ?? part.fileName,
+      ...aggregate(lots),
+      children: lots,
+      position: null,
+    };
+  });
+  const names = new Set(parts.map((part) => part.draft.projectName));
+  return {
+    id: 'project',
+    kind: 'project',
+    code: '',
+    ownCode: '',
+    // Gleicher Projektname in allen Dateien: der steht oben, sonst keiner.
+    label: names.size === 1 ? parts[0].draft.projectName : null,
     ...aggregate(children),
     children,
     position: null,

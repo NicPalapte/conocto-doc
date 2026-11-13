@@ -4,7 +4,8 @@
 
 import type { PositionHashes, PositionType } from '@core';
 
-export type LVNodeKind = 'project' | 'lot' | 'section' | 'position';
+/** `file`: ein LV unter mehreren geladenen (Entscheidung 0110); fehlt bei nur einer Datei. */
+export type LVNodeKind = 'project' | 'file' | 'lot' | 'section' | 'position';
 
 export interface PositionSummary {
   oz: string;
@@ -17,6 +18,11 @@ export interface PositionSummary {
   attributes: Record<string, unknown>;
   /** Inhalts-Hashes aus dem Kern: `id` adressiert die Position im Link (Entscheidung 0055). */
   hashes: PositionHashes;
+  /**
+   * Kennung des LV, aus dem die Position stammt („LV2"), nur wenn mehrere LVs geladen sind
+   * (Entscheidung 0110). Facette „LV", Kennzeichen in Karte, Tabelle und Suche.
+   */
+  lv?: string;
 }
 
 export interface LVNode {

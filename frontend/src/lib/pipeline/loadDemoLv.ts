@@ -71,6 +71,8 @@ export interface LoadedDemo {
   readonly annotations: Annotations;
   /** PDFs zum Öffnen im Bereich „Dokument“. */
   readonly docs: readonly File[];
+  /** Bytes des Demo-LV: ein weiteres LV dazu rechnet den Baum daraus neu (0110). */
+  readonly bytes: ArrayBuffer;
 }
 
 async function fetchBytes(url: string): Promise<ArrayBuffer> {
@@ -118,10 +120,10 @@ export async function loadDemoLv(
   }
   const lv = await loadLvFromBytes(bytes, demo.fileName, options);
   try {
-    return { lv, ...(await extrasOf(demo, lv)) };
+    return { lv, bytes, ...(await extrasOf(demo, lv)) };
   } catch {
     options.onNotice?.('Die Dokumente zum Demo-Projekt fehlen. Das LV ist trotzdem offen.');
-    return { lv, annotations: EMPTY_ANNOTATIONS, docs: [] };
+    return { lv, bytes, annotations: EMPTY_ANNOTATIONS, docs: [] };
   }
 }
 

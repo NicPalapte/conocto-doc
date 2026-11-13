@@ -18,6 +18,7 @@
 // setzen; Fortschritt und „Wichtig" per Griff über mehrere Zeilen ziehen (wie in
 // Excel). Abschnitte stehen als eigene Kopfzeilen je Ebene und lassen sich zuklappen.
 
+import { LvBadge } from '../common/LvBadge';
 import {
   useCallback,
   useEffect,
@@ -157,7 +158,7 @@ function ShortTextCell({ position, query }: { position: PositionSummary; query: 
  * `DEFAULT_ORDER`: Kennung und Mengengerüst zuerst, dann die Klassifizierung.
  */
 const COLUMNS: ReadonlyArray<Column<Row>> = [
-  { key: 'oz', label: 'OZ', width: 110, render: (r) => r.position.oz },
+  { key: 'oz', label: 'OZ', width: 110, render: (r) => <OzCell position={r.position} /> },
   {
     key: 'shortText',
     label: 'Bezeichnung',
@@ -209,13 +210,25 @@ const COLUMNS: ReadonlyArray<Column<Row>> = [
   },
 ];
 
+/** OZ, bei mehreren LVs mit Kennzeichen davor („LV2 01.0010", Entscheidung 0110). */
+function OzCell({ position, query }: { position: PositionSummary; query?: string }) {
+  const oz = query === undefined ? position.oz : <Highlighted text={position.oz} query={query} />;
+  if (position.lv === undefined) return <>{oz}</>;
+  return (
+    <span className="inline-flex min-w-0 items-center gap-[4px]">
+      <LvBadge lv={position.lv} />
+      <span className="truncate">{oz}</span>
+    </span>
+  );
+}
+
 /**
  * Spalten, in denen die Suche den Treffer markiert (Issue #100). Ohne Suche
  * gilt das `render` aus `COLUMNS`.
  */
 function searchRender(key: string, query: string): Column<Row>['render'] | undefined {
   if (query === '') return undefined;
-  if (key === 'oz') return (r) => <Highlighted text={r.position.oz} query={query} />;
+  if (key === 'oz') return (r) => <OzCell position={r.position} query={query} />;
   if (key === 'shortText') return (r) => <ShortTextCell position={r.position} query={query} />;
   return undefined;
 }
@@ -639,7 +652,8 @@ function ColumnPicker({
 function sortValue(position: PositionSummary, key: SortKey): string | number | null {
   switch (key) {
     case 'oz':
-      return position.oz;
+      // Bei mehreren LVs erst nach LV, dann nach OZ (Entscheidung 0110).
+      return position.lv === undefined ? position.oz : `${position.lv.padStart(5)} ${position.oz}`;
     case 'shortText':
       return position.shortText;
     case 'positionsart':

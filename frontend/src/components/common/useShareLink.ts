@@ -14,6 +14,7 @@
 import { useEffect, useRef } from 'react';
 import { decodeSharedChecked, sharedHash, type SharedState } from '../../lib/share/urlState';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
+import type { LoadedLV } from '../../lib/pipeline/runPipeline';
 
 /** Wartezeit vor dem Schreiben — Tippen in der Suche soll nicht je Zeichen schreiben. */
 const SCHREIB_VERZOEGERUNG = 300;
@@ -28,16 +29,24 @@ function leereFragment(): void {
   window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
 }
 
+/** Datei-ID des LV, aus dem die Position stammt (Entscheidung 0110). */
+export function fileIdOfPosition(lv: LoadedLV, key: string | undefined): string | null {
+  if (key === undefined) return lv.fileId;
+  return lv.files.find((file) => file.key === key)?.fileId ?? lv.fileId;
+}
+
 export function useShareLink(): void {
-  const { lv, index, filter, view, selection, parents, nodes } = useViewer();
+  const { lv, session, index, filter, view, selection, parents, nodes } = useViewer();
   const dispatch = useViewerDispatch();
-  const gelesenFuer = useRef<object | null>(null);
+  // Sitzung statt LV: kommt nur ein weiteres LV dazu (Entscheidung 0110), gilt der Link
+  // weiter und wird nicht noch einmal gelesen.
+  const gelesenFuer = useRef<number | null>(null);
 
   // ── Lesen ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (lv === null || gelesenFuer.current === lv) return;
+    if (lv === null || gelesenFuer.current === session) return;
     const weitereDatei = gelesenFuer.current !== null;
-    gelesenFuer.current = lv;
+    gelesenFuer.current = session;
 
     if (weitereDatei) {
       // Ein neuer Import ersetzt den kompletten Session-Zustand
@@ -74,7 +83,10 @@ export function useShareLink(): void {
     if (gesucht && positionId === null && !verworfen.includes('Auswahl')) {
       verworfen.push('Auswahl');
     }
-    const andereDatei = shared.lv !== null && lv.fileId !== null && shared.lv !== lv.fileId;
+    const andereDatei =
+      shared.lv !== null &&
+      lv.fileId !== null &&
+      !lv.files.some((file) => file.fileId === shared.lv);
     if (verworfen.length > 0) {
       dispatch({
         type: 'notice',
@@ -84,7 +96,7 @@ export function useShareLink(): void {
       // Gleicher Hash ⇒ gleicher Inhalt, auch wenn die Datei eine andere ist.
       dispatch({ type: 'notice', message: ANDERE_DATEI });
     }
-  }, [lv, index, parents, dispatch]);
+  }, [lv, session, index, parents, dispatch]);
 
   // ── Schreiben ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -114,7 +126,7 @@ export function useShareLink(): void {
       menge: filter.filters.menge,
       hideMode: filter.hideMode,
       pos,
-      lv: pos === null ? null : lv.fileId,
+      lv: pos === null ? null : fileIdOfPosition(lv, position?.position?.lv),
       oz: null,
     };
     const hash = sharedHash(shared);

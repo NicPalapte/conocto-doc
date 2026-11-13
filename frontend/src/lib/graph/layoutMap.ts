@@ -31,7 +31,14 @@ export type GraphLayoutId = 'lv' | 'matrix';
  * Position. Bei Normen oder Expositionsklassen stünde eine Position in mehreren
  * Zellen zugleich — der Punkt wäre dann nicht mehr eindeutig.
  */
-export const AXIS_FACETS: readonly string[] = ['einheit', 'positionsart', 'positionstyp', 'beton'];
+export const AXIS_FACETS: readonly string[] = [
+  'einheit',
+  'positionsart',
+  'positionstyp',
+  'beton',
+  // Mehrere LVs (Entscheidung 0110); bei einer Datei ohne Werte und damit nicht wählbar.
+  'lv',
+];
 
 /**
  * Zeilen/Spalten nach dem Abschnitt der Position (ihr Elternknoten im LV) —
@@ -117,8 +124,8 @@ export interface MapCell {
 
 export interface MapHull {
   id: string;
-  /** Los (gepunktete Hülle) oder Hauptabschnitt (Insel mit Titel). */
-  kind: 'lot' | 'section';
+  /** LV bei mehreren (Entscheidung 0110), Los (gepunktete Hülle) oder Hauptabschnitt. */
+  kind: 'file' | 'lot' | 'section';
   title: string;
   x: number;
   y: number;
@@ -327,10 +334,14 @@ function placeInRows(blocks: readonly Block[]): number {
   return radius;
 }
 
-/** Nächstes Los über einem Knoten (der Knoten selbst zählt mit). */
-function lotOf(node: LVNode | null, parents: ReadonlyMap<string, LVNode | null>): LVNode | null {
+/** Nächster Knoten der Art über einem Knoten (der Knoten selbst zählt mit). */
+function upTo(
+  kind: 'lot' | 'file',
+  node: LVNode | null,
+  parents: ReadonlyMap<string, LVNode | null>,
+): LVNode | null {
   for (let up = node; up !== null; up = parents.get(up.id) ?? null) {
-    if (up.kind === 'lot') return up;
+    if (up.kind === kind) return up;
   }
   return null;
 }
@@ -381,19 +392,21 @@ function layoutByLv(
   // Gruppen ohne Hauptabschnitt bilden eine Insel ohne Hülle.
   const islands = new Map<
     string,
-    { main: LVNode | null; lot: LVNode | null; groups: MapGroup[] }
+    { main: LVNode | null; lot: LVNode | null; file: LVNode | null; groups: MapGroup[] }
   >();
   for (const group of groups) {
     const main = islandOf.get(group) ?? null;
     // Ohne Hauptabschnitt kann der Elternknoten selbst das Los sein.
-    const lot = lotOf(main ?? parentOf.get(group) ?? null, parents);
-    const key = `${lot?.id ?? ''}|${main?.id ?? ''}`;
-    const island = islands.get(key) ?? { main, lot, groups: [] };
+    const anchor = main ?? parentOf.get(group) ?? null;
+    const lot = upTo('lot', anchor, parents);
+    const file = upTo('file', anchor, parents);
+    const key = `${file?.id ?? ''}|${lot?.id ?? ''}|${main?.id ?? ''}`;
+    const island = islands.get(key) ?? { main, lot, file, groups: [] };
     island.groups.push(group);
     islands.set(key, island);
   }
 
-  const lots = new Map<string, { lot: LVNode | null; blocks: Block[] }>();
+  const lots = new Map<string, { lot: LVNode | null; file: LVNode | null; blocks: Block[] }>();
   for (const island of islands.values()) {
     const inner = packGroups(island.groups);
     const block: Block = { x: 0, y: 0, r: inner, groups: island.groups, hulls: [] };
@@ -409,41 +422,59 @@ function layoutByLv(
         slots: island.groups.flatMap((group) => group.slots),
       });
     }
-    const key = island.lot?.id ?? '';
-    const bucket = lots.get(key) ?? { lot: island.lot, blocks: [] };
+    const key = `${island.file?.id ?? ''}|${island.lot?.id ?? ''}`;
+    const bucket = lots.get(key) ?? { lot: island.lot, file: island.file, blocks: [] };
     bucket.blocks.push(block);
     lots.set(key, bucket);
   }
 
   // Ohne Lose liegen die Inseln selbst in Reihen; mit Losen erst die Inseln je Los,
-  // dann die Lose.
-  let top: Block[] = [];
-  for (const { lot, blocks } of lots.values()) {
+  // dann die Lose. Bei mehreren LVs (Entscheidung 0110) darum noch eine Insel je LV.
+  const files = new Map<string, { file: LVNode | null; blocks: Block[] }>();
+  for (const { lot, file, blocks } of lots.values()) {
+    const key = file?.id ?? '';
+    const bucket = files.get(key) ?? { file, blocks: [] };
+    files.set(key, bucket);
     if (lot === null) {
-      top = top.concat(blocks);
+      bucket.blocks.push(...blocks);
       continue;
     }
-    const inner = placeInRows(blocks);
-    const r = inner + HULL_PAD;
-    const hull: MapHull = {
-      id: lot.id,
-      kind: 'lot',
-      title: lot.label ?? lot.code,
-      x: 0,
-      y: 0,
-      r,
-      slots: blocks.flatMap((block) => block.groups.flatMap((group) => group.slots)),
-    };
-    top.push({
-      x: 0,
-      y: 0,
-      r,
-      groups: blocks.flatMap((block) => block.groups),
-      hulls: [hull, ...blocks.flatMap((block) => block.hulls)],
-    });
+    bucket.blocks.push(hullBlock(lot, 'lot', lot.label ?? lot.code, blocks));
+  }
+  let top: Block[] = [];
+  for (const { file, blocks } of files.values()) {
+    if (file === null) top = top.concat(blocks);
+    else top.push(hullBlock(file, 'file', fileTitle(file), blocks));
   }
   placeInRows(top);
   return { groups, hulls: top.flatMap((block) => block.hulls) };
+}
+
+/** Titel der Insel eines LV: „LV2 · Rohbau". */
+function fileTitle(file: LVNode): string {
+  return file.label === null ? file.code : `${file.code} · ${file.label}`;
+}
+
+/** Blöcke in Reihen legen und mit einer Hülle umgeben (Los oder LV). */
+function hullBlock(node: LVNode, kind: 'lot' | 'file', title: string, blocks: Block[]): Block {
+  const inner = placeInRows(blocks);
+  const r = inner + HULL_PAD;
+  const hull: MapHull = {
+    id: node.id,
+    kind,
+    title,
+    x: 0,
+    y: 0,
+    r,
+    slots: blocks.flatMap((block) => block.groups.flatMap((group) => group.slots)),
+  };
+  return {
+    x: 0,
+    y: 0,
+    r,
+    groups: blocks.flatMap((block) => block.groups),
+    hulls: [hull, ...blocks.flatMap((block) => block.hulls)],
+  };
 }
 
 /** Eine Achse der Matrix: Merkmal oder Abschnitt, mit Werten je Position. */

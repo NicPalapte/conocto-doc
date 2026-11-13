@@ -397,6 +397,37 @@ export function rekey(annotations: Annotations, keys: ReadonlyMap<string, string
 }
 
 /**
+ * Notizen vom alten auf einen neuen Baum derselben Sitzung — ein LV kam dazu oder ging
+ * (Entscheidung 0110). Über den Hash: Knoten-IDs können sich verschieben. Notizen eines
+ * geschlossenen LV bleiben unter ihrem Hash stehen und finden ihre Position wieder, wenn
+ * das LV zurückkommt.
+ */
+export function carryOver(
+  annotations: Annotations,
+  before: Iterable<LVNode>,
+  after: Iterable<LVNode>,
+): Annotations {
+  const next = storageKeys(after).toNode;
+  const keys = new Map(next);
+  for (const [id, hash] of storageKeys(before).toHash) keys.set(id, next.get(hash) ?? hash);
+  return rekey(annotations, keys);
+}
+
+/** Alte → neue Knoten-ID jeder Position, die in beiden Bäumen steht (über den Hash). */
+export function positionMoves(
+  before: Iterable<LVNode>,
+  after: Iterable<LVNode>,
+): Map<string, string> {
+  const next = storageKeys(after).toNode;
+  const moves = new Map<string, string>();
+  for (const [id, hash] of storageKeys(before).toHash) {
+    const target = next.get(hash);
+    if (target !== undefined) moves.set(id, target);
+  }
+  return moves;
+}
+
+/**
  * Form für die IndexedDB: Arrays statt Set/Map, damit auch ältere Browser klonen.
  * `v: 6`: dazu Stellen in Begleitdokumenten (Entscheidung 0072), seit 0081 optional
  * `links` (Verbindungen aus Regeln) — ältere Versionen lesen das Feld einfach nicht.
