@@ -266,6 +266,20 @@ Die Aggregate (`positionCount`, `totalPrice`) werden beim Baumaufbau bottom-up
 berechnet, damit der Graph Bubble-Größen ohne erneutes Durchlaufen aller
 Rohpositionen bestimmen kann (Skalierung Richtung ~10k Positionen).
 
+### Mehrere LVs (Entscheidung 0110)
+
+- `loadLvsFromBytes(sources)` parst jede Datei für sich (Haupt-Thread), eine kaputte Datei
+  landet in `failed`, eine doppelte (gleiche Datei-ID) in `duplicates`.
+- `classifyAndBuildParts(parts)` klassifiziert je Draft und baut **einen** Baum:
+  `project → file (LV1, LV2 …) → lot → section → position`. Mit einem Teil ist das genau
+  `buildTree` (kein Knoten `file`).
+- Hashes und Knoten-IDs über alle Teile in einem Lauf (`buildTreeOfParts`): das erste LV
+  behält IDs und Hashes, Dubletten in späteren LVs bekommen `-2` bzw. `#2`.
+- Summary, Prüfung und Beziehungen laufen über den ganzen Baum. `LoadedLV.files` nennt die
+  LVs; `fileName`/`fileId`/`projectName` gehören zum ersten.
+- LV dazu oder weg (`LvFilesProvider`): Baum aus allen Quellen neu, Notizen über
+  `carryOver` (Hash), Auswahl über `positionMoves`, Aktion `lvsChanged` (Sitzung bleibt).
+
 ## Fehlerbehandlung
 
 `GAEBParseError`/`GAEBValidationError`/`GAEBVersionError` werden in der

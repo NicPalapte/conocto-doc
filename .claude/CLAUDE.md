@@ -47,7 +47,8 @@ _Linting/Formatierung laufen automatisch via Claude Code Hook nach jedem Edit/Wr
   (Auswahl, Zoom, aktive Filter) darf in React-State/Context leben, muss aber einen
   Reload nicht überleben. Ausnahme: die Anordnung im Splitscreen (Entscheidung 0073).
 - **IndexedDB nur über `frontend/src/lib/persist/lastLv.ts`:** genau ein Projekt
-  (Original-Bytes + Angaben der zuletzt geöffneten eigenen Datei + Marker, Kommentar-Verlauf
+  (Original-Bytes + Angaben der zuletzt geöffneten eigenen Datei(en), weitere LVs unter
+  `weitereLvs`, Entscheidung 0110, + Marker, Kommentar-Verlauf
   und Textmarkierungen je Positions-Hash `hashes.id`, `lib/annotations.ts`, Entscheidung 0057,
   dazu Stellen in Begleit-PDFs und ausgeblendete Vorschlagsarten `lib/docs/docNotes.ts`,
   0072, 0087),
@@ -62,7 +63,7 @@ _Linting/Formatierung laufen automatisch via Claude Code Hook nach jedem Edit/Wr
   und die abgeschalteten Grundstock-Regeln (Schlüssel `grundstock-aus`, 0089)
   und die eigenen Wortlisten (Schlüssel `wortlisten`, `lib/rules/wordLists.ts`, 0090).
   Urteile über Verbindungen aus Regeln liegen in den Notizen der Datei (`links`, 0081).
-  Kein geparstes LV speichern, keine Demo-LVs, keine zweite Datei, keine PDF-Bytes. Notizen
+  Kein geparstes LV speichern, keine Demo-LVs, kein zweites Projekt, keine PDF-Bytes. Notizen
   nur schreiben, wenn die Projekt-Kennung (`persistIdOf`) noch passt. Fehlt IndexedDB ⇒ still ohne
   Speicher weiter, kein Fehler (Entscheidungen 0046, 0047, 0053).
 
@@ -138,7 +139,10 @@ Scopes: `gaeb · classify · tree · viewer · graph · relate · check · front
 - Jede eigene Exception hat mindestens einen Test, der den Fehlerfall auslöst
 
 ## Produkt-Scope
-**In Scope:** GAEB-Import im Browser (x83 **und** preisführende x84/x86) ·
+**In Scope:** GAEB-Import im Browser (x83 **und** preisführende x84/x86) · mehrere LVs
+nebeneinander (`LvFilesProvider`, Kennung `LV1…` an `PositionSummary.lv`, Knoten `file` nur ab
+zwei LVs, Facette `lv`, Insel je LV, Verwaltung im Bereich „Dokument“, ein Menüpunkt
+„Dokument hinzufügen…“ für PDF und GAEB, `docs/decisions/0110`) ·
 Klassifizierung Kurz-/Langtext inkl. Textstellen · Hervorhebung der vier
 Wichtig-Kategorien (Geld/Menge · Risiko · Norm · Frist) · VOB-Check als Hinweis ·
 fachliche Filter · **Graph als Hauptscreen** auf einem Filterzustand
@@ -188,8 +192,8 @@ Befehlspalette (`docs/decisions/0038-keine-befehlspalette.md`).
 
 **Out of Scope** (ablehnen / vertrösten): Server jeglicher Art, Persistenz über die
 Session hinaus (außer 0046/0047/0053/0073), Auth/SSO (kein Passwort, auch nicht als
-Sichtschutz, 0109), **mehrere Dateien gleichzeitig** (Versionsvergleich,
-x83+x84-Merge — perspektivisch gewollt, jetzt draußen; Begleit-PDF erlaubt, 0072), Aufgaben, Notizen außer
+Sichtschutz, 0109), **Versionsvergleich und x83+x84-Merge** (perspektivisch gewollt, jetzt
+draußen; mehrere LVs nebeneinander erlaubt, 0110; Begleit-PDF erlaubt, 0072), Aufgaben, Notizen außer
 Markierung/Kommentar je Position, Vergabepakete, NU-Anfragen, Bieterfragen **verwalten**, Zuständigkeit/Zuweisung,
 Status-**Änderung**, EP-Kalkulation, Excel-/Manuell-Import, Multi-Tenant, GAEB-Export,
 LLM-Klassifizierung. Details → @docs/scope.md #out-of-scope

@@ -52,7 +52,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0043 | [Punktfarbe im Graphen nach Hauptabschnitt](0043-punktfarbe-nach-abschnitt.md)                                 | akzeptiert                         | 2026-10-10 |
 | 0044 | [Leistungsbereich (Gewerk) aus der App entfernt](0044-leistungsbereich-entfernt.md)                            | akzeptiert                         | 2026-10-11 |
 | 0045 | [Materialwissen als Tabelle je Material](0045-materialwissen-als-tabelle.md)                                   | akzeptiert                         | 2026-10-11 |
-| 0046 | [Zuletzt geöffnete Datei im Browser behalten](0046-letzte-datei-im-browser.md)                                 | akzeptiert                         | 2026-10-12 |
+| 0046 | [Zuletzt geöffnete Datei im Browser behalten](0046-letzte-datei-im-browser.md)                                 | akz., ergänzt d. 0110              | 2026-10-12 |
 | 0047 | [Eigene Markierungen und Kommentare je Position](0047-kommentare-und-markierungen.md)                          | akzeptiert                         | 2026-10-12 |
 | 0048 | [Referenzdaten ohne Kopie im Frontend](0048-referenzdaten-ohne-kopie.md)                                       | akzeptiert                         | 2026-10-14 |
 | 0049 | [Prüfregeln als Tabelle, keine wertenden Kennzahlen](0049-pruefregeln-als-tabelle.md)                          | Tabellen-Teil ersetzt durch 0086   | 2026-10-15 |
@@ -116,6 +116,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0107 | [Graph und Tabelle am selben Platz wechseln (Taste T)](0107-graph-tabelle-am-selben-platz.md)                  | akzeptiert                         | 2026-11-10 |
 | 0108 | [Vorschläge nach dem Praxistest](0108-vorschlaege-nach-praxistest.md)                                          | akzeptiert                         | 2026-11-12 |
 | 0109 | [Einstellungen statt Admin-Werkzeuge](0109-einstellungen-statt-admin.md)                                      | akzeptiert                         | 2026-11-12 |
+| 0110 | [Mehrere LVs gleichzeitig laden](0110-mehrere-lvs.md)                                                         | akzeptiert                         | 2026-11-13 |
 
 ## Wann schreibe ich eine neue Datei?
 
