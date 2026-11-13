@@ -358,7 +358,9 @@ export function FileDropzone() {
               >
                 {loading ? 'Wird gelesen…' : 'Datei auswählen'}
               </button>
-              <span className="start-meta">x81 – x86 · xml · auch mehrere, gern mit PDF · bis {MAX_MB} MB</span>
+              <span className="start-meta">
+                x81 – x86 · xml · auch mehrere, gern mit PDF · bis {MAX_MB} MB
+              </span>
               <input
                 ref={inputRef}
                 type="file"
