@@ -17,6 +17,7 @@ import { extractBetonklassen } from '../classify/rulesets/normklassen';
 import { canonicalUnit, unitLabel } from '../units';
 import { sortExpo, sorteKeyOf } from './sorteKey';
 import type { PositionIndex } from '../index/positionIndex';
+import { istFestigkeitsklasse } from './festigkeitsklassen';
 import type { PositionSummary } from '../../types/lvNode';
 
 /** Sammelsorte für Betonpositionen in m³ ohne Druckfestigkeitsklasse. */
@@ -113,7 +114,7 @@ const FESTIGKEIT = /\b(?:lc|c)\s?\d{1,3}\/\d{1,3}\b/g;
  */
 function teileZur(text: string, festigkeit: string | null): string[] {
   const lower = text.toLowerCase();
-  const matches = [...lower.matchAll(FESTIGKEIT)];
+  const matches = [...lower.matchAll(FESTIGKEIT)].filter((match) => istFestigkeitsklasse(match[0]));
   if (matches.length === 0) return [lower];
   const eigene = festigkeit?.toLowerCase().replace(/\s+/g, '') ?? null;
   return matches

@@ -10,7 +10,7 @@
 // Gerechnet wird gegen den flachen Positions-Index, einmal je Filterwechsel —
 // nie über den Baum und nie im Render (WP-I).
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { BetonSortenCard } from './BetonSortenCard';
 import { ImportLogCard } from './ImportLogCard';
 import { LargestQuantities } from './LargestQuantities';
@@ -23,14 +23,19 @@ import { buildBetonSorten } from '../../lib/beton/sorten';
 import { linkedTextsOf } from '../../lib/docs/docNotes';
 import { formatCount, formatPositions } from '../../lib/format';
 import { filterMask } from '../../lib/index/positionIndex';
-import { buildOverview } from '../../lib/overview/model';
+import { buildOverview, DIRECT_KEY } from '../../lib/overview/model';
+import { headingOf } from '../../lib/tree/heading';
 import { matchCount } from '../../lib/tree/matchCounts';
 import { useMitnehmen } from '../common/useMitnehmen';
 import { useScrollMemory } from '../common/useScrollMemory';
 import { toggleFacetValue } from '../../state/filterState';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
+import type { LVNode } from '../../types/lvNode';
 
 const EMPTY_ACTIVE: ReadonlySet<string> = new Set();
+
+const CRUMB =
+  'cursor-pointer truncate border-none bg-transparent p-0 font-mono text-[11.5px] text-mute hover:text-ink hover:underline';
 
 function Card({
   title,
@@ -60,7 +65,13 @@ export function OverviewView() {
     () => (active.filtering ? filterMask(index, active) : null),
     [index, active],
   );
-  const model = useMemo(() => buildOverview({ index, mask, parents }), [index, mask, parents]);
+  // Geöffneter Abschnitt in der Verteilung (Issue #191). Gilt nur für dieses LV.
+  const [opened, setOpened] = useState<{ index: typeof index; id: string } | null>(null);
+  const focus = opened !== null && opened.index === index ? opened.id : null;
+  const model = useMemo(
+    () => buildOverview({ index, mask, parents, focus }),
+    [index, mask, parents, focus],
+  );
   const docTexts = useMemo(() => linkedTextsOf(annotations.documents), [annotations.documents]);
   const betonSorten = useMemo(
     () => buildBetonSorten(index, mask, docTexts),
@@ -102,12 +113,31 @@ export function OverviewView() {
 
   const pickSection = (sectionId: string): void => dispatch({ type: 'selectNode', id: sectionId });
 
+  // Klick auf einen Abschnitt öffnet ihn in der Verteilung; der Graph wählt ihn und zoomt hin.
+  // Der Filter bleibt, Tabelle und andere Bereiche zeigen weiter alles (Issue #191).
+  const openSection = (sectionId: string | null): void => {
+    setOpened(sectionId === null ? null : { index, id: sectionId });
+    if (sectionId === null) return;
+    pickSection(sectionId);
+    dispatch({ type: 'graphFocus' });
+  };
+
   const pickSectionUnit = (sectionId: string, unit: string): void => {
     // Anwählen **und** filtern: der Klick sagt „diese Einheit in diesem
     // Abschnitt" — die Ansicht bleibt, wo sie ist.
     pickUnit(unit);
-    pickSection(sectionId);
+    pickSection(sectionId === DIRECT_KEY && focus !== null ? focus : sectionId);
   };
+
+  // Pfad zum geöffneten Abschnitt, von oben nach unten.
+  const trail: LVNode[] = [];
+  for (
+    let up: LVNode | null = focus === null ? null : (nodes.get(focus) ?? null);
+    up !== null;
+    up = parents.get(up.id) ?? null
+  ) {
+    if (up.kind === 'section') trail.unshift(up);
+  }
 
   const pickPosition = (nodeId: string): void =>
     dispatch({
@@ -137,14 +167,42 @@ export function OverviewView() {
           title="Verteilung · Abschnitt und Einheit"
           note={model.measure === 'preis' ? 'Fläche = Summe' : 'Fläche = Anzahl Positionen'}
         >
-          <Treemap
-            groups={model.groups}
-            measure={model.measure}
-            selectedId={selection.nodeId}
-            activeUnits={activeUnits}
-            onPickSection={pickSection}
-            onPickUnit={pickSectionUnit}
-          />
+          {trail.length > 0 && (
+            <nav
+              aria-label="Geöffneter Abschnitt"
+              className="mb-[6px] flex min-w-0 flex-wrap items-center gap-x-[6px] font-mono text-[11.5px] text-mute"
+            >
+              <button type="button" onClick={() => openSection(null)} className={CRUMB}>
+                ‹ Alle Abschnitte
+              </button>
+              {trail.map((node, at) => (
+                <span key={node.id} className="flex min-w-0 items-center gap-[6px]">
+                  <span aria-hidden="true">/</span>
+                  {at === trail.length - 1 ? (
+                    <span className="truncate text-ink">{headingOf(node)}</span>
+                  ) : (
+                    <button type="button" onClick={() => openSection(node.id)} className={CRUMB}>
+                      {headingOf(node)}
+                    </button>
+                  )}
+                </span>
+              ))}
+            </nav>
+          )}
+          {focus !== null && model.groups.length === 0 ? (
+            <p className="m-0 py-[24px] text-center font-mono text-[11.5px] text-mute">
+              Keine Treffer in diesem Abschnitt
+            </p>
+          ) : (
+            <Treemap
+              groups={model.groups}
+              measure={model.measure}
+              selectedId={selection.nodeId}
+              activeUnits={activeUnits}
+              onPickSection={openSection}
+              onPickUnit={pickSectionUnit}
+            />
+          )}
         </Card>
 
         <div className="flex flex-wrap gap-[12px]">

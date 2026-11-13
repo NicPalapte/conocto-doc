@@ -2,8 +2,8 @@
 // Kachel entspricht ihrem Anteil — an der Summe, und ohne Preise an der Anzahl.
 // Beides steht in jeder Datei; eine Klassifizierung braucht es nicht.
 //
-// Klick: ein Abschnittskopf wählt den Abschnitt an, eine Einheitenkachel wählt
-// ihn an und filtert zusätzlich nach der Einheit. Der Ansichtsmodus bleibt
+// Klick: ein Abschnittskopf öffnet den Abschnitt (Unterabschnitte, Issue #191), eine
+// Einheitenkachel wählt ihn an und filtert zusätzlich nach der Einheit. Der Ansichtsmodus bleibt
 // dabei stehen — ein Filter ist kein Ansichtswechsel (.claude/CLAUDE.md).
 //
 // Gezeichnet wird mit absolut gesetzten `div`s statt SVG: abgeschnittene
@@ -26,6 +26,11 @@ const HEAD_HEIGHT = 20;
 /** Kleiner als das liest niemand mehr eine Beschriftung. */
 const LABEL_MIN_WIDTH = 54;
 const LABEL_MIN_HEIGHT = 26;
+/**
+ * Einheiten-Kacheln unter dieser Kantenlänge (px) entfallen; der Abschnitt bleibt klickbar.
+ * Seit nichts mehr zusammengefasst wird (Issue #191), hält das die Zahl der Knoten klein.
+ */
+const CELL_MIN = 3;
 
 export interface TreemapProps {
   groups: readonly TreemapGroup[];
@@ -83,14 +88,16 @@ export function Treemap({
       };
       // Kachel-Koordinaten relativ zur Abschnittsfläche: die Einheiten liegen im
       // `div` des Abschnitts, nicht im äußeren Rahmen.
-      const cells = squarify([...entry.item.cells], body).map((cell) => ({
-        item: cell.item,
-        rect: {
-          ...cell.rect,
-          x: cell.rect.x - entry.rect.x,
-          y: cell.rect.y - entry.rect.y,
-        },
-      }));
+      const cells = squarify([...entry.item.cells], body)
+        .filter((cell) => cell.rect.width >= CELL_MIN && cell.rect.height >= CELL_MIN)
+        .map((cell) => ({
+          item: cell.item,
+          rect: {
+            ...cell.rect,
+            x: cell.rect.x - entry.rect.x,
+            y: cell.rect.y - entry.rect.y,
+          },
+        }));
       return { group: entry.item, rect: entry.rect, cells };
     });
   }, [groups, boxWidth]);
@@ -120,8 +127,11 @@ export function Treemap({
               width: rect.width,
               height: rect.height,
               background: color,
-              outline: active ? '2px solid var(--accent)' : '1px solid var(--white)',
+              outline: '1px solid var(--white)',
               outlineOffset: -1,
+              // Auswahl als dünne Linie nach innen: ein Rahmen nach außen lag über den
+              // Nachbarn und wirkte dick (Issue #191).
+              boxShadow: active ? 'inset 0 0 0 2px var(--accent)' : undefined,
             }}
           >
             <button
@@ -147,8 +157,9 @@ export function Treemap({
                   top: cell.y,
                   width: cell.width,
                   height: cell.height,
-                  outline: activeUnits.has(item.key) ? '2px solid var(--accent)' : undefined,
-                  outlineOffset: -2,
+                  boxShadow: activeUnits.has(item.key)
+                    ? 'inset 0 0 0 1.5px var(--accent)'
+                    : undefined,
                 }}
               >
                 {cell.width > LABEL_MIN_WIDTH && cell.height > LABEL_MIN_HEIGHT ? (

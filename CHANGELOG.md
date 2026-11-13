@@ -9,6 +9,28 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.62.0 — 12.11.2026 · Verteilung und Prüfung
+
+- **Verteilung im Überblick fasst nichts mehr zusammen:** Jeder Hauptabschnitt hat seinen
+  eigenen Kasten, „Weitere N Abschnitte“ gibt es nicht mehr.
+- **Klick auf einen Abschnitt öffnet ihn:** Die Verteilung zeigt dann seine Unterabschnitte,
+  oben steht „‹ Alle Abschnitte“. Der Graph wählt den Abschnitt und zoomt hin. Der Filter
+  bleibt, Tabelle und andere Bereiche zeigen weiter alles.
+- **Auswahl ohne Überlappen:** Der gewählte Kasten hat eine dünne Linie nach innen statt
+  des dicken roten Rahmens.
+- **Funde der Prüfung zur Seite:** Ist der Bereich breit genug, stehen die Funde rechts
+  neben den Regeln. Im schmalen Bereich schieben sie sich über die Liste, zurück mit
+  „‹ Alle Regeln“.
+
+## 0.61.1 — 12.11.2026 · Betonklassen und Maße
+
+- **Nur echte Betonklassen:** Als Betonsorte zählen nur Festigkeitsklassen nach DIN EN 206 /
+  DIN 1045-2 (C8/10 bis C100/115, LC8/9 bis LC80/88). „C100/0“ aus dem Asphalt ist keine.
+  Das gilt für die Betonsortenliste, den Langtext und die Vorschläge im PDF.
+- **Mehr Maße im Langtext:** Neu ist die Breite („Stufenbreite 80 cm“, „Breite von 15 cm“).
+  Gebeugte Formen wie „10 cm dickem“ werden erkannt. Je Art werden alle Stellen markiert,
+  nicht nur die erste.
+
 ## 0.61.0 — 12.11.2026 · Einstellungen für alle
 
 - **Neu im Logo-Menü: „Einstellungen“.** Darin „Hervorhebung & Regeln“ (der Regeleditor),

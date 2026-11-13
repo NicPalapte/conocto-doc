@@ -12,6 +12,12 @@
     "001.002.0020": [],
     "001.002.0030": [
       {
+        "key": "breite",
+        "start": 122,
+        "end": 134,
+        "label": "breite 4,5 m"
+      },
+      {
         "key": "masse",
         "start": 173,
         "end": 178,
@@ -80,10 +86,10 @@
         "label": "# mm"
       },
       {
-        "key": "masse",
-        "start": 351,
+        "key": "dicke",
+        "start": 345,
         "end": 357,
-        "label": "# mm"
+        "label": "Dicke 365 mm"
       }
     ],
     "001.003.0040": [
@@ -239,26 +245,8 @@
       }
     ]
   },
-  "sample-3.2.x83": {
-    "01.01.0010": [
-      {
-        "key": "masse",
-        "start": 57,
-        "end": 62,
-        "label": "# cm"
-      }
-    ]
-  },
-  "sample.X83": {
-    "01.01.0010": [
-      {
-        "key": "masse",
-        "start": 57,
-        "end": 62,
-        "label": "# cm"
-      }
-    ]
-  },
+  "sample-3.2.x83": {},
+  "sample.X83": {},
   "zeilenumbruch-export.x83": {},
   "bvbs-gaeb-musterdatei.x83": {
     "001.001.0010": [
@@ -272,6 +260,12 @@
     "001.002.0010": [],
     "001.002.0020": [],
     "001.002.0030": [
+      {
+        "key": "breite",
+        "start": 122,
+        "end": 134,
+        "label": "breite 4,5 m"
+      },
       {
         "key": "masse",
         "start": 173,
@@ -341,10 +335,10 @@
         "label": "# mm"
       },
       {
-        "key": "masse",
-        "start": 351,
+        "key": "dicke",
+        "start": 345,
         "end": 357,
-        "label": "# mm"
+        "label": "Dicke 365 mm"
       }
     ],
     "001.003.0040": [
@@ -513,6 +507,12 @@
     "001.002.0020": [],
     "001.002.0030": [
       {
+        "key": "breite",
+        "start": 122,
+        "end": 134,
+        "label": "breite 4,5 m"
+      },
+      {
         "key": "masse",
         "start": 173,
         "end": 178,
@@ -581,10 +581,10 @@
         "label": "# mm"
       },
       {
-        "key": "masse",
-        "start": 351,
+        "key": "dicke",
+        "start": 345,
         "end": 357,
-        "label": "# mm"
+        "label": "Dicke 365 mm"
       }
     ],
     "001.003.0040": [
@@ -814,10 +814,10 @@
         "label": "# cm"
       },
       {
-        "key": "masse",
-        "start": 106,
+        "key": "breite",
+        "start": 99,
         "end": 110,
-        "label": "# mm"
+        "label": "breite 3 mm"
       },
       {
         "key": "platzhalter",

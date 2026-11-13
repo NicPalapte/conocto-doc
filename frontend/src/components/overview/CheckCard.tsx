@@ -12,7 +12,15 @@
 // **Ein Filterzustand, alle Ansichten** (.claude/CLAUDE.md): gezählt und gelistet
 // werden nur Funde zu Positionen, die der aktive Filter durchlässt.
 
-import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useJumpToPosition } from '../common/useJumpToPosition';
 import { formatCount } from '../../lib/format';
 import { matchCount } from '../../lib/tree/matchCounts';
@@ -245,25 +253,71 @@ function gruppiere(flags: readonly Flag[]): Array<[string, Array<[string, Flag[]
     .map(([label, teile]) => [label, [...teile].sort(([a], [b]) => deutsch(a, b))]);
 }
 
+/** Ab dieser Breite stehen die Funde als Spalte neben den Regeln (Issue #191, 12.11.2026). */
+const SIDE_BY_SIDE = 560;
+
 /**
- * Klappkarte unter der Liste: Hinweistext, Verweis und Funde der aufgeklappten
- * Regel. Ein Fund wählt die Position im Graphen aus.
+ * Bereich „Prüfung“: Regeln und Funde. Breit zwei Spalten, schmal schieben sich die Funde
+ * über die Regelliste („‹ Alle Regeln“). Vorher klappten sie unten auf, der Pfeil › an jeder
+ * Regel zeigt aber zur Seite.
  */
-export function CheckFlyout() {
+export function CheckPane() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  // Layout-Effekt: der erste Messwert kommt vor dem ersten Zeichnen, breit springt nichts.
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (element === null || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry !== undefined) setWidth(entry.contentRect.width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const side = width >= SIDE_BY_SIDE;
+  const shown = useShownRule();
+  const covered = !side && shown !== null;
+  return (
+    <div ref={ref} className="relative flex min-h-0 flex-1">
+      {/* Schmal liegen die Funde über der Liste; die Regeln dahinter sind dann nicht bedienbar. */}
+      <div className="relative min-h-0 min-w-0 flex-1" inert={covered}>
+        <div className="absolute inset-0 overflow-auto px-[14px] py-[14px]">
+          <CheckCard />
+        </div>
+      </div>
+      <CheckFlyout layout={side ? 'side' : 'over'} />
+    </div>
+  );
+}
+
+/** Die aufgeklappte Regel mit ihren Funden, oder `null`, wenn keine Funde zu zeigen sind. */
+function useShownRule(): { rule: RuleStatus; flags: readonly Flag[] } | null {
   const {
     lv,
-    nodes,
     filter: { mutedRules },
+  } = useViewer();
+  const byRule = useFlagsByRule();
+  const openRule = useOpenRule();
+  const rule = lv?.check.rules.find((entry) => entry.id === openRule) ?? null;
+  const flags = rule === null ? [] : (byRule.get(rule.id) ?? []);
+  if (rule === null || !rule.active || mutedRules.has(rule.id) || flags.length === 0) return null;
+  return { rule, flags };
+}
+
+/**
+ * Funde der aufgeklappten Regel: Hinweistext, Verweis und Fundstellen. Breit als Spalte neben
+ * den Regeln (`side`), schmal über der Liste (`over`). Ein Fund wählt die Position im Graphen.
+ */
+export function CheckFlyout({ layout = 'over' }: { layout?: 'side' | 'over' }) {
+  const {
+    nodes,
     selection: { positionId: selected },
   } = useViewer();
   const dispatch = useViewerDispatch();
   const jumpTo = useJumpToPosition();
-  const byRule = useFlagsByRule();
-  const openRule = useOpenRule();
-
-  const rule = lv?.check.rules.find((entry) => entry.id === openRule) ?? null;
-  const flags = rule === null ? [] : (byRule.get(rule.id) ?? []);
-  if (rule === null || !rule.active || mutedRules.has(rule.id) || flags.length === 0) return null;
+  const shown = useShownRule();
+  if (shown === null) return null;
+  const { rule, flags } = shown;
 
   const zeile = (flag: Flag, index: number, mitTitel: boolean): ReactNode => {
     const position = nodes.get(flag.positionId)?.position ?? null;
@@ -298,20 +352,34 @@ export function CheckFlyout() {
   return (
     <section
       aria-label={`Funde ${shortName(rule)}`}
-      className="flex max-h-[55%] shrink-0 flex-col overflow-hidden border-t border-line bg-surface"
+      className={`flex flex-col overflow-hidden bg-surface ${
+        layout === 'side' ? 'w-[50%] shrink-0 border-l border-line' : 'absolute inset-0 z-[2]'
+      }`}
     >
       <div className="flex shrink-0 items-center gap-[8px] border-b border-line px-[14px] py-[10px]">
+        {layout === 'over' && (
+          <button
+            type="button"
+            onClick={() => dispatch({ type: 'toggleRuleOpen', id: rule.id })}
+            title="Funde schließen"
+            className="shrink-0 cursor-pointer border-none bg-transparent p-0 font-mono text-[11.5px] text-mute hover:text-ink hover:underline"
+          >
+            ‹ Alle Regeln
+          </button>
+        )}
         <span className="min-w-0 flex-1 truncate font-display text-[14px] font-semibold text-ink">
           {shortName(rule)} · {formatCount(flags.length)} {flags.length === 1 ? 'Fund' : 'Funde'}
         </span>
-        <button
-          type="button"
-          onClick={() => dispatch({ type: 'toggleRuleOpen', id: rule.id })}
-          aria-label="Funde schließen"
-          className="inline-flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-sm)] border-none bg-transparent text-mute hover:bg-sunken hover:text-ink"
-        >
-          ✕
-        </button>
+        {layout === 'side' && (
+          <button
+            type="button"
+            onClick={() => dispatch({ type: 'toggleRuleOpen', id: rule.id })}
+            aria-label="Funde schließen"
+            className="inline-flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-sm)] border-none bg-transparent text-mute hover:bg-sunken hover:text-ink"
+          >
+            ✕
+          </button>
+        )}
       </div>
       <div className="min-h-0 flex-1 overflow-auto px-[14px] pb-[14px] pt-[10px]">
         {rule.hint !== '' && (

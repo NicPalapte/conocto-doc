@@ -34,7 +34,7 @@ import { GraphStage } from './GraphStage';
 import { useWorkspace, type PopPane } from './WorkspaceProvider';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { SelectionCard } from '../graph/SelectionCard';
-import { CheckCard, CheckFlyout } from '../overview/CheckCard';
+import { CheckPane } from '../overview/CheckCard';
 import { OverviewView } from '../overview/OverviewView';
 import { PositionsTable } from '../table/PositionsTable';
 import { DocumentView } from '../docs/DocumentView';
@@ -472,12 +472,7 @@ export function SplitView({ root }: { root: LVNode }) {
     ),
     check: (
       <ErrorBoundary bereich="check" dateiGeladen>
-        <div className="relative min-h-0 flex-1">
-          <div className="absolute inset-0 overflow-auto px-[14px] py-[14px]">
-            <CheckCard />
-          </div>
-        </div>
-        <CheckFlyout />
+        <CheckPane />
       </ErrorBoundary>
     ),
   };

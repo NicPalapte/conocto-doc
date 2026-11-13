@@ -47,6 +47,12 @@ function WithLv({ lv: loaded, children }: { lv: LoadedLV; children: ReactNode })
       <button type="button" onClick={() => dispatch({ type: 'loaded', lv: loaded })}>
         laden
       </button>
+      <button
+        type="button"
+        onClick={() => dispatch({ type: 'setFacet', facetId: 'einheit', values: new Set(['h']) })}
+      >
+        nur Stunden
+      </button>
       {children}
     </>
   );
@@ -109,6 +115,28 @@ describe('Überblick', () => {
     expect(screen.getByTestId('node')).toHaveTextContent('section:999');
     expect(screen.getByTestId('facets')).toHaveTextContent('');
     expect(screen.getByTestId('mode')).toHaveTextContent('graph');
+  });
+
+  it('öffnet einen Abschnitt in der Verteilung und geht zurück (Issue #191)', () => {
+    renderOverview();
+    fireEvent.click(screen.getByTitle(/^§ 001 · Bauhauptgewerke · \d+ Positionen$/));
+    const pfad = screen.getByRole('navigation', { name: 'Geöffneter Abschnitt' });
+    expect(pfad).toHaveTextContent('§ 001 · Bauhauptgewerke');
+    expect(screen.getByTestId('node')).toHaveTextContent('section:001');
+    expect(screen.getByTestId('facets')).toHaveTextContent('');
+    // Jetzt stehen die Unterabschnitte als Kästen da, nicht mehr die Hauptabschnitte.
+    expect(screen.queryByTitle(/^§ 999 · Stundenlohnarbeiten/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '‹ Alle Abschnitte' }));
+    expect(screen.queryByRole('navigation', { name: 'Geöffneter Abschnitt' })).toBeNull();
+    expect(screen.getAllByTitle(/^§ 999 · Stundenlohnarbeiten/).length).toBeGreaterThan(0);
+  });
+
+  it('sagt im geöffneten Abschnitt, wenn der Filter dort nichts übrig lässt', () => {
+    renderOverview();
+    fireEvent.click(screen.getByTitle(/^§ 001 · Bauhauptgewerke · \d+ Positionen$/));
+    fireEvent.click(screen.getByRole('button', { name: 'nur Stunden' }));
+    expect(screen.getByText('Keine Treffer in diesem Abschnitt')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '‹ Alle Abschnitte' })).toBeInTheDocument();
   });
 
   it('wählt beim Klick auf eine Einheit im Abschnitt an und filtert die Einheit', () => {

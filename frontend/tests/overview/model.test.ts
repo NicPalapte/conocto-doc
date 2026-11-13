@@ -7,20 +7,25 @@ import { describe, expect, it } from 'vitest';
 import { buildPositionIndex, filterMask } from '../../src/lib/index/positionIndex';
 import { summarize } from '../../src/lib/index/summary';
 import { prepareFilters } from '../../src/lib/matchPos';
-import { buildOverview, MAX_GROUPS } from '../../src/lib/overview/model';
+import { buildOverview, DIRECT_KEY } from '../../src/lib/overview/model';
 import { runPipeline } from '../../src/lib/pipeline/runPipeline';
 import { buildTree } from '../../src/lib/tree/buildTree';
 import { indexParents } from '../../src/lib/tree/buildTree';
 import { syntheticDraft } from '../support/syntheticLv';
 import type { LVDraft } from '@core';
 
-function overviewOf(draft: LVDraft, search = '') {
+function overviewOf(draft: LVDraft, search = '', focusLabel: string | null = null) {
   const tree = buildTree(draft);
   const index = buildPositionIndex(tree);
   const active = prepareFilters({ facets: {}, menge: null }, search);
   const mask = active.filtering ? filterMask(index, active) : null;
+  const parents = indexParents(tree);
+  const focus =
+    focusLabel === null
+      ? null
+      : ([...parents.values()].find((node) => node?.label === focusLabel)?.id ?? null);
   return {
-    model: buildOverview({ index, mask, parents: indexParents(tree) }),
+    model: buildOverview({ index, mask, parents, focus }),
     index,
     summary: summarize(index),
   };
@@ -159,8 +164,8 @@ describe('buildOverview · ohne Preise', () => {
 });
 
 describe('buildOverview · viele Abschnitte', () => {
-  it('fasst alles jenseits der Kachelgrenze zusammen, ohne Summe zu verlieren', () => {
-    const count = MAX_GROUPS + 5;
+  it('fasst keine Abschnitte zusammen (Issue #191) und verliert keine Summe', () => {
+    const count = 15;
     const draft: LVDraft = {
       projectName: 'Viele Abschnitte',
       client: null,
@@ -189,14 +194,76 @@ describe('buildOverview · viele Abschnitte', () => {
       ],
     };
     const { model } = overviewOf(draft);
-    expect(model.groups).toHaveLength(MAX_GROUPS);
-    const rest = model.groups[model.groups.length - 1];
-    expect(rest.label).toMatch(/Weitere \d+ Abschnitte/);
-    expect(rest.pickable).toBe(false);
+    expect(model.groups).toHaveLength(count);
+    expect(model.groups.every((group) => group.pickable)).toBe(true);
     expect(model.groups.reduce((sum, group) => sum + group.value, 0)).toBeCloseTo(
       model.metrics.totalPrice,
       6,
     );
     expect(model.groups.reduce((sum, group) => sum + group.count, 0)).toBe(model.metrics.positions);
+  });
+});
+
+describe('buildOverview · geöffneter Abschnitt (Issue #191)', () => {
+  const position = (oz: string, unit: string, unitPrice: number) => ({
+    oz,
+    shortText: `Position ${oz}`,
+    longText: '',
+    unit,
+    quantity: 10,
+    unitPrice,
+    positionType: 'NORMAL' as const,
+    attributes: {},
+  });
+  const draft: LVDraft = {
+    projectName: 'Abschnitte',
+    client: null,
+    lots: [
+      {
+        number: '001',
+        label: 'Los 1',
+        sections: [
+          {
+            number: '01',
+            label: 'Rohbau',
+            positions: [position('01.0010', 'psch', 50)],
+            sections: [
+              {
+                number: '01.01',
+                label: 'Erdarbeiten',
+                sections: [],
+                positions: [position('01.01.0010', 'm3', 10), position('01.01.0020', 'm2', 5)],
+              },
+              {
+                number: '01.02',
+                label: 'Beton',
+                sections: [],
+                positions: [position('01.02.0010', 'm3', 100)],
+              },
+            ],
+          },
+          {
+            number: '02',
+            label: 'Ausbau',
+            sections: [],
+            positions: [position('02.0010', 'm2', 20)],
+          },
+        ],
+      },
+    ],
+  };
+
+  it('gliedert nach Unterabschnitten, Kennzahlen bleiben für alles', () => {
+    const { model } = overviewOf(draft, '', 'Rohbau');
+    const labels = model.groups.map((group) => group.label).join(' | ');
+    expect(labels).toMatch(/Erdarbeiten/);
+    expect(labels).toMatch(/Beton/);
+    expect(labels).toMatch(/Rohbau · direkt/);
+    expect(labels).not.toMatch(/Ausbau/);
+    expect(model.groups.find((group) => group.key === DIRECT_KEY)?.pickable).toBe(false);
+    expect(model.groups.find((group) => group.label.endsWith('Erdarbeiten'))?.cells).toHaveLength(
+      2,
+    );
+    expect(model.metrics.positions).toBe(5);
   });
 });
