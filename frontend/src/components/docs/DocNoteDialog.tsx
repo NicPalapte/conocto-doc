@@ -28,7 +28,7 @@ export function DocNoteDialog({
   onClose: () => void;
 }) {
   const host = useHostWindow();
-  const { annotations, persistId } = useViewer();
+  const { annotations } = useViewer();
   const dispatch = useViewerDispatch();
   const ref = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState('');
@@ -138,9 +138,6 @@ export function DocNoteDialog({
           autoFocus
         />
         <div className="flex items-center gap-[8px]">
-          {persistId === null && (
-            <span className="font-mono text-[11px] text-mute">Nur für diese Sitzung</span>
-          )}
           <button
             type="button"
             onClick={save}

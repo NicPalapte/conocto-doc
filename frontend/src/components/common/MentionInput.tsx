@@ -1,6 +1,6 @@
-// Eingabe für Notizen mit @-Verweisen (Entscheidung 0111). „@“ tippen (oder den Knopf, am
-// Tablet ohne @-Taste griffbereit) öffnet unter dem Feld passende Positionen nach OZ oder
-// Kurztext aus allen geladenen LVs. Tippen oder Enter übernimmt; im Text steht dann
+// Eingabe für Notizen mit @-Verweisen (Entscheidung 0111). „@“ tippen öffnet unter dem Feld
+// passende Positionen nach OZ oder Kurztext aus allen geladenen LVs. Am Tablet zusätzlich ein
+// Knopf, weil die Bildschirmtastatur kein @ zeigt; am PC nur der Hinweis im Feld. Tippen oder Enter übernimmt; im Text steht dann
 // `@[Knoten-ID]`, angezeigt als Chip (`MentionText`).
 //
 // Die Liste steht unter dem Feld im Fluss, nicht schwebend: so schneidet kein Bereich mit
@@ -167,7 +167,7 @@ export function MentionInput({
           title="Position erwähnen (@)"
           onMouseDown={(event) => event.preventDefault()}
           onClick={startMention}
-          className="inline-flex h-[32px] w-[32px] shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-pill)] border border-line bg-surface font-mono text-[14px] font-semibold text-dim hover:border-line2 hover:text-ink [@media(pointer:coarse)]:h-[40px] [@media(pointer:coarse)]:w-[40px]"
+          className="hidden h-[40px] w-[40px] shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-pill)] border border-line bg-surface font-mono text-[14px] font-semibold text-dim hover:border-line2 hover:text-ink [@media(pointer:coarse)]:inline-flex"
         >
           @
         </button>

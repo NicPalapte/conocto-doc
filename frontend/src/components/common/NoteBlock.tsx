@@ -84,7 +84,7 @@ function entryLine(entry: Exclude<LogEntry, { kind: 'comment' }>): string {
 }
 
 export function NoteBlock({ positionId }: { positionId: string }) {
-  const { annotations, persistId } = useViewer();
+  const { annotations } = useViewer();
   const dispatch = useViewerDispatch();
   const [draft, setDraft] = useState('');
   const entries = annotations.log.get(positionId) ?? [];
@@ -160,11 +160,6 @@ export function NoteBlock({ positionId }: { positionId: string }) {
           Senden
         </button>
       </div>
-      {persistId === null && (
-        <span className="font-mono text-[11px] text-mute">
-          Nur für diese Sitzung, wird nicht gespeichert.
-        </span>
-      )}
     </Section>
   );
 }
