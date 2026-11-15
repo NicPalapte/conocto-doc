@@ -199,7 +199,8 @@ describe('Markierungen und Kommentare', () => {
     });
     await screen.findByRole('button', { name: '+ Filter' });
     waehlePunkt(0);
-    expect(await screen.findByText(/wird nicht gespeichert/)).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: 'Wichtig', pressed: false }));
+    expect(await screen.findByRole('button', { name: 'Wichtig', pressed: true })).toBeVisible();
   });
 
   it('gibt die Notizen ab dem ersten Speichern an die neue Datei', async () => {
@@ -251,14 +252,14 @@ describe('Markierungen und Kommentare', () => {
     expect(screen.queryByRole('button', { name: /Mit Kommentar/ })).toBeNull();
   });
 
-  it('sagt ohne gespeicherte Datei, dass die Notizen nur für diese Sitzung gelten', () => {
+  it('nimmt ohne gespeicherte Datei Kommentare an, ohne Hinweis', () => {
     // Ohne `persistId` — so lädt ein Demo-LV.
     render(
       <ViewerProvider>
         <NoteBlock positionId="position:1" />
       </ViewerProvider>,
     );
-    expect(screen.getByText(/wird nicht gespeichert/)).toBeInTheDocument();
+    expect(screen.queryByText(/wird nicht gespeichert/)).toBeNull();
     fireEvent.change(screen.getByLabelText('Kommentar zur Position'), {
       target: { value: 'nur kurz' },
     });
