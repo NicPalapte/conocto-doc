@@ -133,6 +133,49 @@ describe('Notizen an Dokumentstellen', () => {
   });
 });
 
+describe('Doppelte und kaputte Notizen (Review PR #239)', () => {
+  it('übernimmt gleiche Notizen aus einer Datei nur einmal, auch beim zweiten Laden', () => {
+    const own = addDocComment(EMPTY_DOC_NOTES, SPOT, 'Eigene', 1);
+    const twice = {
+      ...EMPTY_DOC_NOTES,
+      marks: [
+        {
+          ...SPOT,
+          paint: null,
+          links: [],
+          at: 2,
+          comments: [
+            { at: 5, text: 'Doppelt' },
+            { at: 5, text: 'Doppelt' },
+          ],
+        },
+      ],
+    };
+    const once = mergeDocNotes(own, twice);
+    expect(markAt(once, SPOT)?.comments?.map((comment) => comment.text)).toEqual([
+      'Eigene',
+      'Doppelt',
+    ]);
+    expect(mergeDocNotes(once, twice)).toBe(once);
+  });
+
+  it('liest doppelte Notizen einmal und lässt kaputte weg', () => {
+    const mark = toDocMark({
+      ...SPOT,
+      comments: [
+        { at: 5, text: 'Doppelt' },
+        { at: 5, text: ' Doppelt ' },
+        { at: 6, text: '' },
+        { at: 7 },
+        'kein Objekt',
+        null,
+      ],
+    });
+    expect(mark?.comments).toEqual([{ at: 5, text: 'Doppelt' }]);
+    expect(toDocMark({ ...SPOT, comments: [{ at: 1, text: '   ' }] })).toBeNull();
+  });
+});
+
 describe('Erwähnungen einer Position', () => {
   it('sammelt Kommentare anderer Positionen und Notizen in Dokumenten nach Zeit', () => {
     let notes = addComment(EMPTY_ANNOTATIONS, 'p2', `Erst nach ${mentionToken('p1')}`, 30);

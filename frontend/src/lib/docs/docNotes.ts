@@ -430,12 +430,21 @@ export function rekeyDocNotes(notes: DocNotes, keys: ReadonlyMap<string, string>
 }
 
 /** Notizen vereinigen, gleiche (Zeit + Text) einmal, nach Zeit; `null`: nichts Neues. */
+const commentKey = (comment: DocComment): string => `${comment.at}\u0000${comment.text}`;
+
 function mergeComments(
   own: readonly DocComment[],
   more: readonly DocComment[],
 ): DocComment[] | null {
-  const seen = new Set(own.map((comment) => `${comment.at}\u0000${comment.text}`));
-  const added = more.filter((comment) => !seen.has(`${comment.at}\u0000${comment.text}`));
+  const seen = new Set(own.map(commentKey));
+  const added: DocComment[] = [];
+  for (const comment of more) {
+    const key = commentKey(comment);
+    // Auch Doppelte innerhalb von `more` (bearbeitete Datei) nur einmal übernehmen.
+    if (seen.has(key)) continue;
+    seen.add(key);
+    added.push(comment);
+  }
   if (added.length === 0) return null;
   return [...own, ...added].sort((a, b) => a.at - b.at);
 }
@@ -568,7 +577,8 @@ export function toDocComments(value: unknown): DocComment[] {
     const at = typeof raw.at === 'number' && Number.isFinite(raw.at) ? raw.at : 0;
     out.push({ at, text });
   }
-  return out.sort((a, b) => a.at - b.at);
+  // Gleiche Notiz (Zeit + Text) nur einmal, auch wenn Speicher oder Datei sie doppelt haben.
+  return mergeComments([], out) ?? [];
 }
 
 /** Ein abgelehnter Vorschlag aus Speicher oder Notiz-Datei; Unbrauchbares wird `null`. */
