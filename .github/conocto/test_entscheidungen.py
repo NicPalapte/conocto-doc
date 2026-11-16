@@ -122,7 +122,7 @@ class Repo(unittest.TestCase):
         readme.write_text(readme.read_text().replace(
             "| 0001 |", "| 0002 | [x](0002-von-hand.md) | akzeptiert | 2026-02-02 |\n| 0001 |"))
         Path("package.json").write_text(json.dumps({"name": "x", "version": "0.4.2"}, indent=2))
-        Path("CHANGELOG.md").write_text("geändert\n")
+        Path("CHANGELOG.md").write_text("# Änderungen\n\n## 0.4.2 — von Hand\n")
         Path("changes/kaputt.md").write_text("ohne Kopf\n")
         self.commit("pr")
         fehler, _ = ent.pruefen(self.e, self.basis)
@@ -136,6 +136,12 @@ class Repo(unittest.TestCase):
         fehler, _ = ent.pruefen(self.e, self.basis)
         self.assertTrue(any("Status" in f for f in fehler))
         self.assertTrue(any("Datum" in f for f in fehler))
+
+    def test_changelog_kopf_darf_sich_aendern(self) -> None:
+        Path("CHANGELOG.md").write_text(
+            "# Änderungen\n\nNeuer Hinweis.\n\n---\n\n## 0.4.1 — 01.01.2026 · Alt\n")
+        self.commit("pr")
+        self.assertEqual(ent.pruefen(self.e, self.basis), ([], []))
 
     def test_hinweis_ohne_baustein(self) -> None:
         Path("app.ts").write_text("x")

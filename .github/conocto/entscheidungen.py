@@ -86,6 +86,10 @@ def titel_ohne_nummer(erste_zeile: str) -> str:
     return re.sub(r"^(?:[A-Z]+-)?(?:\d{4}|NEU|neu)\s*[–-]\s*", "", t)
 
 
+def versions_abschnitte(text: str) -> list[str]:
+    return [z for z in text.splitlines() if z.startswith("## ")]
+
+
 def tabellen_nummern(text: str) -> set[str]:
     return {m[1] for z in text.splitlines() if (m := TABELLEN_ZEILE.match(z))}
 
@@ -342,11 +346,13 @@ def pruefen(e: Einstellung, basis: str) -> tuple[list[str], list[str]]:
                 "Die Zeile schreibt der Bot nach dem Merge."
             )
 
-    if e.changelog.as_posix() in geaendert:
-        fehler.append(
-            f"{e.changelog}: bitte nicht von Hand ändern. Stattdessen "
-            f"{e.bausteine.as_posix()}/<titel>.md anlegen."
-        )
+    if e.changelog.as_posix() in geaendert and e.changelog.exists():
+        vorher = versions_abschnitte(git_datei(basis, e.changelog) or "")
+        if versions_abschnitte(e.changelog.read_text(encoding="utf-8")) != vorher:
+            fehler.append(
+                f"{e.changelog}: Versions-Abschnitte bitte nicht von Hand ändern. Stattdessen "
+                f"{e.bausteine.as_posix()}/<titel>.md anlegen."
+            )
     for datei in (e.versionsdatei, e.lockdatei):
         if datei is None or datei.as_posix() not in geaendert or not datei.exists():
             continue
