@@ -105,20 +105,25 @@ export function GraphHeader({ root, width, controls }: GraphHeaderProps) {
   );
 }
 
-/** Legende; schmal als Knopf „Legende", der sie darüber aufklappt. */
+/**
+ * Legende; schmal als Knopf „Legende", der sie darüber aufklappt. Breit steht die erste
+ * Zeile, die Abschnittsfarben klappen über „+ N ▾“ auf.
+ */
 function Legend({ compact }: { compact: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const close = useCallback(() => setOpen(false), []);
-  useDismiss(ref, compact && open, close);
+  useDismiss(ref, open, close);
 
   if (!compact) {
+    // Breit: nur die erste Zeile, die Abschnittsfarben klappen per Klick auf (Issue #191).
     return (
       <div
+        ref={ref}
         aria-label="Legende"
         className="ov-glass pointer-events-auto flex min-w-0 max-w-[560px] flex-col gap-[6px] !rounded-[var(--r-md)] px-[12px] py-[8px] font-mono text-[11px] text-dim"
       >
-        <LegendBody />
+        <LegendBody expanded={open} onToggle={() => setOpen(!open)} />
       </div>
     );
   }
@@ -149,7 +154,8 @@ function Legend({ compact }: { compact: boolean }) {
   );
 }
 
-function LegendBody() {
+/** `onToggle` fehlt: alles zeigen (aufgeklappte Legende am schmalen Graphen). */
+function LegendBody({ expanded = true, onToggle }: { expanded?: boolean; onToggle?: () => void }) {
   const {
     view: {
       graph: { showHints, layout },
@@ -196,8 +202,19 @@ function LegendBody() {
             </span>
           </>
         )}
+        {onToggle !== undefined && sections.length > 0 && (
+          <button
+            type="button"
+            aria-expanded={expanded}
+            onClick={onToggle}
+            title={expanded ? 'Abschnittsfarben zuklappen' : 'Abschnittsfarben zeigen'}
+            className="cursor-pointer border-none bg-transparent p-0 font-mono text-[11px] text-mute hover:text-ink"
+          >
+            + {formatCount(sectionColors.entries.length)} Abschnitte {expanded ? '▴' : '▾'}
+          </button>
+        )}
       </div>
-      {sections.length > 0 && (
+      {sections.length > 0 && expanded && (
         <div className="flex flex-wrap items-center gap-x-[12px] gap-y-[4px]">
           {sections.map(({ key, label, color }) => (
             <span

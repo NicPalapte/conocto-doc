@@ -9,6 +9,18 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.65.0 — 16.11.2026 · Vorschläge, Tabelle und Legende
+
+- **Keine doppelten Vorschläge:** Steht eine Position im selben Satz mehrfach (z. B. OZ und
+  Menge), wird sie nur einmal vorgeschlagen. Es gilt der sicherste Vorschlag: OZ vor Menge
+  vor Beton vor Kurztext.
+- **Rechtsklick im Dokument:** „Mit Position verknüpfen…“, „Notiz…“ und „In Suche
+  übernehmen“ stehen gleich gestaltet untereinander, ohne Lupe und ohne Rot.
+- **Tabelle:** Die Spalte „Druckfestigkeit“ ist weg. Neu ist „Verknüpfungen“: die Zahl der
+  verknüpften Stellen in Dokumenten, beim Überfahren mit den Dokumentnamen, sortierbar.
+- **Legende:** In der Matrix stehen die Abschnittsfarben hinter „+ N Abschnitte ▾“ und
+  klappen erst per Klick auf.
+
 ## 0.64.1 — 16.11.2026 · Dokument im eigenen Fenster: zwei ruhige Leisten
 
 - **Eine Zeile weniger:** Im eigenen Fenster fällt die Titelzeile „Dokument“ weg.

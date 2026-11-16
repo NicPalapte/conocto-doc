@@ -879,7 +879,27 @@ export function suggestionsInPage(
       source: 'text',
     });
   }
-  return kept.sort((a, b) => a.start - b.start);
+  return onePerSentence(text, kept).sort((a, b) => a.start - b.start);
+}
+
+/** Je Satz und Position gilt nur der sicherste Vorschlag (Issue #191, 15.11.2026). */
+const SOURCE_RANK: Readonly<Record<LinkSource, number>> = { oz: 0, menge: 1, beton: 2, text: 3 };
+
+function onePerSentence(text: string, list: readonly DocSuggestion[]): DocSuggestion[] {
+  const best = new Map<string, DocSuggestion>();
+  for (const item of list) {
+    // Von der Mitte aus: ein Vorschlag, der genau am Satzanfang beginnt, gehört sonst
+    // scheinbar noch zum Satz davor.
+    const middle = item.start + Math.floor(item.text.length / 2);
+    const sentence = sentenceAround(text, middle, middle);
+    const key = `${sentence.start}:${item.id}`;
+    const seen = best.get(key);
+    if (seen === undefined || SOURCE_RANK[item.source] < SOURCE_RANK[seen.source]) {
+      best.set(key, item);
+    }
+  }
+  const keep = new Set(best.values());
+  return list.filter((item) => keep.has(item));
 }
 
 /** Was in der Positionskarte zum offenen Vorschlag passt (Entscheidung 0108). */

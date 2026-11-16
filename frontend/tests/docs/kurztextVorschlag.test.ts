@@ -101,3 +101,24 @@ describe('Was die Positionskarte markiert', () => {
     expect(oz).toEqual({ oz: true, amount: false, terms: [] });
   });
 });
+
+describe('Ein Vorschlag je Position und Satz (Issue #191)', () => {
+  const index = suggestIndexOf([
+    { id: 'm', oz: '02.01.0010', quantity: 120, unit: 'm2', shortText: 'Bodenplatte Tiefgarage' },
+    { id: 'n', oz: '02.01.0020', quantity: 35, unit: 'm3', shortText: 'Sauberkeitsschicht' },
+  ]);
+
+  it('OZ und Menge derselben Position im Satz ergeben nur den OZ-Vorschlag', () => {
+    const satz = 'Pos. 02.01.0010 umfasst die Bodenplatte Tiefgarage mit 120 m² Fläche.';
+    expect(finde(satz, index).filter((item) => item.id === 'm')).toEqual([
+      { t: '02.01.0010', id: 'm', source: 'oz' },
+    ]);
+  });
+
+  it('in einem anderen Satz darf dieselbe Position wieder vorkommen', () => {
+    const text =
+      'Pos. 02.01.0010 wird zuerst und vor allen anderen Arbeiten im Baufeld hergestellt. ' +
+      'Danach folgt nach dem Aushärten die Bodenplatte Tiefgarage.';
+    expect(finde(text, index).map((item) => item.source)).toEqual(['oz', 'text']);
+  });
+});

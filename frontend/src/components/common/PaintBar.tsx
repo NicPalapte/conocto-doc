@@ -62,9 +62,6 @@ function SearchRows({ searches }: { searches: readonly SearchAction[] }) {
           onClick={action.run}
           className={at === 0 ? `${ROW} font-semibold` : ROW}
         >
-          <span aria-hidden="true" className="w-[12px] shrink-0 text-center text-mute">
-            {at === 0 ? '⌕' : ''}
-          </span>
           {action.label}
         </button>
       ))}
@@ -144,7 +141,7 @@ export function PaintBar({
             type="button"
             onMouseDown={(event) => event.preventDefault()}
             onClick={onLink}
-            className={`${ROW} font-semibold text-accent-ink`}
+            className={`${ROW} font-semibold`}
           >
             Mit Position verknüpfen…
           </button>
@@ -161,7 +158,6 @@ export function PaintBar({
               )}
             </button>
           )}
-          <span aria-hidden="true" className="mx-[8px] my-[4px] h-px bg-line" />
         </>
       )}
       <SearchRows searches={searches} />
