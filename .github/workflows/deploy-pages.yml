@@ -14,9 +14,12 @@ name: Deploy to GitHub Pages
 # es beim Merge nur noch einen einzigen Schreibvorgang auf `gh-pages`.
 # Siehe docs/decisions/0007-previews-im-deploy-aufraeumen.md.
 
+# Nur bei einem neuen Release (Tag v…), nicht bei jedem Merge nach main.
+# main geht als Arbeitsversion zu Cloudflare Pages (eigenes Projekt, kein Workflow hier).
+# conocto.app bleibt so die stabile Beta. Siehe docs/decisions/0112-beta-nur-bei-release.md.
 on:
   push:
-    branches: [main]
+    tags: ['v*']
   # Erlaubt, einen Feature-Branch manuell testweise zu deployen.
   workflow_dispatch:
 

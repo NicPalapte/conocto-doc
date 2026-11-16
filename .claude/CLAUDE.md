@@ -261,7 +261,9 @@ Prompts in Workflows):
 - `.github/workflows/claude-review.yml` – Review-Agent, max. 3 automatische Läufe je PR
 - `.github/workflows/pr-preview.yml` – Preview-App je PR unter `pr-preview/pr-<nr>/`,
   nur auf Kommentar `/preview`
-- `.github/workflows/deploy-pages.yml` – `main` → Branch `gh-pages` (Wurzel)
+- `.github/workflows/deploy-pages.yml` – Release-Tag `v*` → Branch `gh-pages` (Wurzel) =
+  conocto.app (stabile Beta). `main` → Cloudflare Pages (Arbeitsversion, Einstellungen im
+  Cloudflare-Dashboard, Entscheidung 0112)
 - `gh-pages` wird ausschließlich von Workflows geschrieben – niemals von Hand committen
 - Der Review-Agent misst am Inhalt dieser Datei; Regeländerungen hier ändern den
   Review-Maßstab

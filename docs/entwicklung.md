@@ -108,7 +108,7 @@ bubble/
 │   ├── ci.yml                    # Lint, Format, Typecheck, Test, Build bei jedem PR
 │   ├── claude-review.yml         # KI-Review je PR, gedeckelt auf 3 automatische Läufe
 │   ├── pr-preview.yml            # Preview-App je PR
-│   └── deploy-pages.yml          # main → Branch gh-pages → Live-Seite
+│   └── deploy-pages.yml          # Release v… → gh-pages → conocto.app
 ├── .claude/
 │   ├── CLAUDE.md                 # Coding-Agent-Instruktionen
 │   ├── settings.json             # Claude Code Hook-Konfiguration
@@ -157,7 +157,8 @@ Die alte Adresse `https://nicpalapte.github.io/bubbleLV/` leitet GitHub dorthin 
 
 | Was           | Wann                         | Wo                                     |
 | ------------- | ---------------------------- | -------------------------------------- |
-| Live-Stand    | Push auf `main` oder manuell | `https://conocto.app/`                 |
+| Stabile Beta  | Release (Tag `v…`) oder manuell | `https://conocto.app/`              |
+| Arbeitsversion | Push auf `main` (Cloudflare Pages) | Adresse `*.pages.dev`, per Zero Trust geschützt |
 | Preview je PR | Kommentar `/preview` im PR   | `https://conocto.app/pr-preview/pr-<nummer>/` |
 
 - [`deploy-pages.yml`](../.github/workflows/deploy-pages.yml) baut `frontend/` und schreibt
@@ -167,7 +168,7 @@ Die alte Adresse `https://nicpalapte.github.io/bubbleLV/` leitet GitHub dorthin 
 - [`pr-preview.yml`](../.github/workflows/pr-preview.yml) legt auf den Kommentar `/preview`
   eine eigene Version unter `pr-preview/pr-<nummer>/` ab und postet den Link als Kommentar.
   Aufgeräumt wird hier nicht: Die Preview eines geschlossenen PRs entfernt
-  `deploy-pages.yml` beim nächsten Merge nach `main` — er übernimmt dann nur noch die
+  `deploy-pages.yml` beim nächsten Release — er übernimmt dann nur noch die
   Previews der offenen Pull Requests
   ([Entscheidung 0007](decisions/0007-previews-im-deploy-aufraeumen.md)).
 - Der Branch `gh-pages` wird ausschließlich von diesen Workflows verwaltet — dort nie
