@@ -91,9 +91,9 @@ async function extrasOf(
     ...demo.docs.map((doc) => fetchBytes(doc.url)),
   ]);
   const file = parseNotesFile(new TextDecoder().decode(notes));
-  const { same } = matchNotes(file, indexNodes(lv.tree).values());
+  const { same, byHash } = matchNotes(file, indexNodes(lv.tree).values());
   return {
-    annotations: mergeNotes(EMPTY_ANNOTATIONS, same, file.dokumente, file.plaene),
+    annotations: mergeNotes(EMPTY_ANNOTATIONS, same, file.dokumente, file.plaene, byHash),
     docs: pdfs.map((bytes, i) => new File([bytes], demo.docs[i].name, { type: 'application/pdf' })),
   };
 }

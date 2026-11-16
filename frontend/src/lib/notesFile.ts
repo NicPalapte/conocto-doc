@@ -39,6 +39,7 @@ import {
   type DocRejection,
 } from './docs/docNotes';
 import { isLinkSource, type LinkSource } from './docs/docSuggest';
+import { rekeyMentions } from './mentions';
 import { NO_PAINT_NAMES, toPaintNames, type PaintNames } from './paintNames';
 import type { LVNode } from '../types/lvNode';
 import {
@@ -84,6 +85,13 @@ interface FileDocSpot {
   readonly zeit: string | null;
   /** Aus einem Vorschlag übernommen (Entscheidung 0080); fehlt bei „von Hand“. */
   readonly quelle?: LinkSource;
+  /** Eigene Notizen an der Stelle (Entscheidung 0111); `@[hash]` verweist auf Positionen. */
+  readonly notizen?: readonly FileDocComment[];
+}
+
+interface FileDocComment {
+  readonly zeit: string | null;
+  readonly text: string;
 }
 
 /** Abgelehnter Vorschlag in einem Begleitdokument (Entscheidung 0080). */
@@ -150,8 +158,12 @@ function iso(at: number): string | null {
   return at > 0 ? new Date(at).toISOString() : null;
 }
 
-function fileDocSpot(mark: DocMark, id?: string): FileDocSpot {
-  const spot: FileDocSpot = {
+function fileDocSpot(mark: DocMark, toHash: ReadonlyMap<string, string>, id?: string): FileDocSpot {
+  const notizen = (mark.comments ?? []).map((comment) => ({
+    zeit: iso(comment.at),
+    text: rekeyMentions(comment.text, toHash),
+  }));
+  const base: FileDocSpot = {
     dokument: mark.doc,
     seite: mark.page,
     start: mark.start,
@@ -159,6 +171,7 @@ function fileDocSpot(mark: DocMark, id?: string): FileDocSpot {
     farbe: mark.paint,
     zeit: iso(mark.at),
   };
+  const spot = notizen.length === 0 ? base : { ...base, notizen };
   const quelle = id === undefined ? undefined : mark.sources?.[id];
   return quelle === undefined ? spot : { ...spot, quelle };
 }
@@ -173,9 +186,9 @@ function fileRejection(entry: DocRejection): FileRejection {
   };
 }
 
-function fileEntry(entry: LogEntry): FileEntry {
+function fileEntry(entry: LogEntry, toHash: ReadonlyMap<string, string>): FileEntry {
   const zeit = iso(entry.at);
-  if (entry.kind === 'comment') return { zeit, kommentar: entry.text };
+  if (entry.kind === 'comment') return { zeit, kommentar: rekeyMentions(entry.text, toHash) };
   if (entry.kind === 'progress') return { zeit, fortschritt: entry.progress };
   return { zeit, wichtig: entry.on };
 }
@@ -204,11 +217,10 @@ export function notesFileText(
     ...(documents.rejected ?? []).map((entry) => entry.id),
     ...positionsWithVa(plans),
   ]);
+  // Alle Positionen: @-Verweise (0111) zeigen auch auf Positionen ohne eigene Notiz.
   const toHash = new Map<string, string>();
-  for (const id of ids) {
-    const hash = byId.get(id)?.position?.hashes.id;
-    if (hash !== undefined) toHash.set(id, hash);
-  }
+  for (const [id, node] of byId)
+    if (node.position !== null) toHash.set(id, node.position.hashes.id);
   const positionen = [...ids].map((id) => {
     const position = byId.get(id)?.position ?? null;
     const abgelehnt = rejectionsOfPosition(documents, id).map(fileRejection);
@@ -227,9 +239,9 @@ export function notesFileText(
         text: mark.text,
         zeit: iso(mark.at),
       })),
-      dokumentstellen: marksOfPosition(documents, id).map((mark) => fileDocSpot(mark, id)),
+      dokumentstellen: marksOfPosition(documents, id).map((mark) => fileDocSpot(mark, toHash, id)),
       ...(abgelehnt.length === 0 ? {} : { abgelehnt }),
-      verlauf: (annotations.log.get(id) ?? []).map(fileEntry),
+      verlauf: (annotations.log.get(id) ?? []).map((entry) => fileEntry(entry, toHash)),
     };
   });
   const file = {
@@ -247,7 +259,7 @@ export function notesFileText(
     })),
     dokumentstellen: documents.marks
       .filter((mark) => mark.links.length === 0)
-      .map((mark) => fileDocSpot(mark)),
+      .map((mark) => fileDocSpot(mark, toHash)),
     ...(isEmptyPlanNotes(plans)
       ? {}
       : { plaene: toStoredPlanNotes(rekeyPlanNotes(plans, toHash)) }),
@@ -304,6 +316,15 @@ function readDocSpot(value: unknown, links: readonly string[]): DocMark | null {
     links,
     sources: quelle === null ? {} : { [links[0]]: quelle },
     at: at(raw.zeit),
+    comments: Array.isArray(raw.notizen)
+      ? (raw.notizen as unknown[]).map((item) => {
+          const note = (typeof item === 'object' && item !== null ? item : {}) as Record<
+            string,
+            unknown
+          >;
+          return { at: at(note.zeit), text: note.text };
+        })
+      : [],
   });
 }
 
@@ -412,7 +433,9 @@ function readDokumente(file: Record<string, unknown>): DocNotes {
       docs.set(raw.id, { name: raw.name, pages: Math.max(0, pages) });
     }
   }
-  const marks = readDocSpots(file.dokumentstellen, []).filter((mark) => mark.paint !== null);
+  const marks = readDocSpots(file.dokumentstellen, []).filter(
+    (mark) => mark.paint !== null || (mark.comments ?? []).length > 0,
+  );
   if (docs.size === 0 && marks.length === 0) return EMPTY_DOC_NOTES;
   return mergeDocNotes({ docs, marks: [] }, { docs: new Map(), marks });
 }
@@ -483,6 +506,11 @@ export interface NotesMatching {
   /** Hash und Text anders, aber genau eine Position mit dieser OZ. */
   readonly changed: readonly NotesMatch[];
   readonly missing: readonly NotesFilePosition[];
+  /**
+   * Positions-Hash → Knoten-ID aller Positionen des LV: für @-Verweise (0111) auf
+   * Positionen, die selbst keine Notiz in der Datei haben.
+   */
+  readonly byHash: ReadonlyMap<string, string>;
 }
 
 /** Ordnet die Einträge der Datei den Positionen des geladenen LV zu. */
@@ -539,7 +567,8 @@ export function matchNotes(file: NotesFile, nodes: Iterable<LVNode>): NotesMatch
   stufe(byText, (entry) => entry.text, moved);
   stufe(byOz, (entry) => entry.oz, changed);
   missing.push(...offen);
-  return { same, moved, changed, missing };
+  const ids = new Map([...byHash].map(([hash, node]) => [hash, node.id]));
+  return { same, moved, changed, missing, byHash: ids };
 }
 
 function entryKey(entry: LogEntry): string {
@@ -599,6 +628,7 @@ export function mergeNotes(
   matches: readonly NotesMatch[],
   dokumente: DocNotes = EMPTY_DOC_NOTES,
   plaene: PlanNotes = EMPTY_PLAN_NOTES,
+  byHash: ReadonlyMap<string, string> = new Map(),
 ): Annotations {
   const noPlans = isEmptyPlanNotes(plaene);
   if (
@@ -612,10 +642,28 @@ export function mergeNotes(
   const progress = new Map(current.progress);
   const important = new Set(current.important);
   const log = new Map(current.log);
+  // @-Verweise (0111) stehen in der Datei mit Hash; zugeordnete werden zur Knoten-ID.
+  // Zugeordnete Einträge zuerst (auch umnummerierte), sonst gleicher Hash im LV.
+  const hashToNode = new Map([
+    ...byHash,
+    ...matches.map(({ entry, nodeId }): [string, string] => [entry.hash, nodeId]),
+  ]);
+  const local = (item: LogEntry): LogEntry =>
+    item.kind === 'comment' ? { ...item, text: rekeyMentions(item.text, hashToNode) } : item;
+  const localMark = (mark: DocMark): DocMark =>
+    mark.comments === undefined
+      ? mark
+      : {
+          ...mark,
+          comments: mark.comments.map((comment) => ({
+            ...comment,
+            text: rekeyMentions(comment.text, hashToNode),
+          })),
+        };
   for (const { entry, nodeId } of matches) {
     const before = log.get(nodeId) ?? [];
     const seen = new Set(before.map(entryKey));
-    const added = entry.verlauf.filter((item) => !seen.has(entryKey(item)));
+    const added = entry.verlauf.map(local).filter((item) => !seen.has(entryKey(item)));
     // Stabil sortiert: Einträge ohne Zeitpunkt (v0.15) bleiben vorn, wie gespeichert.
     const merged = [...before, ...added].sort((a, b) => a.at - b.at);
     if (merged.length > 0) log.set(nodeId, merged);
@@ -648,14 +696,15 @@ export function mergeNotes(
     for (const mark of entry.dokumentstellen) {
       const quelle = mark.sources?.[entry.hash];
       linked.push({
-        ...mark,
+        ...localMark(mark),
         links: [nodeId],
         sources: quelle === undefined ? {} : { [nodeId]: quelle },
       });
     }
     for (const item of entry.abgelehnt ?? []) rejected.push({ ...item, id: nodeId });
   }
-  const documents = mergeDocNotes(mergeDocNotes(current.documents, dokumente), {
+  const loose: DocNotes = { ...dokumente, marks: dokumente.marks.map(localMark) };
+  const documents = mergeDocNotes(mergeDocNotes(current.documents, loose), {
     docs: new Map(),
     marks: linked,
     rejected,

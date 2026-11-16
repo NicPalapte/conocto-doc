@@ -18,13 +18,16 @@
 
 import { isPaint, MAX_PAINT_LENGTH, type Paint } from './paints';
 import {
+  docMentionsOf,
   EMPTY_DOC_NOTES,
   fromStoredDocNotes,
   rekeyDocNotes,
   toStoredDocNotes,
+  type DocMark,
   type DocNotes,
   type StoredDocNotes,
 } from './docs/docNotes';
+import { hasMention, rekeyMentions } from './mentions';
 import {
   fromStoredPlanNotes,
   isEmptyPlanNotes,
@@ -284,6 +287,38 @@ export function latestCommentsOf(
   return out.reverse();
 }
 
+/** Woher eine Notiz stammt, die eine Position erwähnt. */
+export type MentionSource =
+  | { readonly kind: 'position'; readonly id: string }
+  | { readonly kind: 'doc'; readonly mark: DocMark };
+
+/** Eine Notiz, die eine Position mit `@` erwähnt (Entscheidung 0111). */
+export interface Mention {
+  readonly at: number;
+  readonly text: string;
+  readonly source: MentionSource;
+}
+
+/**
+ * Notizen anderer Positionen und aus Dokumenten, die `id` erwähnen, älteste zuerst.
+ * Eigene Kommentare der Position zählen nicht: die stehen schon in ihrem Verlauf.
+ */
+export function mentionsOf(annotations: Annotations, id: string): Mention[] {
+  const out: Mention[] = [];
+  for (const [owner, entries] of annotations.log) {
+    if (owner === id) continue;
+    for (const entry of entries) {
+      if (entry.kind === 'comment' && hasMention(entry.text, id)) {
+        out.push({ at: entry.at, text: entry.text, source: { kind: 'position', id: owner } });
+      }
+    }
+  }
+  for (const { mark, comment } of docMentionsOf(annotations.documents, id)) {
+    out.push({ at: comment.at, text: comment.text, source: { kind: 'doc', mark } });
+  }
+  return out.sort((a, b) => a.at - b.at);
+}
+
 export function hasComment(annotations: Annotations, id: string): boolean {
   return (annotations.log.get(id) ?? []).some((entry) => entry.kind === 'comment');
 }
@@ -364,6 +399,19 @@ export function storageKeys(nodes: Iterable<LVNode>): StorageKeys {
   return { toHash, toNode };
 }
 
+/** @-Verweise in Kommentaren umschlüsseln (Entscheidung 0111); ohne Verweis bleibt alles. */
+function rekeyEntries(
+  entries: readonly LogEntry[],
+  keys: ReadonlyMap<string, string>,
+): readonly LogEntry[] {
+  if (!entries.some((entry) => entry.kind === 'comment' && entry.text.includes('@['))) {
+    return entries;
+  }
+  return entries.map((entry) =>
+    entry.kind === 'comment' ? { ...entry, text: rekeyMentions(entry.text, keys) } : entry,
+  );
+}
+
 /**
  * Schlüssel austauschen. Unbekannte Schlüssel bleiben, wie sie sind: so gehen
  * Notizen ohne passende Position beim nächsten Speichern nicht verloren, und
@@ -387,7 +435,7 @@ export function rekey(annotations: Annotations, keys: ReadonlyMap<string, string
     progress: new Map([...progress].map(([id, value]) => [key(id), value])),
     important: new Set([...important].map(key)),
     highlights: new Map([...highlights].map(([id, list]) => [key(id), list])),
-    log: new Map([...log].map(([id, entries]) => [key(id), entries])),
+    log: new Map([...log].map(([id, entries]) => [key(id), rekeyEntries(entries, keys)])),
     documents: rekeyDocNotes(documents, keys),
     ...(links.length > 0 ? { links: rekeyLinks(links, keys) } : {}),
     ...(plans === undefined || isEmptyPlanNotes(plans)

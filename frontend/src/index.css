@@ -742,6 +742,12 @@ a:hover {
   text-decoration: underline 2px #c8362b;
 }
 
+/* Nur Notiz (Entscheidung 0111): gepunktet unterstrichen, ohne Fläche. */
+::highlight(docnote) {
+  color: transparent;
+  text-decoration: underline dotted 2px #636368;
+}
+
 ::highlight(docsearch) {
   background-color: #ffe08a;
   color: transparent;

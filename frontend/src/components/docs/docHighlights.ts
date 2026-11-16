@@ -7,9 +7,9 @@
 import { useLayoutEffect, type RefObject } from 'react';
 import { locateOnPage } from '../../lib/docs/docNotes';
 
-/** Namen der Highlights: Anstreichfarben, Verknüpfung, Suchtreffer, Sprungziel. */
+/** Namen der Highlights: Anstreichfarben, Verknüpfung, Notiz, Suchtreffer, Sprungziel. */
 export type DocHighlightName =
-  `docpaint-${string}` | 'doclink' | 'docsearch' | 'docsearch-current' | 'docflash';
+  `docpaint-${string}` | 'doclink' | 'docnote' | 'docsearch' | 'docsearch-current' | 'docflash';
 
 export interface DocHighlightItem {
   readonly name: DocHighlightName;
