@@ -124,7 +124,8 @@ function DocCard({ row, doc, current }: { row: DocRow; doc: OpenedPdf; current: 
   );
 }
 
-export function DocOverview() {
+/** `ownWindow`: im eigenen Fenster in der Farbe der Kopfleiste (Issue #225). */
+export function DocOverview({ ownWindow = false }: { ownWindow?: boolean } = {}) {
   const {
     docs,
     active,
@@ -183,7 +184,11 @@ export function DocOverview() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 flex-wrap items-center gap-[6px] border-b border-line px-[10px] py-[6px]">
+      <div
+        className={`flex shrink-0 flex-wrap items-center gap-[6px] border-b border-line px-[10px] py-[6px] ${
+          ownWindow ? 'bg-surface' : ''
+        }`}
+      >
         <div
           role="group"
           aria-label="Darstellung"

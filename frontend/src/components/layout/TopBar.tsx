@@ -10,7 +10,7 @@
 // Zustand, eigene Filterleiste, Dialoge öffnen dort; Tour und Kurzumfrage bleiben im
 // Hauptfenster; „Ansicht“ und „LV schließen“ wirken nur dort und fehlen im Fenster.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ReportDialog } from '../report/ReportDialog';
 import { SettingsDialog } from '../settings/SettingsDialog';
 import { ShortcutsDialog } from './ShortcutsDialog';
@@ -36,9 +36,16 @@ export interface TopBarProps {
   /** Filterleiste des ausgelagerten Fensters; im Hauptfenster gilt `view.filterBar`. */
   filterOpen?: boolean;
   onFilterOpen?: (open: boolean) => void;
+  /** Rechts am Ende der Leiste, z. B. „↙“ des ausgelagerten Dokuments (Issue #225). */
+  end?: ReactNode;
 }
 
-export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen }: TopBarProps) {
+export function TopBar({
+  popout = false,
+  filterOpen: ownFilterOpen,
+  onFilterOpen,
+  end,
+}: TopBarProps) {
   const { lv, annotations, view } = useViewer();
   const dispatch = useViewerDispatch();
   const survey = useSurvey();
@@ -212,6 +219,7 @@ export function TopBar({ popout = false, filterOpen: ownFilterOpen, onFilterOpen
             )}
           </>
         )}
+        {end}
       </div>
 
       {kuerzel && <ShortcutsDialog onClose={() => setKuerzel(false)} />}

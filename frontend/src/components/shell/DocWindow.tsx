@@ -1,7 +1,8 @@
 // Begleitdokument (Entscheidung 0072) im eigenen Browserfenster für den zweiten
 // Bildschirm — dieselbe Mechanik wie die Tabelle (TableWindow.tsx): ↗ im Bereichskopf
 // löst es aus dem Splitscreen, ↙ hier holt es zurück. Sonst steht das Dokument als
-// Bereich in `SplitView`.
+// Bereich in `SplitView`. Im Fenster zwei gleichfarbige Leisten, keine Titelzeile dazwischen:
+// „↙“ sitzt rechts in der Kopfleiste (Issue #225, Variante A).
 
 import { useCallback, useEffect } from 'react';
 import { ExternalWindow } from '../common/ExternalWindow';
@@ -10,8 +11,8 @@ import { DocumentView } from '../docs/DocumentView';
 import { PopoutHead } from './PopoutHead';
 import { useViewer } from '../../state/viewer';
 
-const ICON_BUTTON =
-  'inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-[var(--r-sm)] border-none bg-transparent text-mute hover:bg-sunken hover:text-ink';
+const DOCK_BUTTON =
+  'inline-flex h-[36px] min-w-[36px] shrink-0 cursor-pointer items-center justify-center gap-[6px] rounded-[var(--r-sm)] border border-line bg-surface px-[10px] font-mono text-[12px] text-dim hover:border-line2 hover:text-ink';
 
 export function DocWindow() {
   const {
@@ -38,21 +39,20 @@ export function DocWindow() {
         data-search-source="doc"
         className="flex min-h-0 flex-1 flex-col"
       >
-        <PopoutHead />
-        <div className="flex h-[38px] shrink-0 items-center gap-[10px] border-b border-line bg-surface pl-[12px] pr-[6px]">
-          <b className="font-display text-[14px] font-semibold text-ink">Dokument</b>
-          <span className="flex-1" />
-          <button
-            type="button"
-            onClick={() => dock('doc')}
-            title="Zurück ins Hauptfenster"
-            aria-label="Dokument zurück ins Hauptfenster"
-            className={ICON_BUTTON}
-          >
-            ↙
-          </button>
-        </div>
-        <DocumentView />
+        <PopoutHead
+          end={
+            <button
+              type="button"
+              onClick={() => dock('doc')}
+              title="Zurück ins Hauptfenster"
+              aria-label="Dokument zurück ins Hauptfenster"
+              className={DOCK_BUTTON}
+            >
+              ↙<span className="hidden md:inline">Ins Hauptfenster</span>
+            </button>
+          }
+        />
+        <DocumentView ownWindow />
       </section>
     </ExternalWindow>
   );

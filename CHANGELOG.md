@@ -9,6 +9,15 @@ Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** 
 
 ---
 
+## 0.64.1 — 16.11.2026 · Dokument im eigenen Fenster: zwei ruhige Leisten
+
+- **Eine Zeile weniger:** Im eigenen Fenster fällt die Titelzeile „Dokument“ weg.
+  „↙ Ins Hauptfenster“ steht jetzt rechts in der Kopfleiste.
+- **Gleiche Farbe:** Die Leiste des PDFs hat die Farbe der Kopfleiste, auch im Dunkelmodus.
+- **Schmales Fenster:** Seitenfilter, Zoom und „Dokument verknüpfen“ rücken wie im
+  Hauptfenster ins Menü „⋯“, und das PDF passt sich der Fensterbreite an. Bisher maß das
+  eigene Fenster seine Breite nicht.
+
 ## 0.64.0 — 14.11.2026 · Notizen in PDFs und @-Verweise
 
 - **Notizen im PDF:** Text markieren, Rechtsklick (am Tablet: markieren und kurz warten)
