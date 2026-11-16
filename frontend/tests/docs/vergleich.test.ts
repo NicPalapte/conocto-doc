@@ -5,15 +5,25 @@
 
 import { describe, expect, it } from 'vitest';
 import type { Rule } from '@core';
-import { suggestIndexOf, suggestionsInPage } from '../../src/lib/docs/docSuggest';
+import {
+  suggestIndexOf,
+  suggestionsInPage,
+  type DocSuggestion,
+} from '../../src/lib/docs/docSuggest';
 import { suggestRulesOf } from '../../src/lib/docs/suggestRules';
 import { GRUNDSTOCK } from '../../src/lib/rules/rules';
 import vorher from './vorschlaege-vorher.json';
 import { POSITIONEN, SEITEN } from './vorschlagPdf';
 
+/** Ohne Satzanfang (Issue #191): der ist neu und stand im alten Stand noch nicht. */
+const ohneSatz = (item: DocSuggestion): DocSuggestion =>
+  JSON.parse(
+    JSON.stringify(item, (key, value: unknown) => (key === 'sentence' ? undefined : value)),
+  );
+
 const alle = (rules: readonly Rule[]) => {
   const index = suggestIndexOf(POSITIONEN, suggestRulesOf(rules));
-  return SEITEN.map((text, i) => suggestionsInPage(text, index, i + 1));
+  return SEITEN.map((text, i) => suggestionsInPage(text, index, i + 1).map(ohneSatz));
 };
 
 const mit = (id: string, change: (rule: Rule) => Rule): Rule[] =>

@@ -10,6 +10,7 @@ import {
   type DocSuggestion,
   type SuggestPosition,
 } from '../../src/lib/docs/docSuggest';
+import { EMPTY_DOC_NOTES, pendingSuggestions, rejectSuggestion } from '../../src/lib/docs/docNotes';
 
 const pos = (id: string, oz: string, shortText: string): SuggestPosition => ({
   id,
@@ -107,18 +108,36 @@ describe('Ein Vorschlag je Position und Satz (Issue #191)', () => {
     { id: 'm', oz: '02.01.0010', quantity: 120, unit: 'm2', shortText: 'Bodenplatte Tiefgarage' },
     { id: 'n', oz: '02.01.0020', quantity: 35, unit: 'm3', shortText: 'Sauberkeitsschicht' },
   ]);
+  const ALLE = { oz: true, menge: true, beton: true, text: true };
+  const offen = (text: string, notes = EMPTY_DOC_NOTES) =>
+    pendingSuggestions(notes, 'd', suggestionsInPage(text, index, 1), ALLE).map(
+      ({ text: t, id, source }) => ({ t, id, source }),
+    );
+  // Kurztext weiter als 80 Zeichen hinter der OZ, aber im selben Satz.
+  const SATZ =
+    'Pos. 02.01.0010 umfasst nach Abschluss aller Erdarbeiten und der Abnahme durch die ' +
+    'Bauleitung auch die Bodenplatte Tiefgarage.';
 
-  it('OZ und Menge derselben Position im Satz ergeben nur den OZ-Vorschlag', () => {
-    const satz = 'Pos. 02.01.0010 umfasst die Bodenplatte Tiefgarage mit 120 m² Fläche.';
-    expect(finde(satz, index).filter((item) => item.id === 'm')).toEqual([
+  it('OZ und Kurztext derselben Position im Satz ergeben nur den OZ-Vorschlag', () => {
+    expect(finde(SATZ, index).filter((item) => item.id === 'm').length).toBeGreaterThan(1);
+    expect(offen(SATZ).filter((item) => item.id === 'm')).toEqual([
       { t: '02.01.0010', id: 'm', source: 'oz' },
     ]);
+  });
+
+  it('nach „Nein“ zur OZ bleibt der nächste Vorschlag derselben Position', () => {
+    const oz = finde(SATZ, index).find((item) => item.source === 'oz');
+    const spot = { doc: 'd', page: 1, start: SATZ.indexOf('02.01'), text: oz?.t ?? '' };
+    const notes = rejectSuggestion(EMPTY_DOC_NOTES, spot, 'm', 1);
+    const rest = offen(SATZ, notes).filter((item) => item.id === 'm');
+    expect(rest).toHaveLength(1);
+    expect(rest[0].source).not.toBe('oz');
   });
 
   it('in einem anderen Satz darf dieselbe Position wieder vorkommen', () => {
     const text =
       'Pos. 02.01.0010 wird zuerst und vor allen anderen Arbeiten im Baufeld hergestellt. ' +
       'Danach folgt nach dem Aushärten die Bodenplatte Tiefgarage.';
-    expect(finde(text, index).map((item) => item.source)).toEqual(['oz', 'text']);
+    expect(offen(text).map((item) => item.source)).toEqual(['oz', 'text']);
   });
 });
