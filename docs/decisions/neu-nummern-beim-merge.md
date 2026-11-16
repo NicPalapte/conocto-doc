@@ -53,6 +53,6 @@
 
 - Nico richtet einmal den Bot-Schlüssel ein: `docs/setup/bot-schluessel.md`. Ohne ihn
   scheitert der Lauf nach dem Merge rot, `neu-…` und Bausteine bleiben liegen, bis er da ist.
-- Nach jedem Merge baut die Seite zweimal: einmal für den Merge, einmal für den Bot-Commit.
-  Die zweite trägt die neue Version.
+- Die Arbeitsversion baut nach jedem Commit auf `main`, also auch nach dem Bot-Commit; erst
+  dieser Stand trägt die neue Version. Ein Release-Tag `v…` daher erst nach dem Bot-Commit setzen.
 - Offene PRs mit schon vergebener Nummer: vor dem Merge auf `neu-…` umstellen.
