@@ -121,6 +121,7 @@ Designsystem `DS-`). Neue Nummern vergibt erst der Bot nach dem Merge (neu-numme
 | 0109 | [Einstellungen statt Admin-Werkzeuge](0109-einstellungen-statt-admin.md)                                       | akzeptiert                         | 2026-11-12 |
 | 0110 | [Mehrere LVs gleichzeitig laden](0110-mehrere-lvs.md)                                                          | akzeptiert                         | 2026-11-13 |
 | 0111 | [Notizen an PDF-Stellen und @-Verweise](0111-notizen-in-pdfs-und-verweise.md)                                  | akzeptiert                         | 2026-11-14 |
+| 0112 | [conocto.app nur bei neuem Release, main zu Cloudflare](0112-beta-nur-bei-release.md)                          | akzeptiert                         | 2026-11-16 |
 
 ## Wann schreibe ich eine neue Datei?
 

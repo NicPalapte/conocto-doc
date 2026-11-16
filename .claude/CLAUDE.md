@@ -270,9 +270,12 @@ Prompts in Workflows):
 - `.github/workflows/claude-review.yml` – Review-Agent, max. 3 automatische Läufe je PR
 - `.github/workflows/pr-preview.yml` – Preview-App je PR unter `pr-preview/pr-<nr>/`,
   nur auf Kommentar `/preview`
-- `.github/workflows/deploy-pages.yml` – `main` → Branch `gh-pages` (Wurzel)
+- `.github/workflows/deploy-pages.yml` – Release-Tag `v*` → Branch `gh-pages` (Wurzel) =
+  conocto.app (stabile Beta). `main` → Cloudflare Pages (Arbeitsversion, Einstellungen im
+  Cloudflare-Dashboard, Entscheidung 0112)
 - `.github/workflows/entscheidungen.yml` – nach Merge auf `main`: Nummer, Tabellenzeile,
-  Version, Changelog in einem Commit (Secret `BOT_SCHLUESSEL`, `docs/setup/bot-schluessel.md`)
+  Version, Changelog in einem Commit (Secret `BOT_SCHLUESSEL`, `docs/setup/bot-schluessel.md`).
+  Release-Tag `v*` erst nach diesem Bot-Commit setzen.
 - `gh-pages` wird ausschließlich von Workflows geschrieben – niemals von Hand committen
 - Der Review-Agent misst am Inhalt dieser Datei; Regeländerungen hier ändern den
   Review-Maßstab
