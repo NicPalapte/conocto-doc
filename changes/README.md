@@ -16,4 +16,4 @@ Tasten nicht im Weg
   der Anwendung.
 - Nicht von Hand ändern: Versionsnummer in `frontend/package.json` und `CHANGELOG.md`.
 - Nach dem Merge macht der Bot daraus Version und Changelog und löscht die Datei
-  (Entscheidung neu-nummern-beim-merge).
+  (Entscheidung 0113).

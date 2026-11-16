@@ -251,7 +251,7 @@ Prompts in Workflows):
 - Neue Entscheidung nur als `docs/decisions/neu-<titel>.md` mit `# NEU – Titel`; Verweise im
   selben PR als `neu-<titel>`. Verboten: Nummer selbst vergeben, Zeile in der Übersichtstabelle
   ergänzen. Nummer + Zeile setzt `.github/workflows/entscheidungen.yml` nach dem Merge
-  (Entscheidung neu-nummern-beim-merge). Verweis in ein anderes Repo mit Präfix: `CORE-0005`,
+  (Entscheidung 0113). Verweis in ein anderes Repo mit Präfix: `CORE-0005`,
   `BIM-0002`, `DS-0001`.
 - App-Änderung ⇒ Baustein `changes/<titel>.md` (`art: funktion|korrektur`, Format in
   `changes/README.md`). Verboten: Version in `frontend/package.json`/`package-lock.json` oder

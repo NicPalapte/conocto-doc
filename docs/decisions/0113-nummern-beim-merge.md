@@ -1,4 +1,4 @@
-# NEU – Nummer, Version und Changelog erst nach dem Merge
+# DOC-0113 – Nummer, Version und Changelog erst nach dem Merge
 
 - **Status:** akzeptiert
 - **Datum:** 2026-11-16

@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
 
       # Meldet, was nach dem Merge Konflikte erzeugt: Nummer von Hand, neue Tabellenzeile,
-      # Version oder CHANGELOG.md von Hand. Siehe docs/decisions/neu-nummern-beim-merge.md.
+      # Version oder CHANGELOG.md von Hand. Siehe docs/decisions/0113-nummern-beim-merge.md.
       - name: Entscheidungen, Version, Changelog
         if: github.event_name == 'pull_request'
         run: |

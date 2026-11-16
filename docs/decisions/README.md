@@ -4,7 +4,7 @@ Hier steht, **warum** das Projekt so gebaut ist, wie es gebaut ist. Eine Datei p
 Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien das _Warum_.
 
 Im Gesamtprodukt Conocto heißen diese Entscheidungen `DOC-NNNN` (core `CORE-`, BIM `BIM-`,
-Designsystem `DS-`). Neue Nummern vergibt erst der Bot nach dem Merge (neu-nummern-beim-merge).
+Designsystem `DS-`). Neue Nummern vergibt erst der Bot nach dem Merge (0113).
 
 ## Übersicht
 
@@ -36,7 +36,7 @@ Designsystem `DS-`). Neue Nummern vergibt erst der Bot nach dem Merge (neu-numme
 | 0024 | [Fehler melden ohne GitHub-Konto](0024-fehler-melden-ohne-konto.md)                                            | akzeptiert                         | 2026-09-23 |
 | 0025 | [Typecheck läuft auch über die Tests](0025-typecheck-ueber-die-tests.md)                                       | akzeptiert                         | 2026-09-23 |
 | 0026 | [Ein Absturz zeigt eine Seite, keine weiße Fläche](0026-absturz-auffangnetz.md)                                | akzeptiert                         | 2026-09-23 |
-| 0027 | [Versionsnummer, Changelog und „Über diese App"](0027-versionsnummer-und-ueber-diese-app.md)                   | teilw. ersetzt d. 0079, neu-nummern-beim-merge | 2026-09-24 |
+| 0027 | [Versionsnummer, Changelog und „Über diese App"](0027-versionsnummer-und-ueber-diese-app.md)                   | teilw. ersetzt d. 0079, 0113 | 2026-09-24 |
 | 0028 | [Zwei Leisten, „Mitnehmen" in die Befehle](0028-zwei-leisten-und-befehle.md)                                   | ersetzt durch 0034                 | 2026-09-24 |
 | 0029 | [Markierungen im Graphen: Ringe und Muster](0029-markierungen-im-graphen.md)                                   | akzeptiert                         | 2026-09-25 |
 | 0030 | [Material-Filter ausblenden, bis die Liste geprüft ist](0030-material-filter-ausblenden.md)                    | ersetzt durch 0044                 | 2026-10-04 |
@@ -122,6 +122,7 @@ Designsystem `DS-`). Neue Nummern vergibt erst der Bot nach dem Merge (neu-numme
 | 0110 | [Mehrere LVs gleichzeitig laden](0110-mehrere-lvs.md)                                                          | akzeptiert                         | 2026-11-13 |
 | 0111 | [Notizen an PDF-Stellen und @-Verweise](0111-notizen-in-pdfs-und-verweise.md)                                  | akzeptiert                         | 2026-11-14 |
 | 0112 | [conocto.app nur bei neuem Release, main zu Cloudflare](0112-beta-nur-bei-release.md)                          | akzeptiert                         | 2026-11-16 |
+| 0113 | [Nummer, Version und Changelog erst nach dem Merge](0113-nummern-beim-merge.md)                                | akzeptiert                         | 2026-11-16 |
 
 ## Wann schreibe ich eine neue Datei?
 
