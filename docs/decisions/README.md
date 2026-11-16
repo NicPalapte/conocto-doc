@@ -3,6 +3,9 @@
 Hier steht, **warum** das Projekt so gebaut ist, wie es gebaut ist. Eine Datei pro
 Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien das _Warum_.
 
+Im Gesamtprodukt Conocto heißen diese Entscheidungen `DOC-NNNN` (core `CORE-`, BIM `BIM-`,
+Designsystem `DS-`). Neue Nummern vergibt erst der Bot nach dem Merge (neu-nummern-beim-merge).
+
 ## Übersicht
 
 | Nr.  | Entscheidung                                                                                                   | Status                             | Datum      |
@@ -33,7 +36,7 @@ Entscheidung, fortlaufend nummeriert. Der Code zeigt das _Was_, diese Dateien da
 | 0024 | [Fehler melden ohne GitHub-Konto](0024-fehler-melden-ohne-konto.md)                                            | akzeptiert                         | 2026-09-23 |
 | 0025 | [Typecheck läuft auch über die Tests](0025-typecheck-ueber-die-tests.md)                                       | akzeptiert                         | 2026-09-23 |
 | 0026 | [Ein Absturz zeigt eine Seite, keine weiße Fläche](0026-absturz-auffangnetz.md)                                | akzeptiert                         | 2026-09-23 |
-| 0027 | [Versionsnummer, Changelog und „Über diese App"](0027-versionsnummer-und-ueber-diese-app.md)                   | teilweise ersetzt durch 0079       | 2026-09-24 |
+| 0027 | [Versionsnummer, Changelog und „Über diese App"](0027-versionsnummer-und-ueber-diese-app.md)                   | teilw. ersetzt d. 0079, neu-nummern-beim-merge | 2026-09-24 |
 | 0028 | [Zwei Leisten, „Mitnehmen" in die Befehle](0028-zwei-leisten-und-befehle.md)                                   | ersetzt durch 0034                 | 2026-09-24 |
 | 0029 | [Markierungen im Graphen: Ringe und Muster](0029-markierungen-im-graphen.md)                                   | akzeptiert                         | 2026-09-25 |
 | 0030 | [Material-Filter ausblenden, bis die Liste geprüft ist](0030-material-filter-ausblenden.md)                    | ersetzt durch 0044                 | 2026-10-04 |
@@ -133,16 +136,23 @@ ohne Weichenstellung.
 
 ## Regeln
 
-- Nummern werden nie wiederverwendet. Dateiname: `NNNN-kurzer-titel.md`.
+- Neue Entscheidung im PR **ohne Nummer**: `neu-kurzer-titel.md` (nur a–z, 0–9, `-`), erste
+  Zeile `# NEU – Titel`. Verweise darauf im selben PR schreibt man `neu-kurzer-titel`.
+- Nach dem Merge benennt der Bot die Datei in `NNNN-kurzer-titel.md` um, setzt `# DOC-NNNN – Titel`,
+  ersetzt alle `neu-kurzer-titel` durch die Nummer und ergänzt die Zeile in der Tabelle oben.
+- **Nicht von Hand:** neue Datei mit Nummer, neue Zeile in der Tabelle. Die CI meldet beides.
+- Nummern werden nie wiederverwendet. Verweise in andere Repos immer mit Präfix (`CORE-0005`).
 - Eine getroffene Entscheidung wird **nicht umgeschrieben**. Wird sie hinfällig, setzt
-  man den Status auf `ersetzt durch NNNN` und schreibt eine neue Datei.
+  man den Status auf `ersetzt durch NNNN` und schreibt eine neue Datei. Den Status in der
+  Tabelle oben darf man dabei von Hand anpassen.
+- Status beginnt immer mit: vorgeschlagen · akzeptiert · ersetzt durch · teilweise ersetzt
+  durch · ergänzt durch · verworfen.
 - Erklärung in einfacher Sprache, kurze Sätze, Stichpunkte statt Fließtext.
-- Nach dem Anlegen: Zeile in der Übersichtstabelle oben ergänzen.
 
 ## Vorlage
 
 ```markdown
-# NNNN – Titel
+# NEU – Titel
 
 - **Status:** akzeptiert
 - **Datum:** JJJJ-MM-TT

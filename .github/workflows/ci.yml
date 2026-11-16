@@ -15,6 +15,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Ganze Historie: die Prüfung unten vergleicht den PR mit main.
+          fetch-depth: 0
+
+      # Meldet, was nach dem Merge Konflikte erzeugt: Nummer von Hand, neue Tabellenzeile,
+      # Version oder CHANGELOG.md von Hand. Siehe docs/decisions/neu-nummern-beim-merge.md.
+      - name: Entscheidungen, Version, Changelog
+        if: github.event_name == 'pull_request'
+        run: |
+          python3 -m unittest discover -s .github/conocto -q
+          python3 .github/conocto/entscheidungen.py pruefen --praefix DOC \
+            --versionsdatei frontend/package.json --lockdatei frontend/package-lock.json \
+            --basis "origin/${{ github.base_ref }}"
 
       - name: Check for frontend app
         id: check

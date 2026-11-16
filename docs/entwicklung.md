@@ -98,6 +98,7 @@ bubble/
 ├── tests/
 │   └── fixtures/                 # GAEB DA XML-Testdateien (Quelle, siehe oben)
 ├── CHANGELOG.md                  # Was sich je Version geändert hat
+├── changes/                      # Bausteine je PR, daraus macht der Bot Version + Changelog
 ├── docs/
 │   ├── scope.md                  # Feature-Specs und Out-of-Scope-Liste
 │   ├── implementation-plan.md    # Arbeitspakete (Release 2: WP-H…P)
@@ -108,7 +109,8 @@ bubble/
 │   ├── ci.yml                    # Lint, Format, Typecheck, Test, Build bei jedem PR
 │   ├── claude-review.yml         # KI-Review je PR, gedeckelt auf 3 automatische Läufe
 │   ├── pr-preview.yml            # Preview-App je PR
-│   └── deploy-pages.yml          # main → Branch gh-pages → Live-Seite
+│   ├── deploy-pages.yml          # main → Branch gh-pages → Live-Seite
+│   └── entscheidungen.yml        # nach Merge: Nummer, Version, Changelog (Bot)
 ├── .claude/
 │   ├── CLAUDE.md                 # Coding-Agent-Instruktionen
 │   ├── settings.json             # Claude Code Hook-Konfiguration
