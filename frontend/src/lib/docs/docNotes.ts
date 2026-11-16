@@ -17,7 +17,7 @@
 
 import { isDocKind, type DocKind } from '@core';
 import { isPaint, MAX_PAINT_LENGTH, type Paint } from '../paints';
-import { isLinkSource, type DocSuggestion, type LinkSource } from './docSuggest';
+import { isLinkSource, onePerSentence, type DocSuggestion, type LinkSource } from './docSuggest';
 import { hasMention, rekeyMentions } from '../mentions';
 
 /** Ein Begleitdokument, das in diesem LV schon einmal offen war. */
@@ -655,10 +655,14 @@ export function pendingSuggestions(
 ): DocSuggestion[] {
   if (list.length === 0) return [];
   const marks = marksOfDoc(notes, doc);
-  return list.filter((item) => {
+  // Erst „Nein“ und Schalter, dann je Satz verdichten: lehnt man die OZ ab, bleibt die Menge
+  // derselben Position. Verknüpft danach: ist die OZ übernommen, fällt die Menge mit weg.
+  const shown = list.filter((item) => {
     if (!enabled[item.source]) return false;
     const spot = { doc, page: item.page, start: item.start, text: item.text };
-    if (isRejected(notes, spot, item.id)) return false;
+    return !isRejected(notes, spot, item.id);
+  });
+  return onePerSentence(shown).filter((item) => {
     const end = item.start + item.text.length;
     return !marks.some(
       (mark) =>

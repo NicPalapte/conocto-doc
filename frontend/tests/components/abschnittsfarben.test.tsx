@@ -121,6 +121,9 @@ describe('Legende der Abschnittsfarben', () => {
   it('nennt in der Matrix die Abschnitte mit ihrer Farbe', () => {
     const legende = renderHeader();
     fireEvent.click(screen.getByRole('button', { name: 'Matrix' }));
+    // Erst zugeklappt, „+ N ▾“ klappt die Farben auf (Issue #191).
+    expect(within(legende).queryByTitle(/^§ 999 · /)).toBeNull();
+    fireEvent.click(within(legende).getByRole('button', { name: /^\+ \d+ Abschnitte ▾$/ }));
     expect(within(legende).getByTitle(/^§ 999 · /)).toBeInTheDocument();
     expect(within(legende).queryByText(/Gewerke/)).toBeNull();
   });

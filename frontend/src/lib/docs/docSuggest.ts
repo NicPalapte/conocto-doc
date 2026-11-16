@@ -110,6 +110,8 @@ export interface DocSuggestion {
    * Im PDF stehen weniger Klassen als im LV (nur so viele, wie dort stehen).
    */
   readonly sorte?: { readonly key: string; readonly matches: number; readonly pdf?: string };
+  /** Beginn des Satzes im Seitentext, für „ein Vorschlag je Position und Satz“. */
+  readonly sentence?: number;
 }
 
 export { SENTENCE_REACH } from '@core';
@@ -879,7 +881,33 @@ export function suggestionsInPage(
       source: 'text',
     });
   }
-  return kept.sort((a, b) => a.start - b.start);
+  return withSentence(text, kept).sort((a, b) => a.start - b.start);
+}
+
+/** Satzanfang an jeden Vorschlag hängen; verdichtet wird erst nach „Nein“ und Schaltern. */
+function withSentence(text: string, list: readonly DocSuggestion[]): DocSuggestion[] {
+  return list.map((item) => {
+    // Von der Mitte aus: ein Vorschlag, der genau am Satzanfang beginnt, gehört sonst
+    // scheinbar noch zum Satz davor.
+    const middle = item.start + Math.floor(item.text.length / 2);
+    return { ...item, sentence: sentenceAround(text, middle, middle).start };
+  });
+}
+
+/** Je Satz und Position gilt nur der sicherste Vorschlag (Issue #191, 15.11.2026). */
+const SOURCE_RANK: Readonly<Record<LinkSource, number>> = { oz: 0, menge: 1, beton: 2, text: 3 };
+
+export function onePerSentence(list: readonly DocSuggestion[]): DocSuggestion[] {
+  const best = new Map<string, DocSuggestion>();
+  for (const item of list) {
+    const key = `${item.page}:${item.sentence ?? item.start}:${item.id}`;
+    const seen = best.get(key);
+    if (seen === undefined || SOURCE_RANK[item.source] < SOURCE_RANK[seen.source]) {
+      best.set(key, item);
+    }
+  }
+  const keep = new Set(best.values());
+  return list.filter((item) => keep.has(item));
 }
 
 /** Was in der Positionskarte zum offenen Vorschlag passt (Entscheidung 0108). */

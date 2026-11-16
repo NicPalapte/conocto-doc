@@ -54,17 +54,14 @@ export interface SearchAction {
 function SearchRows({ searches }: { searches: readonly SearchAction[] }) {
   return (
     <>
-      {searches.map((action, at) => (
+      {searches.map((action) => (
         <button
           key={action.label}
           type="button"
           onMouseDown={(event) => event.preventDefault()}
           onClick={action.run}
-          className={at === 0 ? `${ROW} font-semibold` : ROW}
+          className={ROW}
         >
-          <span aria-hidden="true" className="w-[12px] shrink-0 text-center text-mute">
-            {at === 0 ? '⌕' : ''}
-          </span>
           {action.label}
         </button>
       ))}
@@ -138,31 +135,16 @@ export function PaintBar({
       }}
       onContextMenu={(event) => event.preventDefault()}
     >
+      {/* Reihenfolge (Nico, 16.11.2026): Verknüpfen, Suche, Kopieren, Notiz. */}
       {onLink !== undefined && (
-        <>
-          <button
-            type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={onLink}
-            className={`${ROW} font-semibold text-accent-ink`}
-          >
-            Mit Position verknüpfen…
-          </button>
-          {onNote !== undefined && (
-            <button
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={onNote.open}
-              className={`${ROW} font-semibold`}
-            >
-              <span className="min-w-0 flex-1">Notiz…</span>
-              {onNote.count > 0 && (
-                <span className="shrink-0 text-[11px] text-mute">{onNote.count}</span>
-              )}
-            </button>
-          )}
-          <span aria-hidden="true" className="mx-[8px] my-[4px] h-px bg-line" />
-        </>
+        <button
+          type="button"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={onLink}
+          className={ROW}
+        >
+          Mit Position verknüpfen
+        </button>
       )}
       <SearchRows searches={searches} />
       <button
@@ -173,6 +155,19 @@ export function PaintBar({
       >
         Kopieren
       </button>
+      {onNote !== undefined && (
+        <button
+          type="button"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={onNote.open}
+          className={ROW}
+        >
+          <span className="min-w-0 flex-1">Notiz</span>
+          {onNote.count > 0 && (
+            <span className="shrink-0 text-[11px] text-mute">{onNote.count}</span>
+          )}
+        </button>
+      )}
       <span aria-hidden="true" className="mx-[8px] my-[4px] h-px bg-line" />
       {PAINTS.map((paint) => {
         const own = names[paint];

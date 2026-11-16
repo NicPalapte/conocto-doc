@@ -41,7 +41,8 @@ import { Chip } from '@conocto/design';
 import { DataTable, type Column, type GroupHead } from '../ui/DataTable';
 import { Popover, PopoverHead } from '../ui/Popover';
 import { SegmentedControl } from '@conocto/design';
-import { attrString, attrStrings } from '../../lib/attributes';
+import { attrString } from '../../lib/attributes';
+import type { DocNotes } from '../../lib/docs/docNotes';
 import { facetOptionLabel, FACETS_BY_ID } from '../../lib/facets';
 import { formatCount, formatEuro, formatNumber } from '../../lib/format';
 import { createPositionFilter } from '../../lib/index/positionIndex';
@@ -71,7 +72,7 @@ import { useViewer, useViewerDispatch } from '../../state/viewer';
 import type { LVNode, PositionSummary } from '../../types/lvNode';
 import { searchKeyOf, type PositionType } from '@core';
 
-type SortKey = 'oz' | 'shortText' | 'positionsart' | 'beton' | 'unit' | 'quantity' | 'unitPrice';
+type SortKey = 'oz' | 'shortText' | 'positionsart' | 'links' | 'unit' | 'quantity' | 'unitPrice';
 
 type Scope = 'node' | 'lv';
 
@@ -199,16 +200,13 @@ const COLUMNS: ReadonlyArray<Column<Row>> = [
       return facetOptionLabel(facet, value);
     },
   },
+  // Verknüpfte Stellen in Dokumenten statt Druckfestigkeit (Issue #191, 13.11.2026).
   {
-    key: 'beton',
-    label: 'Druckfestigkeit',
+    key: 'links',
+    label: 'Verknüpfungen',
     width: 130,
-    render: (r) => {
-      const beton = attrString(r.position.attributes, 'beton');
-      const expo = attrStrings(r.position.attributes, 'expo');
-      if (beton === null) return expo.join(', ') || '—';
-      return expo.length === 0 ? beton : `${beton} · ${expo.join(', ')}`;
-    },
+    align: 'right',
+    render: () => '',
   },
 ];
 
@@ -247,6 +245,7 @@ interface NoteCells {
   openMenu: (kind: 'progress' | 'comment', id: string, anchor: HTMLElement) => void;
   toggleImportant: (id: string) => void;
   startFill: (event: ReactPointerEvent<HTMLElement>, id: string, column: FillColumn) => void;
+  links: ReadonlyMap<string, LinkSummary>;
 }
 
 /** Klicks in den Notiz-Zellen wählen die Zeile nicht mit aus. */
@@ -286,6 +285,13 @@ const CELL_BUTTON =
 /** Spalten aus den eigenen Markern und Kommentaren. */
 function annotationRender(key: string, cells: NoteCells): Column<Row>['render'] {
   const { annotations, filling } = cells;
+  if (key === 'links') {
+    return (r) => {
+      const summary = cells.links.get(r.node.id);
+      if (summary === undefined) return <span className="text-mute">—</span>;
+      return <span title={summary.title}>{formatCount(summary.count)}</span>;
+    };
+  }
   if (key === 'va' || key === 'herkunft') {
     const plans = annotations.plans ?? EMPTY_PLAN_NOTES;
     return (r) => {
@@ -656,7 +662,39 @@ function ColumnPicker({
   );
 }
 
-function sortValue(position: PositionSummary, key: SortKey): string | number | null {
+/** Verknüpfte Stellen je Position: Anzahl und Dokumente, für Spalte und Sortierung. */
+interface LinkSummary {
+  readonly count: number;
+  /** „Baubeschreibung (2), AIA (1)“ */
+  readonly title: string;
+}
+
+function linkSummaries(notes: DocNotes): ReadonlyMap<string, LinkSummary> {
+  const byId = new Map<string, Map<string, number>>();
+  for (const mark of notes.marks) {
+    const name = notes.docs.get(mark.doc)?.name ?? 'Dokument';
+    for (const id of mark.links) {
+      const docs = byId.get(id) ?? new Map<string, number>();
+      docs.set(name, (docs.get(name) ?? 0) + 1);
+      byId.set(id, docs);
+    }
+  }
+  const out = new Map<string, LinkSummary>();
+  for (const [id, docs] of byId) {
+    let count = 0;
+    for (const n of docs.values()) count += n;
+    const title = [...docs].map(([name, n]) => `${name} (${n})`).join(', ');
+    out.set(id, { count, title });
+  }
+  return out;
+}
+
+function sortValue(
+  row: Row,
+  key: SortKey,
+  links: ReadonlyMap<string, LinkSummary>,
+): string | number | null {
+  const { position } = row;
   switch (key) {
     case 'oz':
       // Bei mehreren LVs erst nach LV, dann nach OZ (Entscheidung 0110).
@@ -665,8 +703,8 @@ function sortValue(position: PositionSummary, key: SortKey): string | number | n
       return position.shortText;
     case 'positionsart':
       return attrString(position.attributes, 'positionsart');
-    case 'beton':
-      return attrString(position.attributes, 'beton');
+    case 'links':
+      return links.get(row.node.id)?.count ?? null;
     case 'unit':
       return position.unit;
     case 'quantity':
@@ -678,9 +716,15 @@ function sortValue(position: PositionSummary, key: SortKey): string | number | n
   }
 }
 
-function compare(a: Row, b: Row, key: SortKey, dir: 1 | -1): number {
-  const va = sortValue(a.position, key);
-  const vb = sortValue(b.position, key);
+function compare(
+  a: Row,
+  b: Row,
+  key: SortKey,
+  dir: 1 | -1,
+  links: ReadonlyMap<string, LinkSummary>,
+): number {
+  const va = sortValue(a, key, links);
+  const vb = sortValue(b, key, links);
   if (va === null) return 1;
   if (vb === null) return -1;
   if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
@@ -704,6 +748,7 @@ export function PositionsTable({ root }: { root: LVNode }) {
   // Spaltenschlüssel kennt nur diese Komponente. Unbekannte Schlüssel fallen
   // unten in `sortValue` auf „kein Wert" zurück, sortieren also stabil.
   const { sort, scope } = table;
+  const links = useMemo(() => linkSummaries(annotations.documents), [annotations.documents]);
   // `null` heißt „unverändert": die Vorgabe kennt nur diese Komponente, weil
   // nur sie die Spaltendefinitionen hat.
   const columnConfig = table.columns ?? DEFAULT_COLUMN_CONFIG;
@@ -792,7 +837,7 @@ export function PositionsTable({ root }: { root: LVNode }) {
     const sorted = [...shown].sort((a, b) => {
       const ga = order.get(a.groupKey) ?? 0;
       const gb = order.get(b.groupKey) ?? 0;
-      return ga === gb ? compare(a, b, sort.key as SortKey, sort.dir) : ga - gb;
+      return ga === gb ? compare(a, b, sort.key as SortKey, sort.dir, links) : ga - gb;
     });
     // Ebenen, die alle Zeilen teilen (z. B. das LV selbst über der ersten Gliederung),
     // sagen nichts und kosten eine Zeile. Der direkte Abschnitt bleibt immer stehen.
@@ -805,7 +850,7 @@ export function PositionsTable({ root }: { root: LVNode }) {
       common = same;
     }
     return common <= 0 ? sorted : sorted.map((row) => ({ ...row, trail: row.trail.slice(common) }));
-  }, [shown, sort]);
+  }, [shown, sort, links]);
 
   // Zeilen, die gerade zu sehen sind — das Ziehen läuft über diese Reihenfolge.
   const visibleIds = useMemo(
@@ -925,6 +970,7 @@ export function PositionsTable({ root }: { root: LVNode }) {
       },
       toggleImportant: (id) => setImportantNow(dispatch, id, !annotations.important.has(id)),
       startFill,
+      links,
     };
     const shown = visibleColumnKeys(columnConfig).flatMap((key) => {
       const column = COLUMNS_BY_KEY.get(key);
@@ -942,7 +988,7 @@ export function PositionsTable({ root }: { root: LVNode }) {
     return at < 0
       ? [...shown, ...plan]
       : [...shown.slice(0, at + 1), ...plan, ...shown.slice(at + 1)];
-  }, [columnConfig, active.query, annotations, filling, dispatch, startFill, ozOf]);
+  }, [columnConfig, active.query, annotations, filling, dispatch, startFill, ozOf, links]);
 
   // Kopfzeile je Abschnitt: Name, Anzahl der gezeigten Positionen, davon erledigt.
   const heads = useMemo(() => {

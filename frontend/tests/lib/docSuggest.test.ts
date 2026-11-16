@@ -113,6 +113,7 @@ describe('Mengen im Seitentext', () => {
         id: 'p7',
         source: 'menge',
         words: ['Betonstahl'],
+        sentence: 13,
       },
     ]);
   });

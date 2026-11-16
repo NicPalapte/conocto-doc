@@ -95,7 +95,7 @@ describe('PositionsTable · Spalten', () => {
       '!',
       'Kommentar',
       'Positionsart',
-      'Druckfestigkeit',
+      'Verknüpfungen',
     ]);
   });
 
@@ -189,10 +189,10 @@ describe('PositionsTable · Spaltenbreite (Review zu PR #43)', () => {
 
   it('wirkt auch an der letzten Spalte', () => {
     renderTable();
-    fireEvent.mouseDown(grip('Druckfestigkeit'), { clientX: 0 });
+    fireEvent.mouseDown(grip('Verknüpfungen'), { clientX: 0 });
     fireEvent.mouseMove(window, { clientX: 40 });
     fireEvent.mouseUp(window, { clientX: 40 });
-    expect(headerFlex('Druckfestigkeit')).toBe('0 0 170px');
+    expect(headerFlex('Verknüpfungen')).toBe('0 0 170px');
   });
 
   it('passt die Breite per Doppelklick an den Inhalt an', () => {
@@ -254,6 +254,35 @@ function Auswahl({ id }: { id: string | null }) {
   }, [dispatch, id]);
   return null;
 }
+
+/** Verknüpft zwei Stellen eines PDFs mit 01.0020 (Issue #191). */
+function Verknuepfungen() {
+  const dispatch = useViewerDispatch();
+  useEffect(() => {
+    dispatch({ type: 'docRegister', doc: 'd1', name: 'Baubeschreibung', pages: 3 });
+    for (const start of [10, 40]) {
+      const spot = { doc: 'd1', page: 1, start, text: 'Bodenplatte' };
+      dispatch({ type: 'docLink', spot, ids: ['position:01.0020'], at: 1 });
+    }
+  }, [dispatch]);
+  return null;
+}
+
+describe('PositionsTable · Verknüpfungen (Issue #191)', () => {
+  it('zählt die verknüpften Stellen und sortiert danach', () => {
+    render(
+      <ViewerProvider>
+        <Verknuepfungen />
+        <PositionsTable root={section} />
+      </ViewerProvider>,
+    );
+    const zeile = screen.getByRole('row', { name: /01\.0020/ });
+    expect(within(zeile).getByTitle('Baubeschreibung (2)')).toHaveTextContent('2');
+    click(within(screen.getByRole('columnheader', { name: /Verknüpfungen/ })).getByRole('button'));
+    const zeilen = screen.getAllByRole('row').filter((row) => /01\.00/.test(row.textContent ?? ''));
+    expect(zeilen[0]).toHaveTextContent('01.0020');
+  });
+});
 
 describe('PositionsTable · Arbeitsliste', () => {
   it('setzt den Fortschritt per Klick in der Zelle', () => {
