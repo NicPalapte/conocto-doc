@@ -103,7 +103,7 @@ def lies_version(pfad: Path, text: str | None = None) -> str:
     return m[1]
 
 
-def schreibe_version(pfad: Path, neu: str) -> None:
+def schreibe_version(pfad: Path, neu: str, name: str | None = None) -> None:
     text = pfad.read_text(encoding="utf-8")
     if pfad.suffix == ".json":
         daten = json.loads(text)
@@ -112,11 +112,24 @@ def schreibe_version(pfad: Path, neu: str) -> None:
         if isinstance(root, dict) and "version" in root:
             root["version"] = neu
         pfad.write_text(json.dumps(daten, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    elif name:
+        # uv.lock: nur den Eintrag des eigenen Pakets, andere Pakete können dieselbe Version haben.
+        muster = rf'(?m)^(name\s*=\s*"{re.escape(name)}"\s*\nversion\s*=\s*)"[^"]+"'
+        pfad.write_text(re.sub(muster, rf'\g<1>"{neu}"', text, count=1), encoding="utf-8")
     else:
         pfad.write_text(
             re.sub(r'(?m)^(version\s*=\s*)"[^"]+"', rf'\g<1>"{neu}"', text, count=1),
             encoding="utf-8",
         )
+
+
+def paket_name(pfad: Path) -> str | None:
+    text = pfad.read_text(encoding="utf-8")
+    if pfad.suffix == ".json":
+        name = json.loads(text).get("name")
+        return str(name) if name else None
+    m = re.search(r'(?m)^name\s*=\s*"([^"]+)"', text)
+    return m[1] if m else None
 
 
 def naechste_version(alt: str, arten: list[str]) -> str:
@@ -289,7 +302,7 @@ def vergeben(e: Einstellung) -> dict[str, str]:
         neu = naechste_version(alt, [b.art for b in bs])
         schreibe_version(e.versionsdatei, neu)
         if e.lockdatei and e.lockdatei.exists():
-            schreibe_version(e.lockdatei, neu)
+            schreibe_version(e.lockdatei, neu, paket_name(e.versionsdatei))
         schreibe_changelog(e.changelog, changelog_abschnitt(neu, bs, heute()))
         for p in pfade:
             git("rm", "-q", p.as_posix())

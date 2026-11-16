@@ -170,6 +170,20 @@ class Repo(unittest.TestCase):
         self.assertEqual(fehler, [])
         self.assertEqual(len(hinweise), 1)
 
+    def test_uv_lock_nur_eigenes_paket(self) -> None:
+        Path("pyproject.toml").write_text('[project]\nname = "x"\nversion = "0.1.0"\n')
+        lock = Path("uv.lock")
+        lock.write_text(
+            '[[package]]\nname = "fremd"\nversion = "0.1.0"\n\n'
+            '[[package]]\nname = "x"\nversion = "0.1.0"\n'
+        )
+        ent.schreibe_version(lock, "0.2.0", ent.paket_name(Path("pyproject.toml")))
+        self.assertEqual(
+            lock.read_text(),
+            '[[package]]\nname = "fremd"\nversion = "0.1.0"\n\n'
+            '[[package]]\nname = "x"\nversion = "0.2.0"\n',
+        )
+
     def test_pyproject_version(self) -> None:
         p = Path("pyproject.toml")
         p.write_text('[project]\nname = "x"\nversion = "0.1.0"\n')
