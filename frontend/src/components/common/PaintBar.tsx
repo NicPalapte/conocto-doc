@@ -54,13 +54,13 @@ export interface SearchAction {
 function SearchRows({ searches }: { searches: readonly SearchAction[] }) {
   return (
     <>
-      {searches.map((action, at) => (
+      {searches.map((action) => (
         <button
           key={action.label}
           type="button"
           onMouseDown={(event) => event.preventDefault()}
           onClick={action.run}
-          className={at === 0 ? `${ROW} font-semibold` : ROW}
+          className={ROW}
         >
           {action.label}
         </button>
@@ -141,18 +141,18 @@ export function PaintBar({
             type="button"
             onMouseDown={(event) => event.preventDefault()}
             onClick={onLink}
-            className={`${ROW} font-semibold`}
+            className={ROW}
           >
-            Mit Position verknüpfen…
+            Mit Position verknüpfen
           </button>
           {onNote !== undefined && (
             <button
               type="button"
               onMouseDown={(event) => event.preventDefault()}
               onClick={onNote.open}
-              className={`${ROW} font-semibold`}
+              className={ROW}
             >
-              <span className="min-w-0 flex-1">Notiz…</span>
+              <span className="min-w-0 flex-1">Notiz</span>
               {onNote.count > 0 && (
                 <span className="shrink-0 text-[11px] text-mute">{onNote.count}</span>
               )}
