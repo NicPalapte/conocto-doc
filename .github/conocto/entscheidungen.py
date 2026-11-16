@@ -56,15 +56,11 @@ class Fehler(Exception):
 
 
 def git(*args: str) -> str:
-    return subprocess.run(
-        ["git", *args], check=True, capture_output=True, text=True
-    ).stdout
+    return subprocess.run(["git", *args], check=True, capture_output=True, text=True).stdout
 
 
 def git_datei(rev: str, pfad: Path) -> str | None:
-    r = subprocess.run(
-        ["git", "show", f"{rev}:{pfad.as_posix()}"], capture_output=True, text=True
-    )
+    r = subprocess.run(["git", "show", f"{rev}:{pfad.as_posix()}"], capture_output=True, text=True)
     return r.stdout if r.returncode == 0 else None
 
 
@@ -218,7 +214,7 @@ def tabellenzeile(nr: str, titel: str, datei: str, status: str, datum: str, vorl
     breiten = [len(z.strip()) for z in vorlage.strip().strip("|").split("|")]
     if len(breiten) != len(werte):
         breiten = [0] * len(werte)
-    return "| " + " | ".join(w.ljust(b) for w, b in zip(werte, breiten)) + " |\n"
+    return "| " + " | ".join(w.ljust(b) for w, b in zip(werte, breiten, strict=True)) + " |\n"
 
 
 def ergaenze_tabelle(readme: Path, zeilen_neu: list[str]) -> None:
@@ -261,8 +257,12 @@ def vergeben(e: Einstellung) -> dict[str, str]:
         felder = kopf_felder(text)
         tabelle.append(
             tabellenzeile(
-                nummer, titel, ziel.name, felder.get("Status", "akzeptiert"),
-                felder.get("Datum", f"{heute():%Y-%m-%d}"), vorlage,
+                nummer,
+                titel,
+                ziel.name,
+                felder.get("Status", "akzeptiert"),
+                felder.get("Datum", f"{heute():%Y-%m-%d}"),
+                vorlage,
             )
         )
         ersetzungen.append((slug, nummer, ziel.name))
@@ -347,8 +347,8 @@ def pruefen(e: Einstellung, basis: str) -> tuple[list[str], list[str]]:
             )
 
     if e.changelog.as_posix() in geaendert and e.changelog.exists():
-        vorher = versions_abschnitte(git_datei(basis, e.changelog) or "")
-        if versions_abschnitte(e.changelog.read_text(encoding="utf-8")) != vorher:
+        abschnitte = versions_abschnitte(git_datei(basis, e.changelog) or "")
+        if versions_abschnitte(e.changelog.read_text(encoding="utf-8")) != abschnitte:
             fehler.append(
                 f"{e.changelog}: Versions-Abschnitte bitte nicht von Hand ändern. Stattdessen "
                 f"{e.bausteine.as_posix()}/<titel>.md anlegen."
@@ -366,17 +366,22 @@ def pruefen(e: Einstellung, basis: str) -> tuple[list[str], list[str]]:
     bausteine_neu = []
     for pfad, art in geaendert.items():
         p = Path(pfad)
-        if p.parent == e.bausteine and p.suffix == ".md" and p.name.lower() != "readme.md":
-            if art != "D":
-                try:
-                    lies_baustein(p)
-                    bausteine_neu.append(p)
-                except Fehler as f:
-                    fehler.append(str(f))
+        ist_baustein = p.parent == e.bausteine and p.suffix == ".md"
+        if ist_baustein and p.name.lower() != "readme.md" and art != "D":
+            try:
+                lies_baustein(p)
+                bausteine_neu.append(p)
+            except Fehler as f:
+                fehler.append(str(f))
     code = [
-        p for p in geaendert
-        if not (p.startswith(("docs/", ".github/", ".claude/")) or p.endswith(".md")
-                or "/tests/" in f"/{p}" or "test" in Path(p).name)
+        p
+        for p in geaendert
+        if not (
+            p.startswith(("docs/", ".github/", ".claude/"))
+            or p.endswith(".md")
+            or "/tests/" in f"/{p}"
+            or "test" in Path(p).name
+        )
     ]
     if code and not bausteine_neu and e.versionsdatei is not None:
         hinweise.append(
@@ -423,9 +428,9 @@ def main(argv: list[str] | None = None) -> int:
         ergebnis = vergeben(e)
         ausgabe = os.environ.get("GITHUB_OUTPUT")
         if ausgabe:
-            with open(ausgabe, "a", encoding="utf-8") as f:
+            with open(ausgabe, "a", encoding="utf-8") as datei:
                 for k, v in ergebnis.items():
-                    f.write(f"{k}={v}\n")
+                    datei.write(f"{k}={v}\n")
         if not ergebnis:
             print("Nichts zu vergeben.")
         return 0

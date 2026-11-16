@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-import entscheidungen as ent  # noqa: E402
+import entscheidungen as ent
 
 README = """# Entscheidungen
 
@@ -54,8 +54,12 @@ class Repo(unittest.TestCase):
         self.commit("start")
         self.basis = sh("git", "rev-parse", "HEAD").strip()
         self.e = ent.Einstellung(
-            praefix="DOC", ordner=d, versionsdatei=Path("package.json"), lockdatei=None,
-            changelog=Path("CHANGELOG.md"), bausteine=Path("changes"),
+            praefix="DOC",
+            ordner=d,
+            versionsdatei=Path("package.json"),
+            lockdatei=None,
+            changelog=Path("CHANGELOG.md"),
+            bausteine=Path("changes"),
         )
 
     def tearDown(self) -> None:
@@ -68,7 +72,9 @@ class Repo(unittest.TestCase):
 
     def test_vergeben_nummer_tabelle_verweise(self) -> None:
         Path("docs/decisions/neu-zweite-sache.md").write_text(NEU, encoding="utf-8")
-        Path("docs/notiz.md").write_text("Siehe neu-zweite-sache und [x](decisions/neu-zweite-sache.md)\n")
+        Path("docs/notiz.md").write_text(
+            "Siehe neu-zweite-sache und [x](decisions/neu-zweite-sache.md)\n"
+        )
         self.commit("pr")
         erg = ent.vergeben(self.e)
         self.assertEqual(erg["entscheidungen"], "DOC-0002")
@@ -80,7 +86,9 @@ class Repo(unittest.TestCase):
             "Siehe 0002 und [x](decisions/0002-zweite-sache.md)\n",
         )
         readme = Path("docs/decisions/README.md").read_text()
-        self.assertIn("| 0002 | [Zweite Sache](0002-zweite-sache.md) | akzeptiert | 2026-02-02 |", readme)
+        self.assertIn(
+            "| 0002 | [Zweite Sache](0002-zweite-sache.md) | akzeptiert | 2026-02-02 |", readme
+        )
         self.assertLess(readme.index("0002"), readme.index("## Regeln"))
 
     def test_zwei_neue_bekommen_zwei_nummern(self) -> None:
@@ -98,7 +106,9 @@ class Repo(unittest.TestCase):
         self.assertEqual(ent.vergeben(self.e)["version"], "0.5.0")
         self.assertEqual(json.loads(Path("package.json").read_text())["version"], "0.5.0")
         log = Path("CHANGELOG.md").read_text()
-        self.assertRegex(log, r"## 0\.5\.0 — \d\d\.\d\d\.\d{4} · Neue Liste · Taste T\n\n- \*\*T\*\* geht\.")
+        self.assertRegex(
+            log, r"## 0\.5\.0 — \d\d\.\d\d\.\d{4} · Neue Liste · Taste T\n\n- \*\*T\*\* geht\."
+        )
         self.assertLess(log.index("0.5.0"), log.index("0.4.1"))
         self.assertFalse(Path("changes/taste.md").exists())
         self.assertTrue(Path("changes/README.md").exists())
@@ -119,15 +129,24 @@ class Repo(unittest.TestCase):
     def test_pruefen_meldet_konfliktquellen(self) -> None:
         Path("docs/decisions/0002-von-hand.md").write_text(NEU)
         readme = Path("docs/decisions/README.md")
-        readme.write_text(readme.read_text().replace(
-            "| 0001 |", "| 0002 | [x](0002-von-hand.md) | akzeptiert | 2026-02-02 |\n| 0001 |"))
+        readme.write_text(
+            readme.read_text().replace(
+                "| 0001 |", "| 0002 | [x](0002-von-hand.md) | akzeptiert | 2026-02-02 |\n| 0001 |"
+            )
+        )
         Path("package.json").write_text(json.dumps({"name": "x", "version": "0.4.2"}, indent=2))
         Path("CHANGELOG.md").write_text("# Änderungen\n\n## 0.4.2 — von Hand\n")
         Path("changes/kaputt.md").write_text("ohne Kopf\n")
         self.commit("pr")
         fehler, _ = ent.pruefen(self.e, self.basis)
         text = "\n".join(fehler)
-        for erwartet in ("0002-von-hand.md", "README.md", "package.json", "CHANGELOG.md", "kaputt.md"):
+        for erwartet in (
+            "0002-von-hand.md",
+            "README.md",
+            "package.json",
+            "CHANGELOG.md",
+            "kaputt.md",
+        ):
             self.assertIn(erwartet, text)
 
     def test_pruefen_kopf_der_neuen_datei(self) -> None:
@@ -139,7 +158,8 @@ class Repo(unittest.TestCase):
 
     def test_changelog_kopf_darf_sich_aendern(self) -> None:
         Path("CHANGELOG.md").write_text(
-            "# Änderungen\n\nNeuer Hinweis.\n\n---\n\n## 0.4.1 — 01.01.2026 · Alt\n")
+            "# Änderungen\n\nNeuer Hinweis.\n\n---\n\n## 0.4.1 — 01.01.2026 · Alt\n"
+        )
         self.commit("pr")
         self.assertEqual(ent.pruefen(self.e, self.basis), ([], []))
 
