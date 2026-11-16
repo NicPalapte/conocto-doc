@@ -6,13 +6,13 @@ name: PR-Preview
 # Der Link wird automatisch als Kommentar in den PR geschrieben.
 #
 # Aufgeräumt wird hier NICHT. Die Preview eines geschlossenen PRs entfernt der
-# Deploy-Workflow beim nächsten Veröffentlichen von `main` – er übernimmt nur noch
+# Deploy-Workflow beim nächsten Release (Tag `v…`) – er übernimmt nur noch
 # die Previews der offenen Pull Requests. Grund: Merge löste früher zwei Schreib-
 # vorgänge auf `gh-pages` gleichzeitig aus (Aufräumen + Deploy), wodurch GitHub den
 # Seiten-Build abbrach. Siehe docs/decisions/0007-previews-im-deploy-aufraeumen.md.
 #
 # Die Previews liegen im Branch `gh-pages` im Ordner `pr-preview/`; der Live-Stand von
-# `main` liegt im Wurzelverzeichnis desselben Branches (siehe deploy-pages.yml).
+# conocto.app (letztes Release) liegt im Wurzelverzeichnis desselben Branches (siehe deploy-pages.yml).
 #
 # Gebaut wird nur auf Zuruf: Kommentar `/preview` im Pull Request. Nicht bei jedem Push –
 # die meisten Zwischenstände braucht niemand zum Anklicken, und der Build dauert länger
