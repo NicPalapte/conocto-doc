@@ -246,11 +246,20 @@ Prompts in Workflows):
 - Keine Höflichkeitsfloskeln, keine Redundanz
 
 ## Dokumentation
-- Weichenstellungen gehören nach `docs/decisions/` – eine nummerierte Datei je
-  Entscheidung, Vorlage und Kriterien in @docs/decisions/README.md
+- Weichenstellungen gehören nach `docs/decisions/` – eine Datei je Entscheidung, Vorlage und
+  Kriterien in @docs/decisions/README.md
+- Neue Entscheidung nur als `docs/decisions/neu-<titel>.md` mit `# NEU – Titel`; Verweise im
+  selben PR als `neu-<titel>`. Verboten: Nummer selbst vergeben, Zeile in der Übersichtstabelle
+  ergänzen. Nummer + Zeile setzt `.github/workflows/entscheidungen.yml` nach dem Merge
+  (Entscheidung neu-nummern-beim-merge). Verweis in ein anderes Repo mit Präfix: `CORE-0005`,
+  `BIM-0002`, `DS-0001`.
+- App-Änderung ⇒ Baustein `changes/<titel>.md` (`art: funktion|korrektur`, Format in
+  `changes/README.md`). Verboten: Version in `frontend/package.json`/`package-lock.json` oder
+  `CHANGELOG.md` von Hand ändern.
+- `.github/conocto/entscheidungen.py` ist in bubbleLV, bauonto, conocto-bim, conocto-design
+  gleich. Änderung ⇒ in allen vier Repos gleich übernehmen.
 - Vor Abschluss einer Aufgabe prüfen: neue Abhängigkeit, neuer Workflow, geänderte
-  Architekturregel oder verworfene Alternative? → Eintrag anlegen + Übersichtstabelle
-  ergänzen
+  Architekturregel oder verworfene Alternative? → Eintrag `neu-<titel>.md` anlegen
 - Getroffene Entscheidungen nicht umschreiben: Status auf `ersetzt durch NNNN` setzen,
   neue Datei anlegen
 - Kein Eintrag für Bugfixes, Tests, Umbenennungen, Formatierung
@@ -264,6 +273,9 @@ Prompts in Workflows):
 - `.github/workflows/deploy-pages.yml` – Release-Tag `v*` → Branch `gh-pages` (Wurzel) =
   conocto.app (stabile Beta). `main` → Cloudflare Pages (Arbeitsversion, Einstellungen im
   Cloudflare-Dashboard, Entscheidung 0112)
+- `.github/workflows/entscheidungen.yml` – nach Merge auf `main`: Nummer, Tabellenzeile,
+  Version, Changelog in einem Commit (Secret `BOT_SCHLUESSEL`, `docs/setup/bot-schluessel.md`).
+  Release-Tag `v*` erst nach diesem Bot-Commit setzen.
 - `gh-pages` wird ausschließlich von Workflows geschrieben – niemals von Hand committen
 - Der Review-Agent misst am Inhalt dieser Datei; Regeländerungen hier ändern den
   Review-Maßstab

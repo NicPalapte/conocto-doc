@@ -7,6 +7,9 @@ Die Nummern folgen [Semantic Versioning](https://semver.org/lang/de/): die **mit
 Zahl steigt bei neuen Funktionen, die **letzte** bei Korrekturen. Die **erste** bleibt
 `0`, solange Conocto in der Beta ist.
 
+Nicht von Hand schreiben: jeder PR legt einen Baustein in `changes/` an, der Bot macht nach
+dem Merge daraus Version und Abschnitt.
+
 ---
 
 ## 0.65.0 — 16.11.2026 · Vorschläge, Tabelle und Legende
