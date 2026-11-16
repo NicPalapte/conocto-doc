@@ -98,6 +98,30 @@ describe('Kopfleiste im eigenen Fenster', () => {
     expect(screen.queryByRole('button', { name: /Ansicht/ })).toBeNull();
   });
 
+  it('zeigt die Knöpfe des Fensters rechts in der Kopfleiste (Issue #225)', () => {
+    const zurueck = vi.fn();
+    render(
+      <ViewerProvider>
+        <WorkspaceProvider>
+          <Steuerung />
+          <PopoutHead
+            end={
+              <button type="button" onClick={zurueck}>
+                ↙
+              </button>
+            }
+          />
+        </WorkspaceProvider>
+      </ViewerProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'laden' }));
+    const knopf = screen.getByRole('button', { name: '↙' });
+    expect(knopf.closest('header')).not.toBeNull();
+    expect(knopf.parentElement?.lastElementChild).toBe(knopf);
+    fireEvent.click(knopf);
+    expect(zurueck).toHaveBeenCalledOnce();
+  });
+
   describe('sehr schmal', () => {
     const breite = window.innerWidth;
     beforeEach(() => {

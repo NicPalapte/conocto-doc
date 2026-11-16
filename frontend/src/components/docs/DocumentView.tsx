@@ -217,7 +217,7 @@ function EmptyDocument() {
   );
 }
 
-function OpenDocument({ doc }: { doc: OpenedPdf }) {
+function OpenDocument({ doc, ownWindow }: { doc: OpenedPdf; ownWindow: boolean }) {
   const {
     setOverview,
     planWanted,
@@ -782,7 +782,9 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
 
   useEffect(() => {
     if (scroller === null || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(() => setWidth(scroller.clientWidth));
+    // Im eigenen Fenster (DocWindow) misst nur der Observer dieses Fensters dessen Größe.
+    const Observer = scroller.ownerDocument.defaultView?.ResizeObserver ?? ResizeObserver;
+    const observer = new Observer(() => setWidth(scroller.clientWidth));
     // Meldet sich gleich nach `observe` mit der ersten Breite.
     observer.observe(scroller);
     return () => observer.disconnect();
@@ -1277,7 +1279,11 @@ function OpenDocument({ doc }: { doc: OpenedPdf }) {
 
   return (
     <div ref={rootRef} className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center gap-[6px] border-b border-line px-[10px] py-[6px]">
+      <div
+        className={`flex shrink-0 items-center gap-[6px] border-b border-line px-[10px] py-[6px] ${
+          ownWindow ? 'bg-surface' : ''
+        }`}
+      >
         {/* Links und als Pfeil, damit er nicht wie „Bereich schließen“ rechts daneben wirkt. */}
         <button
           type="button"
@@ -1769,10 +1775,15 @@ const NO_EXTRA: readonly DocHighlightItem[] = [];
 const NO_IDS: readonly string[] = [];
 const NO_SUGGESTIONS: readonly DocSuggestion[] = [];
 
-export function DocumentView() {
+/** `ownWindow`: im eigenen Fenster hat die Leiste die Farbe der Kopfleiste (Issue #225). */
+export function DocumentView({ ownWindow = false }: { ownWindow?: boolean } = {}) {
   const { active, overview } = useDocuments();
   if (active === null) return <EmptyDocument />;
-  return overview ? <DocOverview /> : <OpenDocument key={active.id} doc={active} />;
+  return overview ? (
+    <DocOverview ownWindow={ownWindow} />
+  ) : (
+    <OpenDocument key={active.id} doc={active} ownWindow={ownWindow} />
+  );
 }
 
 /**
