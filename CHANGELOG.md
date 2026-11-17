@@ -12,6 +12,15 @@ dem Merge daraus Version und Abschnitt.
 
 ---
 
+## 0.66.0 — 17.11.2026 · PDF-Verknüpfungen übersichtlich, Matrix nach Dokument
+
+- **Graph ruhig:** Linien zu den PDF-Karten erscheinen erst, wenn du ein PDF, eine Position
+  oder einen Abschnitt antippst.
+- **Zahl am Abschnitt:** zeigt, wie viele Positionen mit PDFs verknüpft sind.
+- **Abschnitt antippen:** die Kartenspalte zeigt nur die PDFs mit Bezug dazu.
+- **Matrix:** neue Achsen „Dokument“ und „Dokumentart“. Positionen mit mehreren PDFs stehen
+  unter „mehrere PDFs“.
+
 ## 0.65.1 — 17.11.2026 · PDF verschwindet beim Reiterwechsel
 
 - Liegen Graph und Dokument im selben Bereich, bleibt das PDF nach dem Wechsel auf den Graphen

@@ -57,7 +57,7 @@ export const QUANTITY_AXIS = 'mengenstufe';
 
 /**
  * Zeilen/Spalten nach verknüpftem Begleit-PDF bzw. dessen Dokumentart (Entscheidung
- * neu-pdf-fokus). Kein Filtermerkmal: die Werte kommen aus den eigenen
+ * 0114). Kein Filtermerkmal: die Werte kommen aus den eigenen
  * Verknüpfungen (`DocLinks`), nicht aus der Datei.
  */
 export const DOC_AXIS = 'dokument';

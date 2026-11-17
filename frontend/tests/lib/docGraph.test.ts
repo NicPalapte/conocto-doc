@@ -85,7 +85,7 @@ describe('marksForPosition', () => {
   });
 });
 
-describe('docLinksOf und cardsTouching (Entscheidung neu-pdf-fokus)', () => {
+describe('docLinksOf und cardsTouching (Entscheidung 0114)', () => {
   const slotOf = new Map([
     ['p2', 0],
     ['p4', 1],

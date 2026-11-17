@@ -283,7 +283,7 @@ export function BubbleGraph({ root }: { root: LVNode }) {
     () => docGraphOf(annotations.documents, (id) => index.slotOf.has(id)),
     [annotations.documents, index],
   );
-  // Matrix nach Dokument (Entscheidung neu-pdf-fokus): nur dann hängt die Lage an
+  // Matrix nach Dokument (Entscheidung 0114): nur dann hängt die Lage an
   // den Verknüpfungen, sonst passt eine neue Verknüpfung den Graphen nicht neu ein.
   const kindOfDoc = useOptionalDocuments()?.kindOf;
   const byDocs =
@@ -376,7 +376,7 @@ export function BubbleGraph({ root }: { root: LVNode }) {
     const card = docGraph.cards.find((candidate) => candidate.doc === docFocus);
     return card === undefined ? null : new Set(card.positions);
   }, [docGraph, docFocus]);
-  // Abschnitt hervorgehoben: nur PDFs mit Bezug zu ihm (Entscheidung neu-pdf-fokus).
+  // Abschnitt hervorgehoben: nur PDFs mit Bezug zu ihm (Entscheidung 0114).
   const shownCards = useMemo(
     () => (inSpot === null ? docGraph.cards : cardsTouching(docGraph, inSpot)),
     [docGraph, inSpot],
@@ -1103,7 +1103,7 @@ export function BubbleGraph({ root }: { root: LVNode }) {
 
   // Linien von den Punkten zu ihren PDF-Karten, in Weltkoordinaten unter den Punkten. Kleine
   // Gruppen, deren Punkte als Fläche erscheinen, ziehen eine Linie je Gruppe statt je Punkt.
-  // Fokus (Entscheidung neu-pdf-fokus): Linien nur für das hervorgehobene PDF,
+  // Fokus (Entscheidung 0114): Linien nur für das hervorgehobene PDF,
   // die gewählte Position und den hervorgehobenen Abschnitt, in Ruhe keine.
   const pickedId = selectedPosition?.id ?? null;
   const inFocus = (doc: string, id: string): boolean =>

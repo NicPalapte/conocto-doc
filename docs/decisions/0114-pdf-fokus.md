@@ -1,4 +1,4 @@
-# NEU – PDF-Linien nur im Fokus, Matrix nach Dokument
+# DOC-0114 – PDF-Linien nur im Fokus, Matrix nach Dokument
 
 - **Status:** akzeptiert
 - **Datum:** 2026-11-17

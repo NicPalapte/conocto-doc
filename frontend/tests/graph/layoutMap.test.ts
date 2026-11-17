@@ -393,7 +393,7 @@ describe('Gliederung „Matrix"', () => {
   });
 });
 
-describe('Matrix nach Dokument (Entscheidung neu-pdf-fokus)', () => {
+describe('Matrix nach Dokument (Entscheidung 0114)', () => {
   // Erfundene PDFs: Gutachten an zwei Positionen, Plan an einer davon und einer weiteren.
   const ofSlot: string[][] = Array.from({ length: index.size }, () => []);
   ofSlot[slotOf('01.01.0010')] = ['gutachten', 'plan'];

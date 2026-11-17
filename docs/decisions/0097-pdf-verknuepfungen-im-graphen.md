@@ -1,6 +1,6 @@
 # 0097 – PDF-Verknüpfungen im Graphen: Karten am Rand mit Linien
 
-- **Status:** teilweise ersetzt durch neu-pdf-fokus (Linien nur im Fokus)
+- **Status:** teilweise ersetzt durch 0114 (Linien nur im Fokus)
 - **Datum:** 2026-11-06
 - **Betrifft:** `frontend/src/components/graph/DocCards.tsx`,
   `frontend/src/components/graph/BubbleGraph.tsx`, `frontend/src/lib/docs/docGraph.ts`,
