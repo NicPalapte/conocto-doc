@@ -1,5 +1,5 @@
 // Werkzeuge beim Messen in Plänen (Entscheidung 0095). Oben stehen nur Länge, Fläche und
-// Stück (Nico, 06.11.); die Form wählt man darunter.
+// Stück; die Form wählt man darunter.
 
 /**
  * Länge: Strecke (zwei Punkte) oder Kette (Doppelklick beendet). Fläche: Rechteck (zwei

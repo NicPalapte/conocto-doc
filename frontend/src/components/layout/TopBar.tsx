@@ -1,8 +1,6 @@
-// Kopfleiste: Logo-Menü, Datei, Suche mit den aktiven Filtern. Eine
-// Befehlspalette gibt es nicht mehr; Strg K holt die Suche, Export und Druck
-// stehen im Logo-Menü (docs/decisions/0038-keine-befehlspalette.md).
-// Seit dem neuen Hauptscreen eine schmale Zeile (docs/decisions/0034-graph-als-
-// hauptscreen.md): kein Ansichtsumschalter mehr, die Filter wählt man in der
+// Kopfleiste: Logo-Menü, Datei, Suche mit den aktiven Filtern. Keine
+// Befehlspalette (0038): Strg K holt die Suche, Export und Druck stehen im Logo-Menü.
+// Eine schmale Zeile ohne Ansichtsumschalter (0034); die Filter wählt man in der
 // Filterleiste darunter („+ Filter", Issue #154), hier stehen sie nur als
 // entfernbare Chips — auch die eigenen Marker.
 // Die Suchleiste selbst ist `SearchPill`. Die ganze Kopfleiste steht auch in Graph,

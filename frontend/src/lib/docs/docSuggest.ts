@@ -416,8 +416,8 @@ function isHeading(
 /**
  * OZ im Seitentext, die genau eine Position des LV treffen. Ohne „Pos.“/„OZ“ davor zählt
  * eine Nummer nur in der Schreibweise des LV („01.02.0030“, nicht „1.2.30“) und nicht als
- * Kapitelnummer vor einer Überschrift (Praxistest Nico, 12.11.2026: 10 von 11 Vorschlägen
- * waren Kapitelnummern).
+ * Kapitelnummer vor einer Überschrift (Praxistest, Entscheidung 0108: 10 von
+ * 11 Vorschlägen waren Kapitelnummern).
  */
 function findOz(
   text: string,
@@ -660,7 +660,7 @@ const klassenOfKey = (key: string): string[] => key.split(/ · |, /);
 
 /**
  * Positionen, deren Sorte die Festigkeit und alle Klassen aus dem PDF hat, dazu weitere
- * (Nico, 11.11.2026: im PDF steht oft nur „C35/45“). Nichts darf sich widersprechen.
+ * (im PDF steht oft nur „C35/45“). Nichts darf sich widersprechen.
  */
 function weitereSorten(index: SuggestIndex, key: string): string[] {
   const [festigkeit, ...rest] = klassenOfKey(key);
@@ -894,7 +894,7 @@ function withSentence(text: string, list: readonly DocSuggestion[]): DocSuggesti
   });
 }
 
-/** Je Satz und Position gilt nur der sicherste Vorschlag (Issue #191, 15.11.2026). */
+/** Je Satz und Position gilt nur der sicherste Vorschlag (Issue #191). */
 const SOURCE_RANK: Readonly<Record<LinkSource, number>> = { oz: 0, menge: 1, beton: 2, text: 3 };
 
 export function onePerSentence(list: readonly DocSuggestion[]): DocSuggestion[] {

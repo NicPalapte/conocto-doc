@@ -28,7 +28,7 @@ export interface UseDismissOptions {
 /**
  * `refs` sind alle DOM-Teilbäume, die als "innerhalb" zählen — neben dem
  * Anker meist auch der per Portal an <body> gehängte Popover-Knoten selbst
- * (Issue #24: das Popover steckt nicht mehr im Anker-Element).
+ * (Issue #24).
  */
 export function useDismiss(
   refs: RefObject<HTMLElement | null> | Array<RefObject<HTMLElement | null>>,

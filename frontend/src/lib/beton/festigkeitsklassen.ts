@@ -1,6 +1,6 @@
 // Druckfestigkeitsklassen nach DIN EN 206 / DIN 1045-2 (Normal- und Schwerbeton, Leichtbeton).
 // Nur diese zählen als Betonsorte: „C100/0“ (Asphaltbinder) oder „C2/3“ sehen aus wie eine
-// Klasse, sind aber keine (Issue #191, 12.11.2026; Liste von Nico bestätigt).
+// Klasse, sind aber keine (Issue #191; Liste vom Owner bestätigt).
 
 const NORMALBETON = [
   'C8/10',

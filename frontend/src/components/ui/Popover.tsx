@@ -1,7 +1,6 @@
 // Conocto — Popover: die einzige erhobene Fläche im System (der einzige Schatten).
 // Hängt per Portal an <body> und positioniert sich absolut zum Viewport, ausgehend
-// von `anchorRef` — nicht mehr `position: relative`+`absolute` im Elternelement.
-// Grund: die Filter-Chip-Reihe in der Kopfleiste muss bei schmalen Fenstern
+// von `anchorRef`. Grund: die Filter-Chip-Reihe in der Kopfleiste muss bei schmalen Fenstern
 // scrollen bzw. Chips in ein Overflow-Menü verschieben können (Issue #24); ein
 // scrollender/verschachtelter Container hätte ein kind-positioniertes Popover
 // abgeschnitten. Portiert (Grundform) aus
@@ -48,7 +47,7 @@ export interface PopoverProps {
 /**
  * `ref` gibt den eigenen (portierten) DOM-Knoten nach außen — der Aufrufer
  * braucht ihn für die Außerhalb-Klick-Erkennung (`useDismiss`), weil das
- * Popover nicht mehr im Anker-Element steckt, sondern am Portal-Ziel
+ * Popover nicht im Anker-Element steckt, sondern am Portal-Ziel
  * (<body> oder dem umgebenden Popover) hängt.
  */
 export const Popover = forwardRef<HTMLDivElement, PopoverProps>(function Popover(

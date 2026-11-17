@@ -6,11 +6,10 @@
 // passt dort schon heute keine Filterzeile mehr hin. Das Logo ist der Ort, an
 // dem Nutzer so etwas suchen.
 //
-// Seit Entscheidung 0079 gruppiert: oben Öffnen, dann aufklappbare Gruppen „Exportieren“,
+// Gruppiert (Entscheidung 0079): oben Öffnen, dann aufklappbare Gruppen „Exportieren“,
 // „Mein Arbeitsstand“, „Hilfe & Feedback“, unten Design und eine Fußzeile.
 //
-// „Fehler melden" sitzt ebenfalls hier und nicht mehr im Menü „Mitnehmen":
-// eine Meldung ist kein Export.
+// „Fehler melden" sitzt hier und nicht bei Export und Druck: eine Meldung ist kein Export.
 
 //
 // Seit dem neuen Hauptscreen auch hier: „Anderes LV öffnen" und Hell/Dunkel —

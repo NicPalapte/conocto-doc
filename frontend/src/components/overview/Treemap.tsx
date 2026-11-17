@@ -28,7 +28,7 @@ const LABEL_MIN_WIDTH = 54;
 const LABEL_MIN_HEIGHT = 26;
 /**
  * Einheiten-Kacheln unter dieser Kantenlänge (px) entfallen; der Abschnitt bleibt klickbar.
- * Seit nichts mehr zusammengefasst wird (Issue #191), hält das die Zahl der Knoten klein.
+ * Weil nichts zusammengefasst wird (Issue #191), hält das die Zahl der Knoten klein.
  */
 const CELL_MIN = 3;
 

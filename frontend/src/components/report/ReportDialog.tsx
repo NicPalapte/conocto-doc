@@ -1,8 +1,8 @@
 // „Fehler melden" (WP-P, Schritt 6) — drei Wege zur selben Meldung.
 //
-// **Warum nicht nur GitHub:** der Knopf führte bisher direkt auf ein
-// vorbefülltes GitHub-Formular. Wer kein Konto hat, landet dort auf der
-// Anmeldeseite und kommt nicht weiter — GitHub kennt keine anonymen Meldungen.
+// **Warum nicht nur GitHub:** Wer kein Konto hat, landet beim vorbefüllten
+// GitHub-Formular auf der Anmeldeseite und kommt nicht weiter — GitHub kennt keine
+// anonymen Meldungen.
 // Für ein Werkzeug, das Kalkulatoren und AVA-Fachkräfte benutzen, ist das die
 // Mehrheit. Also: Text kopieren, per Mail schicken oder — wer ein Konto hat —
 // direkt als Issue öffnen. Alle drei tragen denselben Text

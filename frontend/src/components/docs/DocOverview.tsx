@@ -110,7 +110,7 @@ function DocCard({ row, doc, current }: { row: DocRow; doc: OpenedPdf; current: 
       <div className="absolute bottom-[8px] left-[8px] right-[42px] flex">
         <DocKindChip id={row.id} name={row.name} />
       </div>
-      {/* Nur hier entfernt man ein PDF ganz (Nico, 06.11.2026); Notizen dazu bleiben. */}
+      {/* Nur hier entfernt man ein PDF ganz; Notizen dazu bleiben. */}
       <button
         type="button"
         aria-label={`${row.name} entfernen`}
@@ -160,7 +160,7 @@ export function DocOverview({ ownWindow = false }: { ownWindow?: boolean } = {})
     [rows, sort],
   );
   const byId = useMemo(() => new Map(docs.map((doc) => [doc.id, doc])), [docs]);
-  // LVs stehen als Karten unter der Kategorie „LV“ (Nico, 13.11.2026, Entscheidung 0110):
+  // LVs stehen als Karten unter der Kategorie „LV“ (Entscheidung 0110):
   // nach Art sortiert zusammen mit PDFs dieser Art, sonst als eigene Gruppe vorn.
   const lvFiles = useOptionalLvFiles();
   const lvCards = useLvCards(query);

@@ -1,5 +1,11 @@
 # Review: Zukunftsfähigkeit des LV Viewers (Bubble)
 
+> **Historisch – nicht mehr aktuell.** Stand v0.15.1 (14.10.2026). Seitdem: neuer Name
+> Conocto (0069, 0091), Kern unter `packages/core/` (0054, Parser jetzt
+> `packages/core/src/gaeb/`), Splitscreen statt Fenster (0074) und vieles mehr. Pfade,
+> Zahlen und Empfehlungen unten gelten nicht mehr. Bleibt nur, weil Entscheidung 0056
+> darauf verweist. Aktueller Stand: `docs/entwicklung.md` und `docs/decisions/`.
+
 Stand: 2026-10-14, Commit `037b4d3` (main, v0.15.1). Rein lesendes Review; geändert wurde
 nur diese Datei.
 

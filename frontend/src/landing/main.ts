@@ -1,7 +1,7 @@
 // Startseite conocto.app (Entscheidung 0092): Wechselzeile unter dem Logo und die
 // 24-s-Animation „Was Conocto kann" in vier Szenen. Bewusst ohne React und ohne
 // App-Code: die Seite soll sofort stehen und nur Schriften + dieses Skript laden.
-// Drehbuch und Bildaufbau: Mockup „Bubble Startseite" (Nico, 2026-11-02).
+// Drehbuch und Bildaufbau: Mockup „Bubble Startseite".
 //
 // Gerendert wird deklarativ: `render(t)` setzt für einen Zeitpunkt t (Sekunden)
 // jede Klasse; eine rAF-Uhr schiebt t weiter. Springen, Pause und „Bewegung

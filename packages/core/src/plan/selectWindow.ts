@@ -1,4 +1,4 @@
-// Auswahl per Fenster wie im CAD (Nico, 06.11.2026): von links nach rechts aufgezogen
+// Auswahl per Fenster wie im CAD: von links nach rechts aufgezogen
 // zählt nur, was ganz drin liegt; von rechts nach links alles, was das Fenster berührt.
 // Rein geometrisch in einer Ebene — gilt so für Pläne und später für den BIM-Viewer
 // (dort in Bildschirmkoordinaten).
