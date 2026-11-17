@@ -8,6 +8,7 @@ import { resolve } from 'node:path';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it } from 'vitest';
 import App from '../../src/App';
+import { schliesseTourAngebot } from '../helpers/tourAngebot';
 
 const FIXTURE_DIR = resolve(process.cwd(), '../packages/core/tests/fixtures');
 
@@ -36,6 +37,7 @@ async function loadAndShowGraph(): Promise<void> {
     target: { files: [new File([readFileSync(resolve(FIXTURE_DIR, name))], name)] },
   });
   await waitFor(() => expect(screen.getByRole('button', { name: '+ Filter' })).toBeInTheDocument());
+  await schliesseTourAngebot();
 }
 
 function oeffneFilter(): void {

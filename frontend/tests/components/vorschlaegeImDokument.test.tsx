@@ -12,6 +12,7 @@ import { describe, expect, it, vi } from 'vitest';
 import App from '../../src/App';
 import type { DocSuggestion } from '../../src/lib/docs/docSuggest';
 import type { OpenedPdf } from '../../src/lib/docs/pdf';
+import { schliesseTourAngebot } from '../helpers/tourAngebot';
 
 const SEITEN = [
   'Nach Pos. 1.2.20 sind 7.200 m³ Boden zu lösen.',
@@ -68,6 +69,7 @@ async function ladeAppMitPdf(seiten: readonly string[] = SEITEN): Promise<void> 
     target: { files: [new File([readFileSync(resolve(FIXTURE_DIR, name))], name)] },
   });
   await screen.findByRole('main', { name: 'Bubble-Graph' }, { timeout: 5000 });
+  await schliesseTourAngebot();
   openPdf.mockResolvedValue(scheinPdf(seiten));
   fireEvent.change(screen.getByLabelText('Dokument auswählen'), {
     target: { files: [new File(['%PDF'], 'baubeschreibung.pdf', { type: 'application/pdf' })] },

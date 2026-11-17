@@ -10,6 +10,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it } from 'vitest';
 import App from '../../src/App';
 import { readLastLv, readLastLvMeta, readPaintNames } from '../../src/lib/persist/lastLv';
+import { schliesseTourAngebot } from '../helpers/tourAngebot';
 
 const NAME = 'gaeb-xml-beispiel.x83';
 const FIXTURE = readFileSync(resolve(process.cwd(), '../packages/core/tests/fixtures', NAME));
@@ -24,6 +25,7 @@ async function ladeDatei(): Promise<void> {
     target: { files: [new File([FIXTURE], NAME)] },
   });
   await screen.findByRole('button', { name: '+ Filter' });
+  await schliesseTourAngebot();
 }
 
 /** Wählt den ersten Punkt mit Langtext und gibt den Langtext selbst zurück. */

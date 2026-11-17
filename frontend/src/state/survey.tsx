@@ -14,7 +14,13 @@ import {
   type ReactNode,
 } from 'react';
 import { readSurveyDone, saveSurveyDone } from '../lib/persist/lastLv';
-import { SURVEY_DELAY_MS, surveyEvents, surveyOn, type SurveyAnswers, type SurveyDone } from '../lib/survey';
+import {
+  SURVEY_DELAY_MS,
+  surveyEvents,
+  surveyOn,
+  type SurveyAnswers,
+  type SurveyDone,
+} from '../lib/survey';
 import { countEvent } from '../lib/usage/count';
 import { useViewer } from './viewer';
 
