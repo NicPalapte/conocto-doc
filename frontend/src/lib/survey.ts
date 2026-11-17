@@ -7,6 +7,14 @@
 import { MAILTO_GRENZE, meldeMail } from './export/issueLink';
 import type { UsageEvent } from './usage/count';
 
+/**
+ * Hauptschalter der Kurzumfrage: aus nur mit `VITE_UMFRAGE=0` in `frontend/.env.production`
+ * (Firmentest, neu-tracking-aus-fuer-firmentest). Aus ⇒ kein Erscheinen, kein Menüpunkt.
+ */
+export function surveyOn(): boolean {
+  return import.meta.env.VITE_UMFRAGE !== '0';
+}
+
 /** Aktive Nutzungszeit mit geöffneter Datei, bevor die Umfrage einmal erscheint. */
 export const SURVEY_DELAY_MS = 4 * 60_000;
 

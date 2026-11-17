@@ -23,6 +23,7 @@ import { DOCUMENT_ACCEPT, useOptionalLvFiles } from '../docs/LvFilesProvider';
 import { NotesFileError, notesCount, readNotesFile, type NotesFile } from '../../lib/notesFile';
 import { useRules } from '../../state/rules';
 import { useSurvey } from '../../state/survey';
+import { surveyOn } from '../../lib/survey';
 import { useHostWindow } from '../common/hostWindow';
 import { keyIsTaken, overlayOpen } from '../common/keys';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
@@ -129,7 +130,7 @@ export function TopBar({
           onFehlerMelden={() => setMelden(true)}
           onTastenkuerzel={() => setKuerzel(true)}
           onTour={loaded && !popout ? () => dispatch({ type: 'tour', step: 0 }) : undefined}
-          onFeedback={loaded && !popout ? survey.show : undefined}
+          onFeedback={loaded && !popout && surveyOn() ? survey.show : undefined}
           onAnderesLv={loaded ? () => dispatch({ type: 'clear' }) : undefined}
           mitnehmen={loaded ? mitnehmen : undefined}
           onDokumentHinzufuegen={
