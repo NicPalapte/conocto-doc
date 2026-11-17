@@ -12,6 +12,11 @@ dem Merge daraus Version und Abschnitt.
 
 ---
 
+## 0.65.1 — 17.11.2026 · PDF verschwindet beim Reiterwechsel
+
+- Liegen Graph und Dokument im selben Bereich, bleibt das PDF nach dem Wechsel auf den Graphen
+  nicht mehr sichtbar stehen.
+
 ## 0.65.0 — 16.11.2026 · Vorschläge, Tabelle und Legende
 
 - **Keine doppelten Vorschläge:** Steht eine Position im selben Satz mehrfach (z. B. OZ und
