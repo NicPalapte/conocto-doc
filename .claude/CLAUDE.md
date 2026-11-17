@@ -172,7 +172,9 @@ zum Produkt (Owner-Wunsch, `docs/decisions/0071-kurzumfrage.md`). · Begleit-PDF
 Fenster „Dokument“ lesen, anstreichen, Stellen oder das ganze Dokument (Seite 0, 0099) von Hand
 mit Positionen verknüpfen, keine
 Interpretation (`components/docs/`, `docs/decisions/0072-begleitdokument-pdf.md`; im
-Graphen als PDF-Karten am Rand mit Linien, nur Anzeige, `docs/decisions/0097`); Vorschläge nur
+Graphen als PDF-Karten am Rand mit Linien, nur Anzeige, `docs/decisions/0097`; Linien nur für
+hervorgehobenes PDF, gewählte Position, hervorgehobenen Abschnitt, Matrix-Achsen `dokument`/
+`dokumentart` mit Sammelwert „mehrere PDFs“, `neu-pdf-fokus`); Vorschläge nur
 bei exakt passender OZ oder eindeutiger Menge+Einheit (gleiche Menge: eigene Kurztext-Wörter im
 Satzteil, bei Aufzählung/„je“ mehrere Positionen), Übernahme erst per Klick, „Nein“ gemerkt,
 kein inhaltliches Matching (`lib/docs/docSuggest.ts`, `docs/decisions/0080`; an/aus und Werte nur

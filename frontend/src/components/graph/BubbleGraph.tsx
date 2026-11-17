@@ -25,6 +25,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react';
 import { DocCards } from './DocCards';
+import { useOptionalDocuments } from '../docs/DocumentsProvider';
 import { GraphControls } from './GraphControls';
 import { GraphHeader } from './GraphHeader';
 import { HoverCard } from './HoverCard';
@@ -47,10 +48,16 @@ import {
   type MarkerInfo,
   type Progress,
 } from '../../lib/annotations';
-import { docGraphOf } from '../../lib/docs/docGraph';
+import { cardsTouching, docGraphOf, docLinksOf } from '../../lib/docs/docGraph';
 import { cullBounds, isInView } from '../../lib/graph/culling';
 import { MONO_CHAR, SANS_CHAR, axisText, fitText, hullPill } from '../../lib/graph/labels';
-import { layoutMap, type MapGroup, type MapHull } from '../../lib/graph/layoutMap';
+import {
+  DOC_AXIS,
+  DOC_KIND_AXIS,
+  layoutMap,
+  type MapGroup,
+  type MapHull,
+} from '../../lib/graph/layoutMap';
 import { graphOverlayProps, isOverlayEvent } from '../../lib/graph/overlay';
 import { placePins, type PinAnchor, type PlacedPin, type Rect } from '../../lib/graph/pins';
 import { positionRadii } from '../../lib/graph/sizes';
@@ -271,10 +278,31 @@ export function BubbleGraph({ root }: { root: LVNode }) {
   // springt beim Tippen nicht unter der Maus weg.
   const layoutMask = layout === 'matrix' || hide ? mask : null;
   const selected = layout === 'matrix' ? selectedFacets : EMPTY_SELECTED;
+  // ── Verknüpfungen mit Begleit-PDFs (Entscheidung 0097): Karten, Linien, Zahl am Punkt.
+  const docGraph = useMemo(
+    () => docGraphOf(annotations.documents, (id) => index.slotOf.has(id)),
+    [annotations.documents, index],
+  );
+  // Matrix nach Dokument (Entscheidung neu-pdf-fokus): nur dann hängt die Lage an
+  // den Verknüpfungen, sonst passt eine neue Verknüpfung den Graphen nicht neu ein.
+  const kindOfDoc = useOptionalDocuments()?.kindOf;
+  const byDocs =
+    layout === 'matrix' && [rows, cols].some((id) => id === DOC_AXIS || id === DOC_KIND_AXIS);
+  const docLinks = useMemo(
+    () =>
+      byDocs
+        ? docLinksOf(docGraph, index.slotOf, index.size, (doc) =>
+            kindOfDoc === undefined
+              ? (annotations.documents.docs.get(doc)?.kind ?? null)
+              : kindOfDoc(doc).kind,
+          )
+        : null,
+    [byDocs, docGraph, index, kindOfDoc, annotations.documents],
+  );
   // Alles, was die Lage bestimmt, außer der Blasengröße — gleich ⇒ nicht neu einpassen.
   const lage = useMemo(
-    () => ({ index, parents, layout, rows, cols, layoutMask, hide, hideEmpty, selected }),
-    [index, parents, layout, rows, cols, layoutMask, hide, hideEmpty, selected],
+    () => ({ index, parents, layout, rows, cols, layoutMask, hide, hideEmpty, selected, docLinks }),
+    [index, parents, layout, rows, cols, layoutMask, hide, hideEmpty, selected, docLinks],
   );
   const map = useMemo(
     () =>
@@ -288,9 +316,10 @@ export function BubbleGraph({ root }: { root: LVNode }) {
           hide,
           hideEmpty,
           selected,
+          docs: docLinks,
         }),
       ),
-    [index, parents, layout, rows, cols, radii, layoutMask, hide, hideEmpty, selected],
+    [index, parents, layout, rows, cols, radii, layoutMask, hide, hideEmpty, selected, docLinks],
   );
 
   // ── Hervorhebung eines Abschnitts (Entscheidung 0075): nur „nach LV", nur Darstellung.
@@ -324,12 +353,18 @@ export function BubbleGraph({ root }: { root: LVNode }) {
     (on: boolean): number => (inSpot === null || on ? 1 : spotlightHide ? 0 : SPOT_FADE),
     [inSpot, spotlightHide],
   );
-  // ── Verknüpfungen mit Begleit-PDFs (Entscheidung 0097): Karten, Linien, Zahl am Punkt.
-  const docGraph = useMemo(
-    () => docGraphOf(annotations.documents, (id) => index.slotOf.has(id)),
-    [annotations.documents, index],
-  );
   const docsOn = showDocs && docGraph.cards.length > 0;
+  /** Verknüpfte Positionen je Gruppe — die Zahl am Kreis, solange keine Linien laufen. */
+  const docsInGroup = useMemo(() => {
+    const out = new Int32Array(map.groups.length);
+    if (!docsOn) return out;
+    for (const id of docGraph.countOf.keys()) {
+      const slot = index.slotOf.get(id);
+      const group = slot === undefined ? -1 : map.groupOf[slot];
+      if (group >= 0) out[group]++;
+    }
+    return out;
+  }, [docsOn, docGraph, index, map]);
   /** Breite der Spalte mit den PDF-Karten am rechten Rand. */
   const docWidth = Math.round(Math.min(260, Math.max(180, w * 0.3)));
   // Einpassen lässt die Spalte frei, solange daneben genug Graph bleibt.
@@ -341,6 +376,11 @@ export function BubbleGraph({ root }: { root: LVNode }) {
     const card = docGraph.cards.find((candidate) => candidate.doc === docFocus);
     return card === undefined ? null : new Set(card.positions);
   }, [docGraph, docFocus]);
+  // Abschnitt hervorgehoben: nur PDFs mit Bezug zu ihm (Entscheidung neu-pdf-fokus).
+  const shownCards = useMemo(
+    () => (inSpot === null ? docGraph.cards : cardsTouching(docGraph, inSpot)),
+    [docGraph, inSpot],
+  );
   const slotFade = useCallback(
     (slot: number): number => {
       const id = index.nodes[slot].id;
@@ -1063,8 +1103,12 @@ export function BubbleGraph({ root }: { root: LVNode }) {
 
   // Linien von den Punkten zu ihren PDF-Karten, in Weltkoordinaten unter den Punkten. Kleine
   // Gruppen, deren Punkte als Fläche erscheinen, ziehen eine Linie je Gruppe statt je Punkt.
+  // Fokus (Entscheidung neu-pdf-fokus): Linien nur für das hervorgehobene PDF,
+  // die gewählte Position und den hervorgehobenen Abschnitt, in Ruhe keine.
   const pickedId = selectedPosition?.id ?? null;
-  const docLines: Array<{ key: string; d: string; strong: boolean; faint: boolean }> = [];
+  const inFocus = (doc: string, id: string): boolean =>
+    doc === docFocus || id === pickedId || (inSpot !== null && inSpot(id));
+  const docLines: Array<{ key: string; d: string; faint: boolean }> = [];
   if (docsOn && !morphing && k > 0) {
     const seen = new Set<string>();
     for (const card of docGraph.cards) {
@@ -1073,6 +1117,7 @@ export function BubbleGraph({ root }: { root: LVNode }) {
       const ex = (anchor.x - view.tx) / k;
       const ey = (anchor.y - view.ty) / k;
       for (const id of card.positions) {
+        if (!inFocus(card.doc, id)) continue;
         const slot = index.slotOf.get(id);
         if (slot === undefined || !Number.isFinite(map.px[slot])) continue;
         const hit = isHit(slot);
@@ -1093,15 +1138,11 @@ export function BubbleGraph({ root }: { root: LVNode }) {
         docLines.push({
           key,
           d: `M${sx},${y} C${mx},${y} ${mx},${ey} ${ex},${ey}`,
-          strong: card.doc === docFocus || id === pickedId,
           faint: !hit || fade < 1,
         });
       }
     }
-    // Kräftige Linien zuletzt, damit sie über den dünnen liegen.
-    docLines.sort((a, b) => Number(a.strong) - Number(b.strong));
   }
-  const docQuiet = docFocus !== null || pickedId !== null;
 
   return (
     <div
@@ -1342,6 +1383,34 @@ export function BubbleGraph({ root }: { root: LVNode }) {
                     strokeWidth={(chosen ? 2.5 : 1.2) / Math.max(k, 0.3)}
                     strokeDasharray={n === 0 || group.rest ? '4 4' : undefined}
                   />
+                  {docsInGroup[i] > 0 && !group.rest && (
+                    <g
+                      data-doc-group-count={docsInGroup[i]}
+                      pointerEvents="none"
+                      transform={`translate(${group.x + group.r * 0.71},${
+                        group.y - group.r * 0.71
+                      }) scale(${1 / Math.max(k, 0.05)})`}
+                    >
+                      <rect
+                        x={-11 - 3 * String(docsInGroup[i]).length}
+                        y={-10}
+                        width={22 + 6 * String(docsInGroup[i]).length}
+                        height={20}
+                        rx={10}
+                        fill="var(--cyan)"
+                        stroke="var(--surface)"
+                      />
+                      <text
+                        fill="#fff"
+                        fontSize={11}
+                        fontWeight={600}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                      >
+                        {formatCount(docsInGroup[i])}
+                      </text>
+                    </g>
+                  )}
                   {labelFits && (
                     <>
                       {group.context !== '' && (
@@ -1389,10 +1458,10 @@ export function BubbleGraph({ root }: { root: LVNode }) {
                   key={line.key}
                   d={line.d}
                   fill="none"
-                  stroke={line.strong ? 'var(--cyan)' : 'var(--line2)'}
-                  strokeWidth={line.strong ? 2 : 1}
+                  stroke="var(--cyan)"
+                  strokeWidth={2}
                   vectorEffect="non-scaling-stroke"
-                  opacity={line.strong ? 1 : (docQuiet ? 0.45 : 0.9) * (line.faint ? 0.4 : 1)}
+                  opacity={line.faint ? 0.4 : 1}
                 />
               ))}
             </g>
@@ -1684,7 +1753,7 @@ export function BubbleGraph({ root }: { root: LVNode }) {
 
       {docsOn && (
         <DocCards
-          cards={docGraph.cards}
+          cards={shownCards}
           focus={docFocus}
           picked={pickedId}
           index={index}

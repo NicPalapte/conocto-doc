@@ -9,6 +9,8 @@ import { ChipGroup, ValueChip } from '@conocto/design';
 import { FACETS_BY_ID } from '../../lib/facets';
 import {
   AXIS_IDS,
+  DOC_AXIS,
+  DOC_KIND_AXIS,
   QUANTITY_AXIS,
   SECTION_AXIS,
   type GraphLayoutId,
@@ -47,12 +49,15 @@ export function Row({
 const AXIS_LABELS: Readonly<Record<string, string>> = {
   [SECTION_AXIS]: 'Abschnitt',
   [QUANTITY_AXIS]: 'Mengenstufe',
+  [DOC_AXIS]: 'Dokument',
+  [DOC_KIND_AXIS]: 'Dokumentart',
 };
 
 export function DisplayControls() {
   const {
     lv,
     summary,
+    annotations,
     view: {
       graph: { layout, rows, cols, hideEmpty },
     },
@@ -61,9 +66,15 @@ export function DisplayControls() {
   if (lv === null) return null;
 
   // Nur Merkmale, die in dieser Datei mindestens einen Wert haben; Abschnitt
-  // und Mengenstufe stehen immer da, sie kommen aus der Datei selbst.
+  // und Mengenstufe stehen immer da, sie kommen aus der Datei selbst. Dokument und
+  // Dokumentart erst, wenn eine Stelle in einem PDF verknüpft ist.
+  const linked = annotations.documents.marks.some((mark) => mark.links.length > 0);
   const axes = AXIS_IDS.filter(
-    (id) => id === SECTION_AXIS || id === QUANTITY_AXIS || (summary.facets.get(id)?.size ?? 0) > 0,
+    (id) =>
+      id === SECTION_AXIS ||
+      id === QUANTITY_AXIS ||
+      ((id === DOC_AXIS || id === DOC_KIND_AXIS) && linked) ||
+      (summary.facets.get(id)?.size ?? 0) > 0,
   ).map((id) => ({
     value: id,
     label: AXIS_LABELS[id] ?? FACETS_BY_ID.get(id)?.label ?? id,

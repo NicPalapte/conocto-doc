@@ -2,7 +2,13 @@
 // Stellen je Position, nur aus verknüpften Stellen und nur für bekannte Positionen.
 
 import { describe, expect, it } from 'vitest';
-import { docGraphOf, EMPTY_DOC_GRAPH, marksForPosition } from '../../src/lib/docs/docGraph';
+import {
+  cardsTouching,
+  docGraphOf,
+  docLinksOf,
+  EMPTY_DOC_GRAPH,
+  marksForPosition,
+} from '../../src/lib/docs/docGraph';
 import {
   EMPTY_DOC_NOTES,
   linkDocMark,
@@ -76,5 +82,32 @@ describe('marksForPosition', () => {
     const [bb] = docGraphOf(sample(), all).cards;
     expect(marksForPosition(bb, 'p2').map((mark) => mark.page)).toEqual([6]);
     expect(marksForPosition(bb, 'p7')).toEqual([]);
+  });
+});
+
+describe('docLinksOf und cardsTouching (Entscheidung neu-pdf-fokus)', () => {
+  const slotOf = new Map([
+    ['p2', 0],
+    ['p4', 1],
+    ['p5', 2],
+  ]);
+
+  it('nennt je Indexeintrag seine PDFs in Kartenreihenfolge', () => {
+    const links = docLinksOf(docGraphOf(sample(), all), slotOf, 4, () => null);
+    expect(links.ofSlot).toEqual([
+      ['bb0000000001', 'gu0000000002'],
+      ['bb0000000001'],
+      ['bb0000000001'],
+      [],
+    ]);
+    expect(links.docs.map((doc) => doc.name)).toEqual(['Baubeschreibung', 'Bodengutachten']);
+  });
+
+  it('behält nur PDFs, die eine Position im Bereich berühren', () => {
+    const graph = docGraphOf(sample(), all);
+    expect(cardsTouching(graph, (id) => id === 'p4').map((card) => card.name)).toEqual([
+      'Baubeschreibung',
+    ]);
+    expect(cardsTouching(graph, () => false)).toEqual([]);
   });
 });

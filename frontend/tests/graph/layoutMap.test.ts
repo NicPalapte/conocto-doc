@@ -7,8 +7,14 @@ import { FACETS } from '../../src/lib/facets';
 import { groupRadius } from '../../src/lib/graph/constants';
 import { AXIS_LABEL_MAX } from '../../src/lib/graph/labels';
 import {
+  DOC_AXIS,
+  DOC_KIND_AXIS,
   layoutMap,
+  MANY_DOCS,
+  MANY_KINDS,
   NO_VALUE,
+  UNKNOWN_KIND,
+  type DocLinks,
   QUANTITY_AXIS,
   SECTION_AXIS,
   type MapOptions,
@@ -383,6 +389,56 @@ describe('Gliederung „Matrix"', () => {
 
   it('führt Positionen ohne Wert unter „ohne Angabe"', () => {
     const map = layoutMap(index, parents, options({ layout: 'matrix', rows: 'positionsart' }));
+    expect(map.groups.map((group) => group.title)).toEqual([NO_VALUE]);
+  });
+});
+
+describe('Matrix nach Dokument (Entscheidung neu-pdf-fokus)', () => {
+  // Erfundene PDFs: Gutachten an zwei Positionen, Plan an einer davon und einer weiteren.
+  const ofSlot: string[][] = Array.from({ length: index.size }, () => []);
+  ofSlot[slotOf('01.01.0010')] = ['gutachten', 'plan'];
+  ofSlot[slotOf('01.01.0020')] = ['gutachten'];
+  ofSlot[slotOf('01.02.01.0010')] = ['plan'];
+  ofSlot[slotOf('02.01.0010')] = ['notiz'];
+  const docs: DocLinks = {
+    ofSlot,
+    docs: [
+      { id: 'plan', name: 'Schalplan.pdf' },
+      { id: 'gutachten', name: 'Bodengutachten.pdf' },
+      { id: 'notiz', name: 'Notiz.pdf' },
+    ],
+    kindOf: (doc) => (doc === 'plan' ? 'plan' : doc === 'gutachten' ? 'gutachten' : null),
+  };
+
+  it('ordnet jede Position genau einer Spalte zu, mehrere PDFs gesammelt', () => {
+    const map = layoutMap(
+      index,
+      parents,
+      options({ layout: 'matrix', rows: SECTION_AXIS, cols: DOC_AXIS, docs }),
+    );
+    expect(map.axes?.colKey).toBe('Dokument');
+    expect(map.axes?.cols.map((col) => col.label)).toEqual([
+      'Schalplan.pdf',
+      'Bodengutachten.pdf',
+      'Notiz.pdf',
+      MANY_DOCS,
+      NO_VALUE,
+    ]);
+    const placed = map.groups.reduce((n, group) => n + (group.rest ? 0 : group.slots.length), 0);
+    expect(placed).toBe(index.size);
+    const viele = map.groups[map.groupOf[slotOf('01.01.0010')]];
+    expect(viele.slots).toEqual([slotOf('01.01.0010')]);
+  });
+
+  it('gliedert nach Dokumentart, nicht erkannte und gemischte eigens', () => {
+    const map = layoutMap(index, parents, options({ layout: 'matrix', rows: DOC_KIND_AXIS, docs }));
+    expect(map.groups.map((group) => group.title)).toEqual(
+      expect.arrayContaining(['Gutachten', 'Plan', UNKNOWN_KIND, MANY_KINDS, NO_VALUE]),
+    );
+  });
+
+  it('ohne Verknüpfungen steht alles unter „ohne Angabe"', () => {
+    const map = layoutMap(index, parents, options({ layout: 'matrix', rows: DOC_AXIS }));
     expect(map.groups.map((group) => group.title)).toEqual([NO_VALUE]);
   });
 });
