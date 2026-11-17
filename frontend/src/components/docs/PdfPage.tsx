@@ -390,7 +390,7 @@ function PdfPageView({
         ref={canvasRef}
         aria-hidden="true"
         className="absolute left-0 top-0"
-        style={{ width, height, visibility: proxy === null ? 'hidden' : 'visible' }}
+        style={{ width, height, visibility: proxy === null ? 'hidden' : undefined }}
       />
       <canvas
         ref={detailRef}
