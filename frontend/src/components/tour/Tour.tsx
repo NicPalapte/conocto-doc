@@ -3,10 +3,9 @@
 // fängt keine Klicks ab — wer mag, klickt das markierte Element selbst; manche
 // Schritte warten genau darauf (`done` in tourSteps.ts).
 //
-// Nach dem ersten LV einer Sitzung bietet Conocto die Tour einmal an.
-// Das Angebot steht über der Legende: feste Teile bleiben stehen, Neues weicht aus. Ob sie
-// schon angeboten war, steht nur im React-State: ein Reload bietet sie wieder
-// an, gespeichert wird nichts (.claude/CLAUDE.md, kein localStorage).
+// Nach dem ersten LV bietet Conocto die Tour einmal als Willkommenskarte in der Mitte an,
+// der Graph dahinter abgedunkelt (neu-tour-willkommenskarte). „Später", Escape oder ein
+// Tipp daneben schließen sie. Gesehen bleibt gemerkt (Entscheidung 0098).
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
@@ -28,6 +27,12 @@ const CARD_WIDTH = 300;
 /** Platz, den die Karte unter dem Ziel braucht; sonst steht sie darüber. */
 const CARD_SPACE = 190;
 const EDGE = 12;
+
+/** Breite der Willkommenskarte beim ersten Besuch. */
+const OFFER_WIDTH = 360;
+/** Knöpfe der Willkommenskarte: 44 px, gut mit dem Finger zu treffen. */
+const BIG_BUTTON =
+  'h-[44px] cursor-pointer rounded-[var(--r-sm)] border px-[18px] font-sans text-[14px]';
 
 const BUTTON =
   'h-[28px] cursor-pointer rounded-[var(--r-sm)] border px-[10px] font-mono text-[11.5px]';
@@ -256,8 +261,9 @@ export function Tour() {
 
   // Escape beendet die Tour — in der Capture-Phase, damit es nicht zusätzlich
   // die Auswahl zurücknimmt (ViewerPage).
+  const offering = lv !== null && index === null && !seen && stored === false;
   useEffect(() => {
-    if (index === null) return;
+    if (index === null && !offering) return;
     const onKey = (event: KeyboardEvent): void => {
       if (event.key !== 'Escape') return;
       // Ein anderes offenes Fenster oder die Suche bekommt Escape zuerst.
@@ -269,38 +275,57 @@ export function Tour() {
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [index, go]);
+  }, [index, offering, go]);
 
   if (lv === null) return null;
 
   if (index === null) {
-    if (seen || stored !== false) return null;
+    if (!offering) return null;
     return (
-      <div
-        // Kein `dialog`: das Angebot blockiert nichts, und Escape soll weiter
-        // die Positionskarte schließen (useDismiss, `yieldToDialogs`).
-        role="group"
-        aria-label="Tour anbieten"
-        // Über Legende und Steuerung unten links — auch wenn beide zwei Zeilen brauchen.
-        className="ov-glass absolute bottom-[112px] left-[16px] z-[12] flex items-center gap-[10px] py-[8px] pl-[14px] pr-[8px]"
-      >
-        <span className="font-sans text-[14px] text-ink">Neu hier?</span>
-        <button
-          type="button"
-          onClick={() => go(0)}
-          className={`${BUTTON} border-accent-fill bg-accent-fill text-white hover:bg-accent-fill-hover`}
-        >
-          Kurze Tour
-        </button>
-        <button
-          type="button"
+      <>
+        {/* Abdunkeln wie bei der Tour; ein Tipp daneben heißt „Später". */}
+        <div
+          aria-hidden="true"
           onClick={() => go(null)}
-          aria-label="Tour nicht anzeigen"
-          className="cursor-pointer border-none bg-transparent px-[6px] font-mono text-[12px] text-mute hover:text-ink"
+          className="fixed inset-0 z-[50] bg-[var(--spot)]"
+        />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tour-angebot-titel"
+          data-tour-card=""
+          className="ov-glass fixed left-1/2 top-1/2 z-[51] flex -translate-x-1/2 -translate-y-1/2 flex-col gap-[12px] p-[20px]"
+          style={{ width: OFFER_WIDTH, maxWidth: `calc(100vw - ${2 * EDGE}px)` }}
         >
-          ✕
-        </button>
-      </div>
+          <b id="tour-angebot-titel" className="font-display text-[18px] font-semibold text-ink">
+            Willkommen bei Conocto
+          </b>
+          <p className="m-0 font-sans text-[14px] leading-[1.45] text-dim">
+            In einer Minute die wichtigsten Griffe: Punkte, Positionskarte, Suche, Filter.
+          </p>
+          <span className="font-mono text-[11.5px] text-mute">
+            {TOUR_STEPS.length} Schritte · ca. 1 Minute
+          </span>
+          <div className="mt-[4px] flex flex-wrap items-center gap-[8px]">
+            <button
+              type="button"
+              autoFocus
+              onClick={() => go(0)}
+              className={`${BIG_BUTTON} border-accent-fill bg-accent-fill font-semibold text-white hover:bg-accent-fill-hover`}
+            >
+              Tour starten
+            </button>
+            <button
+              type="button"
+              onClick={() => go(null)}
+              title="Die Tour bleibt im Logo-Menü unter „Hilfe & Feedback“"
+              className={`${BIG_BUTTON} border-line bg-surface text-ink hover:bg-sunken`}
+            >
+              Später
+            </button>
+          </div>
+        </div>
+      </>
     );
   }
 

@@ -14,7 +14,13 @@ import {
   type ReactNode,
 } from 'react';
 import { readSurveyDone, saveSurveyDone } from '../lib/persist/lastLv';
-import { SURVEY_DELAY_MS, surveyEvents, type SurveyAnswers, type SurveyDone } from '../lib/survey';
+import {
+  SURVEY_DELAY_MS,
+  surveyEvents,
+  surveyOn,
+  type SurveyAnswers,
+  type SurveyDone,
+} from '../lib/survey';
 import { countEvent } from '../lib/usage/count';
 import { useViewer } from './viewer';
 
@@ -54,7 +60,8 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
 
   // Nur Zeit mit geöffneter Datei und sichtbarem Tab zählt.
   const activeMs = useRef(0);
-  const waiting = tree !== null && !shown && done !== 'beantwortet' && done !== 'abgelehnt';
+  const waiting =
+    surveyOn() && tree !== null && !shown && done !== 'beantwortet' && done !== 'abgelehnt';
   useEffect(() => {
     if (!waiting) return;
     const timer = window.setInterval(() => {

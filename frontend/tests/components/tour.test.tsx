@@ -122,7 +122,7 @@ afterEach(() => {
 describe('Tour', () => {
   it('bietet sich nach dem ersten LV an und startet beim Punkt', async () => {
     await setup();
-    fireEvent.click(screen.getByRole('button', { name: 'Kurze Tour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
     await frames();
     expect(screen.getByRole('dialog', { name: tourTitle(0) })).toBeTruthy();
     expect(screen.getByText(/Klick auf den markierten Punkt/)).toBeTruthy();
@@ -130,7 +130,7 @@ describe('Tour', () => {
 
   it('geht weiter, sobald man den verlangten Klick selbst macht', async () => {
     await setup();
-    fireEvent.click(screen.getByRole('button', { name: 'Kurze Tour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
     await frames();
     fireEvent.click(screen.getByText('punkt'));
     await frames();
@@ -139,7 +139,7 @@ describe('Tour', () => {
 
   it('läuft mit Weiter und Überspringen bis zum Ende durch', async () => {
     await setup();
-    fireEvent.click(screen.getByRole('button', { name: 'Kurze Tour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
     for (let index = 0; index < TOUR_STEPS.length; index++) {
       await frames();
       expect(screen.getByRole('dialog', { name: tourTitle(index) })).toBeTruthy();
@@ -153,7 +153,7 @@ describe('Tour', () => {
     await setup();
     expect(screen.queryByText('tabelle')).toBeNull();
     const table = TOUR_STEPS.findIndex((step) => step.target === '[data-tour="table"]');
-    fireEvent.click(screen.getByRole('button', { name: 'Kurze Tour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
     for (let index = 0; index < table; index++) {
       await frames();
       fireEvent.click(screen.getByRole('button', { name: /Weiter|Überspringen/ }));
@@ -166,7 +166,7 @@ describe('Tour', () => {
   it('überspringt einen Schritt, dessen Ziel fehlt', async () => {
     await setup(['hints']);
     const hints = TOUR_STEPS.findIndex((step) => step.target === '[data-tour="hints"]');
-    fireEvent.click(screen.getByRole('button', { name: 'Kurze Tour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
     for (let index = 0; index < hints; index++) {
       await frames();
       fireEvent.click(screen.getByRole('button', { name: /Weiter|Überspringen/ }));
@@ -178,28 +178,35 @@ describe('Tour', () => {
 
   it('Escape beendet die Tour, das Angebot kommt nicht wieder', async () => {
     await setup();
-    fireEvent.click(screen.getByRole('button', { name: 'Kurze Tour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
     await frames();
     fireEvent.keyDown(window, { key: 'Escape' });
     await frames();
     expect(screen.queryByRole('dialog')).toBeNull();
     fireEvent.click(screen.getByText('laden'));
     await frames();
-    expect(screen.queryByRole('button', { name: 'Kurze Tour' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Tour starten' })).toBeNull();
   });
 
-  it('✕ am Angebot blendet es aus', async () => {
+  it('Escape schließt die Willkommenskarte', async () => {
     await setup();
-    expect(screen.getByRole('group', { name: 'Tour anbieten' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Tour nicht anzeigen' }));
+    fireEvent.keyDown(window, { key: 'Escape' });
     await frames();
-    expect(screen.queryByRole('group', { name: 'Tour anbieten' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Willkommen bei Conocto' })).toBeNull();
+  });
+
+  it('„Später" an der Willkommenskarte blendet sie aus', async () => {
+    await setup();
+    expect(screen.getByRole('dialog', { name: 'Willkommen bei Conocto' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Später' }));
+    await frames();
+    expect(screen.queryByRole('dialog', { name: 'Willkommen bei Conocto' })).toBeNull();
   });
 
   it('überspringt rückwärts, wenn das Ziel beim Zurückgehen fehlt', async () => {
     await setup(['hints']);
     const hints = TOUR_STEPS.findIndex((step) => step.target === '[data-tour="hints"]');
-    fireEvent.click(screen.getByRole('button', { name: 'Kurze Tour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
     for (let index = 0; index < hints; index++) {
       await frames();
       fireEvent.click(screen.getByRole('button', { name: /Weiter|Überspringen/ }));
@@ -214,7 +221,7 @@ describe('Tour', () => {
 
   it('zeigt die Positionskarte auch, wenn der Punkt-Schritt übersprungen wurde', async () => {
     await setup();
-    fireEvent.click(screen.getByRole('button', { name: 'Kurze Tour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
     await frames();
     fireEvent.click(screen.getByRole('button', { name: 'Überspringen' }));
     await frames();
@@ -226,7 +233,7 @@ describe('Tour', () => {
   it('gibt nach dem Ende die eigene Auswahl zurück', async () => {
     await setup();
     fireEvent.click(screen.getByText('eigene wählen'));
-    fireEvent.click(screen.getByRole('button', { name: 'Kurze Tour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
     await frames();
     expect(screen.getByLabelText('auswahl').textContent).toBe('keine');
     fireEvent.click(screen.getByText('punkt'));
@@ -238,7 +245,7 @@ describe('Tour', () => {
 
   it('Escape gehört zuerst einem anderen offenen Fenster', async () => {
     await setup();
-    fireEvent.click(screen.getByRole('button', { name: 'Kurze Tour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
     await frames();
     const other = document.createElement('div');
     other.setAttribute('role', 'dialog');
@@ -272,7 +279,7 @@ describe('Tour · gemerkt über das Neuladen (Issue #191)', () => {
   it('bietet sich beim ersten Öffnen an, nach ✕ beim nächsten Öffnen nicht mehr', async () => {
     const erstes = oeffnen();
     fireEvent.click(screen.getByText('laden'));
-    fireEvent.click(await screen.findByRole('button', { name: 'Tour nicht anzeigen' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Später' }));
     await waitFor(async () => {
       const { readTourSeen } = await import('../../src/lib/persist/lastLv');
       expect(await readTourSeen()).toBe(true);
@@ -282,6 +289,6 @@ describe('Tour · gemerkt über das Neuladen (Issue #191)', () => {
     oeffnen();
     fireEvent.click(screen.getByText('laden'));
     await new Promise((resolve) => setTimeout(resolve, 100));
-    expect(screen.queryByRole('group', { name: 'Tour anbieten' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Willkommen bei Conocto' })).toBeNull();
   });
 });

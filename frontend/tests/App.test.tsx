@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { describe, expect, it } from 'vitest';
 import App from '../src/App';
 import { giveGraphASize } from './support/graphSize';
+import { schliesseTourAngebot } from './helpers/tourAngebot';
 
 giveGraphASize();
 
@@ -23,6 +24,7 @@ async function loadAndWait(name = 'gaeb-xml-beispiel.x83'): Promise<void> {
   render(<App />);
   await loadFixture(name);
   await waitFor(() => expect(screen.getByRole('button', { name: '+ Filter' })).toBeInTheDocument());
+  await schliesseTourAngebot();
 }
 
 /**
