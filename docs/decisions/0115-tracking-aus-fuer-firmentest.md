@@ -1,4 +1,4 @@
-# NEU – Zählung und Kurzumfrage für den Firmentest aus
+# DOC-0115 – Zählung und Kurzumfrage für den Firmentest aus
 
 - **Status:** akzeptiert
 - **Datum:** 2026-11-17

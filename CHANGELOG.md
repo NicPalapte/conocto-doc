@@ -12,6 +12,13 @@ dem Merge daraus Version und Abschnitt.
 
 ---
 
+## 0.66.1 — 17.11.2026 · Tour fällt beim ersten Besuch auf · Keine Zählung, keine Umfrage
+
+- Beim ersten Besuch begrüßt eine Karte in der Mitte mit „Tour starten" und „Später".
+
+- Conocto zählt keine Nutzung mehr und schickt nichts an GoatCounter.
+- Die Kurzumfrage erscheint nicht mehr, „Feedback geben" fehlt im Logo-Menü.
+
 ## 0.66.0 — 17.11.2026 · PDF-Verknüpfungen übersichtlich, Matrix nach Dokument
 
 - **Graph ruhig:** Linien zu den PDF-Karten erscheinen erst, wenn du ein PDF, eine Position

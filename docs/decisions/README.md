@@ -124,6 +124,8 @@ Designsystem `DS-`). Neue Nummern vergibt erst der Bot nach dem Merge (0113).
 | 0112 | [conocto.app nur bei neuem Release, main zu Cloudflare](0112-beta-nur-bei-release.md)                          | akzeptiert                         | 2026-11-16 |
 | 0113 | [Nummer, Version und Changelog erst nach dem Merge](0113-nummern-beim-merge.md)                                | akzeptiert                         | 2026-11-16 |
 | 0114 | [PDF-Linien nur im Fokus, Matrix nach Dokument](0114-pdf-fokus.md)                                             | akzeptiert                         | 2026-11-17 |
+| 0115 | [Zählung und Kurzumfrage für den Firmentest aus](0115-tracking-aus-fuer-firmentest.md)                         | akzeptiert                         | 2026-11-17 |
+| 0116 | [Tour als Willkommenskarte beim ersten Besuch](0116-tour-willkommenskarte.md)                                  | akzeptiert                         | 2026-11-17 |
 
 ## Wann schreibe ich eine neue Datei?
 

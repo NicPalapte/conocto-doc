@@ -9,7 +9,7 @@ import type { UsageEvent } from './usage/count';
 
 /**
  * Hauptschalter der Kurzumfrage: aus nur mit `VITE_UMFRAGE=0` in `frontend/.env.production`
- * (Firmentest, neu-tracking-aus-fuer-firmentest). Aus ⇒ kein Erscheinen, kein Menüpunkt.
+ * (Firmentest, 0115). Aus ⇒ kein Erscheinen, kein Menüpunkt.
  */
 export function surveyOn(): boolean {
   return import.meta.env.VITE_UMFRAGE !== '0';

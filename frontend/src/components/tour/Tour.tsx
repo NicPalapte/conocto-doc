@@ -4,7 +4,7 @@
 // Schritte warten genau darauf (`done` in tourSteps.ts).
 //
 // Nach dem ersten LV bietet Conocto die Tour einmal als Willkommenskarte in der Mitte an,
-// der Graph dahinter abgedunkelt (neu-tour-willkommenskarte). „Später", Escape oder ein
+// der Graph dahinter abgedunkelt (0116). „Später", Escape oder ein
 // Tipp daneben schließen sie. Gesehen bleibt gemerkt (Entscheidung 0098).
 
 import { useCallback, useEffect, useRef, useState } from 'react';
