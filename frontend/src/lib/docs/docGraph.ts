@@ -5,6 +5,8 @@
 // Grundlage sind allein die gespeicherten Verknüpfungen (`DocNotes.marks[].links`),
 // angestrichene Stellen ohne Verknüpfung zählen nicht.
 
+import type { DocKind } from '@core';
+import type { DocLinks } from '../graph/layoutMap';
 import type { DocMark, DocNotes } from './docNotes';
 
 /** Ein Begleit-PDF mit mindestens einer Verknüpfung. */
@@ -70,4 +72,36 @@ export function docGraphOf(notes: DocNotes, known: (id: string) => boolean): Doc
 /** Stellen einer Karte, die mit dieser Position verknüpft sind. */
 export function marksForPosition(card: DocCard, id: string): readonly DocMark[] {
   return card.marks.filter((mark) => mark.links.includes(id));
+}
+
+/**
+ * Verknüpfte PDFs je Indexeintrag für die Matrix-Achsen „Dokument“/„Dokumentart“.
+ * `slotOf` ordnet Knoten-IDs dem Index zu; PDFs in Kartenreihenfolge.
+ */
+export function docLinksOf(
+  graph: DocGraph,
+  slotOf: ReadonlyMap<string, number>,
+  size: number,
+  kindOf: (doc: string) => DocKind | null,
+): DocLinks {
+  const ofSlot: string[][] = Array.from({ length: size }, () => []);
+  for (const card of graph.cards) {
+    for (const id of card.positions) {
+      const slot = slotOf.get(id);
+      if (slot !== undefined) ofSlot[slot].push(card.doc);
+    }
+  }
+  return {
+    ofSlot,
+    docs: graph.cards.map((card) => ({ id: card.doc, name: card.name })),
+    kindOf,
+  };
+}
+
+/** PDFs mit mindestens einer verknüpften Position, für die `inside` gilt. */
+export function cardsTouching(
+  graph: DocGraph,
+  inside: (id: string) => boolean,
+): readonly DocCard[] {
+  return graph.cards.filter((card) => card.positions.some(inside));
 }

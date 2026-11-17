@@ -22,6 +22,7 @@ import { formatNumber } from '../format';
 import { canonicalUnit, unitLabel } from '../units';
 import { mainSectionOf } from '../tree/mainSection';
 import type { PositionIndex } from '../index/positionIndex';
+import { DOC_KINDS, DOC_KIND_LABEL, type DocKind } from '@core';
 import type { LVNode } from '../../types/lvNode';
 
 export type GraphLayoutId = 'lv' | 'matrix';
@@ -54,13 +55,39 @@ export const SECTION_AXIS = 'abschnitt';
  */
 export const QUANTITY_AXIS = 'mengenstufe';
 
+/**
+ * Zeilen/Spalten nach verknüpftem Begleit-PDF bzw. dessen Dokumentart (Entscheidung
+ * neu-pdf-fokus). Kein Filtermerkmal: die Werte kommen aus den eigenen
+ * Verknüpfungen (`DocLinks`), nicht aus der Datei.
+ */
+export const DOC_AXIS = 'dokument';
+export const DOC_KIND_AXIS = 'dokumentart';
+
 /** Alle Achsen der Matrix in Anzeigereihenfolge. */
 export const AXIS_IDS: readonly string[] = [
   'einheit',
   QUANTITY_AXIS,
   SECTION_AXIS,
   ...AXIS_FACETS.slice(1),
+  DOC_AXIS,
+  DOC_KIND_AXIS,
 ];
+
+/** Sammelwerte: eine Position mit mehreren PDFs bzw. Arten steht nur einmal, hier. */
+export const MANY_DOCS = 'mehrere PDFs';
+export const MANY_KINDS = 'mehrere Arten';
+/** PDFs ohne erkannte oder gewählte Dokumentart. */
+export const UNKNOWN_KIND = 'nicht erkannt';
+
+/** Verknüpfungen mit Begleit-PDFs für die Achsen „Dokument“ und „Dokumentart“. */
+export interface DocLinks {
+  /** Verknüpfte PDFs (Kennungen) je Indexeintrag, ohne Doppelte; leer = keins. */
+  readonly ofSlot: readonly (readonly string[])[];
+  /** PDFs in Kartenreihenfolge mit Namen. */
+  readonly docs: ReadonlyArray<{ readonly id: string; readonly name: string }>;
+  /** Geltende Dokumentart; `null` = nicht erkannt. */
+  readonly kindOf: (doc: string) => DocKind | null;
+}
 
 /** Stufen der Mengen-Achse: Untergrenze (einschließlich) und Name. */
 const QUANTITY_STEPS: ReadonlyArray<readonly [number, string]> = [
@@ -89,6 +116,8 @@ export interface MapOptions {
   hideEmpty?: boolean;
   /** Gewählte Filterwerte je Facette — sie bestimmen die Achsen in „Matrix". */
   selected: Readonly<Record<string, ReadonlySet<string>>>;
+  /** Verknüpfungen mit PDFs; nur für die Achsen „Dokument“/„Dokumentart“ nötig. */
+  docs?: DocLinks | null;
 }
 
 export interface MapGroup {
@@ -542,13 +571,56 @@ function quantityAxis(index: PositionIndex): Axis {
   };
 }
 
+const NO_DOCS: readonly string[] = [];
+
+/** Je Position genau ein Wert: das PDF, bei mehreren der Sammelwert (Punkt bleibt eindeutig). */
+function docAxis(links: DocLinks | null): Axis {
+  const order = new Map<string, number>();
+  const names = new Map<string, string>();
+  links?.docs.forEach((doc, i) => {
+    order.set(doc.id, i);
+    names.set(doc.id, doc.name);
+  });
+  return {
+    id: DOC_AXIS,
+    label: 'Dokument',
+    values: (slot) => {
+      const own = links?.ofSlot[slot] ?? NO_DOCS;
+      return own.length <= 1 ? own : [MANY_DOCS];
+    },
+    valueLabel: (value) => names.get(value) ?? value,
+    sort: (values) => values.sort((a, b) => (order.get(a) ?? 1e9) - (order.get(b) ?? 1e9)),
+  };
+}
+
+function docKindAxis(links: DocLinks | null): Axis {
+  const rank = (value: string): number => {
+    const at = DOC_KINDS.indexOf(value as DocKind);
+    return at >= 0 ? at : value === UNKNOWN_KIND ? DOC_KINDS.length : DOC_KINDS.length + 1;
+  };
+  return {
+    id: DOC_KIND_AXIS,
+    label: 'Dokumentart',
+    values: (slot) => {
+      const own = links?.ofSlot[slot] ?? NO_DOCS;
+      const kinds = new Set(own.map((doc) => links?.kindOf(doc) ?? UNKNOWN_KIND));
+      return kinds.size === 0 ? [] : kinds.size === 1 ? [...kinds] : [MANY_KINDS];
+    },
+    valueLabel: (value) => DOC_KIND_LABEL[value as DocKind] ?? value,
+    sort: (values) => values.sort((a, b) => rank(a) - rank(b)),
+  };
+}
+
 function axisOf(
   index: PositionIndex,
   parents: ReadonlyMap<string, LVNode | null>,
   id: string,
+  docs: DocLinks | null,
 ): Axis | null {
   if (id === SECTION_AXIS) return sectionAxis(index, parents);
   if (id === QUANTITY_AXIS) return quantityAxis(index);
+  if (id === DOC_AXIS) return docAxis(docs);
+  if (id === DOC_KIND_AXIS) return docKindAxis(docs);
   return facetAxis(index, id);
 }
 
@@ -743,9 +815,10 @@ export function layoutMap(
   let hulls: MapHull[] = [];
   let axes: MapAxes | null = null;
   let tiles: Tiles | null = null;
-  const rowAxis = options.layout === 'matrix' ? axisOf(index, parents, options.rows) : null;
+  const docs = options.docs ?? null;
+  const rowAxis = options.layout === 'matrix' ? axisOf(index, parents, options.rows, docs) : null;
   if (rowAxis !== null) {
-    const colAxis = options.cols === null ? null : axisOf(index, parents, options.cols);
+    const colAxis = options.cols === null ? null : axisOf(index, parents, options.cols, docs);
     ({ groups, axes, tiles } = layoutFree(index, rowAxis, colAxis, options));
   } else {
     ({ groups, hulls } = layoutByLv(index, parents, options));

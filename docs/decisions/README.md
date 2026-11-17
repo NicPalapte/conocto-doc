@@ -106,7 +106,7 @@ Designsystem `DS-`). Neue Nummern vergibt erst der Bot nach dem Merge (0113).
 | 0094 | [Mehrere PDFs: Dokumentliste und Übersicht mit Miniaturen](0094-mehrere-pdfs-liste-und-uebersicht.md)          | akzeptiert                         | 2026-11-03 |
 | 0095 | [Pläne im PDF messen: Ausnahme vom Feature-Freeze](0095-plaene-messen-im-pdf.md)                               | akzeptiert                         | 2026-11-05 |
 | 0096 | [Dokumentart der PDFs: erkennen, ändern, sortieren](0096-dokumentart-der-pdfs.md)                              | akzeptiert                         | 2026-11-06 |
-| 0097 | [PDF-Verknüpfungen im Graphen: Karten am Rand mit Linien](0097-pdf-verknuepfungen-im-graphen.md)               | akzeptiert                         | 2026-11-06 |
+| 0097 | [PDF-Verknüpfungen im Graphen: Karten am Rand mit Linien](0097-pdf-verknuepfungen-im-graphen.md)               | teilw. ersetzt d. neu-pdf-fokus    | 2026-11-06 |
 | 0098 | [„Kurze Tour“: gesehen merken](0098-tour-gesehen-merken.md)                                                    | akzeptiert                         | 2026-11-07 |
 | 0099 | [Ganzes Dokument mit Positionen verknüpfen](0099-ganzes-dokument-verknuepfen.md)                               | akzeptiert                         | 2026-11-07 |
 | 0100 | [Ein Demo-Projekt mit PDFs, Verknüpfungen und Plan](0100-ein-demo-projekt.md)                                  | akzeptiert                         | 2026-11-08 |
