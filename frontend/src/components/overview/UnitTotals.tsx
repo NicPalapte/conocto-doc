@@ -48,7 +48,7 @@ export function UnitTotals({
           type="button"
           role="listitem"
           onClick={() => onPick(unit.key)}
-          title={`${formatPositions(unit.count)} — klicken filtert nach ${unit.label}`}
+          title={`${formatPositions(unit.count)} · klicken filtert nach ${unit.label}`}
           className="flex w-full cursor-pointer items-baseline gap-[8px] border-none border-b border-solid border-grid bg-transparent px-0 py-[5px] text-left"
         >
           <span

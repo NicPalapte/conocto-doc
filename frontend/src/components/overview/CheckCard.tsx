@@ -392,7 +392,7 @@ export function CheckFlyout({ layout = 'over' }: { layout?: 'side' | 'over' }) {
               <span
                 className="ml-[6px] border px-[4px] py-[1px]"
                 style={{ borderColor: 'var(--amber)', color: 'var(--amberD)' }}
-                title="Der Norm-Verweis ist noch nicht bestätigt — siehe docs/domain/vob-pruefungen.md"
+                title="Norm-Verweis noch nicht geprüft – bitte in der Norm nachsehen"
               >
                 Verweis zu bestätigen
               </span>

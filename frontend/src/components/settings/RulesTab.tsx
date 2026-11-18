@@ -507,7 +507,7 @@ export function RulesTab() {
               'json',
             )
           }
-          title="Deine eigenen Regeln als Datei regeln.json — zum Weitergeben oder für den Grundstock"
+          title="Eigene Regeln als regeln.json"
           className={BUTTON}
         >
           Regeln exportieren

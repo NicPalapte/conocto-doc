@@ -81,7 +81,7 @@ export function SettingsDialog({ onClose, onTrefferProtokoll }: SettingsDialogPr
               <button
                 type="button"
                 onClick={onTrefferProtokoll}
-                title="Welche Stichworte der Materialtabellen was getroffen haben — gefilterte Positionen"
+                title="Welche Stichworte welche gefilterten Positionen trafen"
                 className="mt-auto hidden h-[32px] cursor-pointer items-center self-start rounded-[var(--r-pill)] border border-line bg-surface px-[12px] text-[12px] text-dim hover:border-line2 md:inline-flex"
               >
                 Treffer-Protokoll (CSV)

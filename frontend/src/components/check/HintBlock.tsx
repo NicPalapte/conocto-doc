@@ -56,7 +56,7 @@ function RuleHints({
             {!rule.refConfirmed && (
               <span
                 className="text-amberD"
-                title="Der Norm-Verweis ist noch nicht bestätigt — siehe docs/domain/vob-pruefungen.md"
+                title="Norm-Verweis noch nicht geprüft – bitte in der Norm nachsehen"
               >
                 Verweis zu bestätigen
               </span>
