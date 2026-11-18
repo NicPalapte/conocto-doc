@@ -1,5 +1,5 @@
 ---
-art: korrektur
+art: funktion
 ---
 Daten von vor 0.66 werden nicht mehr gelesen
 
