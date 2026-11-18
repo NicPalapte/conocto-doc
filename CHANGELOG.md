@@ -12,6 +12,13 @@ dem Merge daraus Version und Abschnitt.
 
 ---
 
+## 0.66.2 — 18.11.2026 · Daten von vor 0.66 werden nicht mehr gelesen
+
+- **Arbeitsstand-Dateien** aus Versionen vor 0.66 („Notizen“) lassen sich nicht mehr laden.
+  Conocto sagt das beim Laden.
+- **Letzte Datei im Browser** aus Versionen vor 0.66 erscheint nicht mehr auf der Startseite.
+- **Alte Links** mit der OZ wählen keine Position mehr; alte Demo-Links öffnen nichts mehr.
+
 ## 0.66.1 — 17.11.2026 · Tour fällt beim ersten Besuch auf · Keine Zählung, keine Umfrage
 
 - Beim ersten Besuch begrüßt eine Karte in der Mitte mit „Tour starten" und „Später".

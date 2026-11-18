@@ -1,4 +1,4 @@
-# NEU – Rückwärtskompatibel erst ab 0.66
+# DOC-0117 – Rückwärtskompatibel erst ab 0.66
 
 - **Status:** akzeptiert
 - **Datum:** 2026-11-18

@@ -163,7 +163,7 @@ describe('annotations', () => {
     expect(rekey(EMPTY_ANNOTATIONS, keys.toHash)).toBe(EMPTY_ANNOTATIONS);
   });
 
-  it('liest keinen Speicher von vor 0.66 (neu-kompatibel-ab-0-66)', () => {
+  it('liest keinen Speicher von vor 0.66 (0117)', () => {
     const notiz = [['k', [{ kind: 'comment', at: 1, text: 'Text' }]]];
     expect(fromStored({ v: 5, progress: [], important: ['m'], log: notiz })).toBe(
       EMPTY_ANNOTATIONS,

@@ -184,7 +184,7 @@ function isMeta(value: unknown): value is LastLvMeta {
     typeof meta.fileName === 'string' &&
     typeof meta.positionCount === 'number' &&
     typeof meta.savedAt === 'number' &&
-    // Ohne `id` oder `files`: vor 0.66 gespeichert, gilt als leer (neu-kompatibel-ab-0-66).
+    // Ohne `id` oder `files`: vor 0.66 gespeichert, gilt als leer (0117).
     typeof meta.id === 'string' &&
     Array.isArray(meta.files) &&
     meta.files.every(isStoredFile)

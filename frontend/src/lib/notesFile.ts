@@ -51,7 +51,7 @@ import {
 
 /** Kennung der Arbeitsstand-Datei (Entscheidung 0101). */
 export const NOTES_FILE_KIND = 'conocto-arbeitsstand';
-/** Kennung vor 0.66 („Notizen“): erkannt, nicht mehr gelesen (neu-kompatibel-ab-0-66). */
+/** Kennung vor 0.66 („Notizen“): erkannt, nicht mehr gelesen (0117). */
 const OLD_NOTES_FILE_KIND = 'conocto-notizen';
 /**
  * Einzige gelesene Version, wie sie Conocto 0.66 schreibt. Neue Felder nur ergänzen, die

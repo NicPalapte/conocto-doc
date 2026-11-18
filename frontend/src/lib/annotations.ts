@@ -477,7 +477,7 @@ export function positionMoves(
 /**
  * Form für die IndexedDB: Arrays statt Set/Map, damit auch ältere Browser klonen.
  * Schlüssel ist der Positions-Hash. `v: 6` ist die Form von 0.66 und die einzige, die
- * `fromStored` liest (neu-kompatibel-ab-0-66). Neue Felder nur optional ergänzen
+ * `fromStored` liest (0117). Neue Felder nur optional ergänzen
  * (wie `links`, 0081, und `plans`, 0095): ältere Fassungen übergehen sie.
  */
 export interface StoredAnnotations {
@@ -572,7 +572,7 @@ export function fromStored(value: unknown): Annotations {
   if (typeof value !== 'object' || value === null) return EMPTY_ANNOTATIONS;
   const raw = value as Record<string, unknown>;
 
-  // Vor 0.66 gespeichert (`v` unter 6): nicht mehr gelesen (neu-kompatibel-ab-0-66).
+  // Vor 0.66 gespeichert (`v` unter 6): nicht mehr gelesen (0117).
   if (raw.v !== 6) return EMPTY_ANNOTATIONS;
   const progress = new Map<string, Progress>();
   for (const [id, p] of pairs(raw.progress)) if (isProgress(p)) progress.set(id, p);

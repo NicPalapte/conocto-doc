@@ -65,7 +65,7 @@ _Linting/Formatierung laufen automatisch via Claude Code Hook nach jedem Edit/Wr
   Kein geparstes LV speichern, keine Demo-LVs, kein zweites Projekt, keine PDF-Bytes. Notizen
   nur schreiben, wenn die Projekt-Kennung (`persistIdOf`) noch passt. Fehlt IndexedDB ⇒ still ohne
   Speicher weiter, kein Fehler (Entscheidungen 0046, 0047, 0053).
-- **Rückwärtskompatibel ab v0.66.0** (`neu-kompatibel-ab-0-66`): Arbeitsstand-Datei
+- **Rückwärtskompatibel ab v0.66.0** (`0117`): Arbeitsstand-Datei
   (`conocto-arbeitsstand` Version 5), Speicher (`StoredAnnotations` `v: 6`, Meta mit `id` +
   `files`) und Links (`pos=`), wie 0.66 sie schreibt, bleiben lesbar. Verboten: Lesewege für
   Formate von vor 0.66 neu anlegen. Neue Felder nur optional ergänzen; ein Bruch braucht eine
