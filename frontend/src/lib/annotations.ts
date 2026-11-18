@@ -370,7 +370,7 @@ export function annotationAllowList(
   return allowed;
 }
 
-/** Datum und Uhrzeit eines Eintrags, wie im Verlauf und im Export. 0 = unbekannt (v0.15). */
+/** Datum und Uhrzeit eines Eintrags, wie im Verlauf und im Export. 0 = unbekannt. */
 export function formatAt(at: number): string {
   if (at <= 0) return '';
   const date = new Date(at);
@@ -414,8 +414,7 @@ function rekeyEntries(
 
 /**
  * Schlüssel austauschen. Unbekannte Schlüssel bleiben, wie sie sind: so gehen
- * Notizen ohne passende Position beim nächsten Speichern nicht verloren, und
- * Notizen aus v0.21 und älter (Knoten-ID) finden ihre Position direkt.
+ * Notizen ohne passende Position beim nächsten Speichern nicht verloren.
  */
 export function rekey(annotations: Annotations, keys: ReadonlyMap<string, string>): Annotations {
   const { progress, important, highlights, log, documents, links = [], plans } = annotations;
@@ -477,12 +476,9 @@ export function positionMoves(
 
 /**
  * Form für die IndexedDB: Arrays statt Set/Map, damit auch ältere Browser klonen.
- * `v: 6`: dazu Stellen in Begleitdokumenten (Entscheidung 0072), seit 0081 optional
- * `links` (Verbindungen aus Regeln) — ältere Versionen lesen das Feld einfach nicht.
- * `v: 5`: dazu Anstreichungen (Entscheidung 0063). `v: 4`: Fortschritt + Wichtig
- * (Entscheidung 0062). Schlüssel ist der Positions-Hash.
- * Ältere Formen liest `fromStored`: `v: 3` (drei Marker, Hash), `v: 2` (drei Marker,
- * Knoten-ID) und ohne `v` (v0.15, Entscheidung 0047).
+ * Schlüssel ist der Positions-Hash. `v: 6` ist die Form von 0.66 und die einzige, die
+ * `fromStored` liest (neu-kompatibel-ab-0-66). Neue Felder nur optional ergänzen
+ * (wie `links`, 0081, und `plans`, 0095): ältere Fassungen übergehen sie.
  */
 export interface StoredAnnotations {
   readonly v: 6;
@@ -527,18 +523,6 @@ export function isProgress(value: unknown): value is Progress {
   return value === 'bearbeitung' || value === 'fertig';
 }
 
-/** Marker bis v0.25: genau einer aus drei je Position. */
-export type OldMarker = 'markiert' | 'wichtig' | 'erledigt';
-
-export function isOldMarker(value: unknown): value is OldMarker {
-  return value === 'markiert' || value === 'wichtig' || value === 'erledigt';
-}
-
-/** „Markiert" und „Wichtig" werden „Wichtig", „Erledigt" bleibt „Erledigt" (Fortschritt `fertig`). */
-export const oldIsImportant = (marker: OldMarker | null): boolean =>
-  marker === 'markiert' || marker === 'wichtig';
-export const oldIsDone = (marker: OldMarker | null): boolean => marker === 'erledigt';
-
 function atOf(raw: Record<string, unknown>): number {
   return typeof raw.at === 'number' && Number.isFinite(raw.at) ? raw.at : 0;
 }
@@ -561,36 +545,6 @@ export function toEntry(value: unknown): LogEntry | null {
     return { kind: 'important', at: atOf(raw), on: raw.on };
   }
   return commentEntry(raw);
-}
-
-/**
- * Verlauf bis v0.25 (Speicher `v: 2/3`, Notiz-Datei Version 1): ein Marker-Wechsel wird
- * zu den Wechseln, die er heute bedeutet.
- * Dazu wird der vorige Marker mitgeführt — „Marker entfernt" sagt allein nicht, was weg ist.
- */
-export function toEntriesOld(entries: readonly unknown[]): LogEntry[] {
-  const out: LogEntry[] = [];
-  let prev: OldMarker | null = null;
-  for (const value of entries) {
-    if (typeof value !== 'object' || value === null) continue;
-    const raw = value as Record<string, unknown>;
-    if (raw.kind !== 'marker') {
-      const comment = commentEntry(raw);
-      if (comment !== null) out.push(comment);
-      continue;
-    }
-    if (raw.marker !== null && !isOldMarker(raw.marker)) continue;
-    const next: OldMarker | null = raw.marker;
-    const at = atOf(raw);
-    if (oldIsDone(prev) !== oldIsDone(next)) {
-      out.push({ kind: 'progress', at, progress: oldIsDone(next) ? 'fertig' : null });
-    }
-    if (oldIsImportant(prev) !== oldIsImportant(next)) {
-      out.push({ kind: 'important', at, on: oldIsImportant(next) });
-    }
-    prev = next;
-  }
-  return out;
 }
 
 function pairs(value: unknown): Array<[string, unknown]> {
@@ -618,74 +572,38 @@ export function fromStored(value: unknown): Annotations {
   if (typeof value !== 'object' || value === null) return EMPTY_ANNOTATIONS;
   const raw = value as Record<string, unknown>;
 
-  if (raw.v === 4 || raw.v === 5 || raw.v === 6) {
-    const progress = new Map<string, Progress>();
-    for (const [id, p] of pairs(raw.progress)) if (isProgress(p)) progress.set(id, p);
-    const important = new Set(
-      Array.isArray(raw.important)
-        ? raw.important.filter((id): id is string => typeof id === 'string')
-        : [],
-    );
-    const log = readLog(raw.log, (entries) =>
-      entries.map(toEntry).filter((entry): entry is LogEntry => entry !== null),
-    );
-    const highlights = new Map<string, Highlight[]>();
-    for (const [id, list] of pairs(raw.highlights)) {
-      if (!Array.isArray(list)) continue;
-      const valid = list.map(toHighlight).filter((mark): mark is Highlight => mark !== null);
-      if (valid.length > 0)
-        highlights.set(
-          id,
-          valid.sort((a, b) => a.start - b.start),
-        );
-    }
-    const documents = raw.v === 6 ? fromStoredDocNotes(raw.documents) : EMPTY_DOC_NOTES;
-    const links = raw.v === 6 ? toLinks(raw.links) : [];
-    const plans = raw.v === 6 ? fromStoredPlanNotes(raw.plans) : null;
-    return {
-      progress,
-      important,
-      highlights,
-      log,
-      documents,
-      ...(links.length > 0 ? { links } : {}),
-      ...(plans === null || isEmptyPlanNotes(plans) ? {} : { plans }),
-    };
+  // Vor 0.66 gespeichert (`v` unter 6): nicht mehr gelesen (neu-kompatibel-ab-0-66).
+  if (raw.v !== 6) return EMPTY_ANNOTATIONS;
+  const progress = new Map<string, Progress>();
+  for (const [id, p] of pairs(raw.progress)) if (isProgress(p)) progress.set(id, p);
+  const important = new Set(
+    Array.isArray(raw.important)
+      ? raw.important.filter((id): id is string => typeof id === 'string')
+      : [],
+  );
+  const log = readLog(raw.log, (entries) =>
+    entries.map(toEntry).filter((entry): entry is LogEntry => entry !== null),
+  );
+  const highlights = new Map<string, Highlight[]>();
+  for (const [id, list] of pairs(raw.highlights)) {
+    if (!Array.isArray(list)) continue;
+    const valid = list.map(toHighlight).filter((mark): mark is Highlight => mark !== null);
+    if (valid.length > 0)
+      highlights.set(
+        id,
+        valid.sort((a, b) => a.start - b.start),
+      );
   }
-
-  if (raw.v === 2 || raw.v === 3) {
-    const progress = new Map<string, Progress>();
-    const important = new Set<string>();
-    for (const [id, marker] of pairs(raw.markers)) {
-      if (!isOldMarker(marker)) continue;
-      if (oldIsDone(marker)) progress.set(id, 'fertig');
-      else important.add(id);
-    }
-    return {
-      progress,
-      important,
-      highlights: new Map(),
-      log: readLog(raw.log, toEntriesOld),
-      documents: EMPTY_DOC_NOTES,
-    };
-  }
-
-  // v0.15: eine Markierung (an/aus) und ein Kommentarfeld je Position. Die
-  // Markierung wird „Wichtig", der Kommentar ein Eintrag ohne Zeitpunkt.
-  const marked = Array.isArray(raw.marked)
-    ? raw.marked.filter((id): id is string => typeof id === 'string')
-    : [];
-  const log = new Map<string, LogEntry[]>();
-  for (const [id, text] of pairs(raw.notes)) {
-    if (typeof text === 'string' && text.trim() !== '') {
-      log.set(id, [{ kind: 'comment', at: 0, text }]);
-    }
-  }
+  const documents = fromStoredDocNotes(raw.documents);
+  const links = toLinks(raw.links);
+  const plans = fromStoredPlanNotes(raw.plans);
   return {
-    progress: new Map(),
-    important: new Set(marked),
-    highlights: new Map(),
+    progress,
+    important,
+    highlights,
     log,
-    documents: EMPTY_DOC_NOTES,
+    documents,
+    ...(links.length > 0 ? { links } : {}),
+    ...(plans === null || isEmptyPlanNotes(plans) ? {} : { plans }),
   };
 }

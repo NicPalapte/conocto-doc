@@ -61,7 +61,7 @@ describe('Namen der Markierfarben', () => {
       gruen: 'Maß',
     });
     expect(parseNotesFile(text).farben).toEqual({ gruen: 'Maß' });
-    const v2 = parseNotesFile('{"art":"conocto-notizen","version":2,"positionen":[]}');
-    expect(v2.farben).toEqual({});
+    const ohne = parseNotesFile('{"art":"conocto-arbeitsstand","version":5,"positionen":[]}');
+    expect(ohne.farben).toEqual({});
   });
 });

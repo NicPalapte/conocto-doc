@@ -295,7 +295,7 @@ function OpenDocument({ doc, ownWindow }: { doc: OpenedPdf; ownWindow: boolean }
     for (let page = 1; page <= pages; page += 1) if (kindOf(page) === 'plan') count += 1;
     return count;
   }, [pages, kindOf]);
-  // Ansatz gestartet (Nico, 06.11.2026): nur die Pläne zeigen; hat dieses PDF keine,
+  // Ansatz gestartet: nur die Pläne zeigen; hat dieses PDF keine,
   // in die Übersicht springen, damit ein Plan gewählt wird. Erst wenn alle Seiten geschätzt
   // sind, sonst wirkt ein großer Plansatz am Anfang planlos.
   const pagesKnown = pageInfo.size >= pages;
@@ -861,8 +861,8 @@ function OpenDocument({ doc, ownWindow }: { doc: OpenedPdf; ownWindow: boolean }
     return () => scroller.removeEventListener('wheel', onWheel);
   }, [scroller, zoomBy]);
 
-  // Linke Maustaste auf Plänen ohne Werkzeug zieht ein Auswahlfenster wie im CAD (Nico,
-  // 06.11.2026). Verschieben: mittlere Maustaste, Leertaste + Ziehen, beim Messen auch links,
+  // Linke Maustaste auf Plänen ohne Werkzeug zieht ein Auswahlfenster wie im CAD.
+  // Verschieben: mittlere Maustaste, Leertaste + Ziehen, beim Messen auch links,
   // am Touchscreen mit dem Finger. Erst ab ein paar Pixeln Weg — Antippen bleibt Antippen.
   const [frameBox, setFrameBox] = useState<{
     left: number;
@@ -974,7 +974,7 @@ function OpenDocument({ doc, ownWindow }: { doc: OpenedPdf; ownWindow: boolean }
   // Sprung von einer Verknüpfung (Positionskarte, Graph). Bis die Seite die Stelle ins Bild
   // gerückt hat, wird nachgescrollt, sooft sich Seitengrößen ändern: frisch geöffnet steht
   // erst Seite 1, die anderen werden beim Näherkommen gemessen und verschieben das Ziel
-  // (Nico, 07.11.2026: erster Klick landete woanders). Danach leuchtet die Stelle kurz, der
+  // (sonst landet der erste Klick woanders). Danach leuchtet die Stelle kurz, der
   // Sprung ist erledigt und wiederholt sich beim nächsten Öffnen nicht.
   const target = jump !== null && jump.spot.doc === doc.id ? jump : null;
   const [revealed, setRevealed] = useState(0);
@@ -1217,7 +1217,7 @@ function OpenDocument({ doc, ownWindow }: { doc: OpenedPdf; ownWindow: boolean }
     setMarkPick({ index: next, from: current });
     jumpTo(spots[next]);
   };
-  // Ein Blätterer für Vorschläge oder eigene Stellen (Nico 11.11., Variante A). Gibt es nur
+  // Ein Blätterer für Vorschläge oder eigene Stellen. Gibt es nur
   // eines von beiden, geht er das durch; die Wahl gilt, solange dieses PDF offen ist.
   const [stepMode, setStepMode] = useState<StepMode>('vorschlaege');
   const suggestTotal = counts.oz + counts.menge + counts.beton;
@@ -1448,7 +1448,7 @@ function OpenDocument({ doc, ownWindow }: { doc: OpenedPdf; ownWindow: boolean }
               ))}
           </div>
         </div>
-        {/* Seitenangabe schwebt unten mittig, die Kopfleiste bleibt frei (Nico, 07.11.2026). */}
+        {/* Seitenangabe schwebt unten mittig, die Kopfleiste bleibt frei. */}
         <span className="cn-pill pointer-events-none absolute bottom-[10px] left-1/2 z-[5] -translate-x-1/2 px-[10px] py-[3px] font-mono text-[11.5px] text-dim">
           {current} / {pages}
         </span>

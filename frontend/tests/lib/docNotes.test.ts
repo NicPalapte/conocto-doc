@@ -152,7 +152,7 @@ describe('Speichern', () => {
   });
 });
 
-describe('Notiz-Datei Version 4', () => {
+describe('Arbeitsstand-Datei mit Dokumentstellen', () => {
   const ALT = [pos('p1', '01.0010', 'h1', 't1'), pos('p2', '01.0020', 'h2', 't2')];
   const QUELLE = { fileName: 'rohbau.x83', fileId: 'abc' };
 
@@ -179,9 +179,9 @@ describe('Notiz-Datei Version 4', () => {
     expect(merged.documents.docs.get('d0c')?.pages).toBe(3);
   });
 
-  it('liest Version 3 weiter, ohne Dokumentstellen', () => {
+  it('liest eine Datei ohne Dokumentstellen', () => {
     const file = parseNotesFile(
-      JSON.stringify({ art: 'conocto-notizen', version: 3, positionen: [] }),
+      JSON.stringify({ art: 'conocto-arbeitsstand', version: 5, positionen: [] }),
     );
     expect(file.dokumente).toBe(EMPTY_DOC_NOTES);
   });

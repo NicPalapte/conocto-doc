@@ -127,7 +127,7 @@ export function SuggestBar({
   }, [host, key, bounds]);
   const area = view ?? { left: 0, top: 0, right: host.innerWidth, bottom: host.innerHeight };
   const placed = placeNextTo(spot, { width: WIDTH, height }, area);
-  // Von Hand weggezogen (Nico, 12.11.2026: verdeckt sonst Text): Versatz zur Stelle, gilt
+  // Von Hand weggezogen, weil sie sonst Text verdeckt: Versatz zur Stelle, gilt
   // nur für diesen Vorschlag und bleibt in der PDF-Ansicht.
   const [moved, setMoved] = useState<{ key: string; dx: number; dy: number } | null>(null);
   const shift = moved?.key === key ? moved : { dx: 0, dy: 0 };

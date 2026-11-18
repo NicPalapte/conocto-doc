@@ -19,7 +19,6 @@
 // Regeln aus den Einstellungen (0081, 0109) und die eigenen Wortlisten (0090).
 
 import { toRule, type Rule } from '@core';
-import type { LearnedTerm } from '../highlight/terms';
 import { toWordListEntry, type WordListEntry } from '../rules/wordLists';
 import { NO_PAINT_NAMES, toPaintNames, type PaintNames } from '../paintNames';
 import { toSurveyDone, type SurveyDone } from '../survey';
@@ -47,7 +46,6 @@ const KEY_BYTES = 'bytes';
 const KEY_NOTES = 'notizen';
 /** Weitere LVs desselben Projekts, Bytes in Ladereihenfolge (Entscheidung 0110). */
 const KEY_MORE = 'weitereLvs';
-const KEY_TERMS = 'begriffe';
 /** Eigene Namen der Markierfarben (Entscheidung 0063), unabhängig von der Datei. */
 const KEY_PAINT_NAMES = 'farbnamen';
 /** Kurzumfrage beantwortet oder abgelehnt (Entscheidung 0071), unabhängig von der Datei. */
@@ -62,8 +60,6 @@ const KEY_RULES = 'regeln';
 const KEY_GRUNDSTOCK_OFF = 'grundstock-aus';
 /** Eigene Wörter und Listen (Entscheidung 0090), unabhängig von der Datei. */
 const KEY_WORD_LISTS = 'wortlisten';
-/** Kennung für Einträge aus v0.14, die noch keine eigene `id` haben. */
-const LEGACY_ID = 'v0.14';
 
 export interface LastLvMeta {
   readonly fileName: string;
@@ -73,15 +69,13 @@ export interface LastLvMeta {
   /**
    * Kennung dieses gespeicherten Projekts. Notizen werden nur geschrieben, wenn
    * sie noch stimmt — so landen sie nie bei einer Datei, die inzwischen ersetzt ist.
-   * Fehlt bei Einträgen aus v0.14.
    */
-  readonly id?: string;
+  readonly id: string;
   /**
    * Alle LVs des Projekts in Ladereihenfolge (Entscheidung 0110); das erste liegt unter
-   * `bytes`, die übrigen unter `weitereLvs`. Fehlt bei Einträgen mit nur einer Datei
-   * aus der Zeit davor — dann ist es „LV1".
+   * `bytes`, die übrigen unter `weitereLvs`.
    */
-  readonly files?: readonly StoredLvFile[];
+  readonly files: readonly StoredLvFile[];
 }
 
 /** Ein LV im gespeicherten Projekt. `fileName` und `positionCount` oben gelten fürs erste. */
@@ -118,13 +112,13 @@ export interface LastLv {
 
 /** Alle LVs des Eintrags mit Bytes, das erste vorn. */
 export function storedSources(last: LastLv): StoredLvBytes[] {
-  const key = last.meta.files?.[0]?.key ?? 'LV1';
+  const key = last.meta.files[0]?.key ?? 'LV1';
   return [{ key, fileName: last.meta.fileName, bytes: last.bytes }, ...last.more];
 }
 
 /** Kennung, unter der Notizen zu diesem Eintrag gespeichert werden. */
 export function persistIdOf(meta: LastLvMeta): string {
-  return meta.id ?? LEGACY_ID;
+  return meta.id;
 }
 
 /** Neue Kennung für eine frisch gespeicherte Datei. */
@@ -190,8 +184,10 @@ function isMeta(value: unknown): value is LastLvMeta {
     typeof meta.fileName === 'string' &&
     typeof meta.positionCount === 'number' &&
     typeof meta.savedAt === 'number' &&
-    (meta.id === undefined || typeof meta.id === 'string') &&
-    (meta.files === undefined || (Array.isArray(meta.files) && meta.files.every(isStoredFile)))
+    // Ohne `id` oder `files`: vor 0.66 gespeichert, gilt als leer (neu-kompatibel-ab-0-66).
+    typeof meta.id === 'string' &&
+    Array.isArray(meta.files) &&
+    meta.files.every(isStoredFile)
   );
 }
 
@@ -334,7 +330,7 @@ export async function saveLastLvFiles(
 function plainMeta(meta: LastLvMeta): LastLvMeta {
   return {
     ...meta,
-    ...(meta.files === undefined ? {} : { files: meta.files.map((f) => ({ ...f })) }),
+    files: meta.files.map((f) => ({ ...f })),
   };
 }
 
@@ -422,64 +418,9 @@ export async function clearLastLv(): Promise<boolean> {
   }
 }
 
-function isTerm(value: unknown): value is LearnedTerm {
-  if (typeof value !== 'object' || value === null) return false;
-  const term = value as Record<string, unknown>;
-  return (
-    typeof term.begriff === 'string' &&
-    term.begriff.trim() !== '' &&
-    (term.kategorie === 'material' ||
-      term.kategorie === 'masse' ||
-      term.kategorie === 'wichtig' ||
-      term.kategorie === 'aus')
-  );
-}
-
-/**
- * Begriffe, die in diesem Browser gelernt wurden. Leer ohne IndexedDB;
- * `null`, wenn das Lesen scheitert — dann darf niemand darüber schreiben, sonst
- * gingen die bisher gelernten Begriffe still verloren.
- */
-export async function readLearnedTerms(): Promise<LearnedTerm[] | null> {
-  if (typeof indexedDB === 'undefined') return [];
-  const db = await openDb();
-  if (db === null) return null;
-  try {
-    const stored: unknown = await requestResult(
-      db.transaction(STORE, 'readonly').objectStore(STORE).get(KEY_TERMS),
-    );
-    return Array.isArray(stored)
-      ? stored.filter(isTerm).map(({ begriff, kategorie }) => ({ begriff, kategorie }))
-      : [];
-  } catch {
-    return null;
-  } finally {
-    db.close();
-  }
-}
-
-/** Ersetzt die gelernten Begriffe. Gibt zurück, ob es geklappt hat. */
-export async function saveLearnedTerms(terms: readonly LearnedTerm[]): Promise<boolean> {
-  const db = await openDb();
-  if (db === null) return false;
-  try {
-    const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).put(
-      terms.map(({ begriff, kategorie }) => ({ begriff, kategorie })),
-      KEY_TERMS,
-    );
-    await transactionDone(tx);
-    return true;
-  } catch {
-    return false;
-  } finally {
-    db.close();
-  }
-}
-
 /**
  * Eigene Namen der Markierfarben. Leer ohne IndexedDB; `null`, wenn das Lesen
- * scheitert — dann nicht darüber schreiben (wie bei den gelernten Begriffen).
+ * scheitert — dann nicht darüber schreiben, sonst gingen sie still verloren.
  */
 export async function readPaintNames(): Promise<PaintNames | null> {
   if (typeof indexedDB === 'undefined') return NO_PAINT_NAMES;
@@ -620,7 +561,7 @@ export async function saveWorkspace(workspace: StoredWorkspace): Promise<boolean
 
 /**
  * Eigene Regeln aus den Einstellungen. Leer ohne IndexedDB; `null`, wenn das Lesen
- * scheitert — dann nicht darüber schreiben (wie bei den gelernten Begriffen).
+ * scheitert — dann nicht darüber schreiben, sonst gingen sie still verloren.
  */
 export async function readOwnRules(): Promise<Rule[] | null> {
   if (typeof indexedDB === 'undefined') return [];

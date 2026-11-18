@@ -663,7 +663,7 @@ export function BubbleGraph({ root }: { root: LVNode }) {
   }
 
   // ── Wechsel der Gliederung: Punkte gleiten an den neuen Platz (Entscheidung 0059).
-  // Nur bei Gliederung, Zeilen oder Spalten — ein Filterwechsel springt wie bisher.
+  // Nur bei Gliederung, Zeilen oder Spalten — ein Filterwechsel springt.
   const arrangement = `${layout}|${rows}|${cols ?? ''}`;
   const [shownArrangement, setShownArrangement] = useState(arrangement);
   const [morph, setMorph] = useState<{ lo: number; span: number } | null>(null);

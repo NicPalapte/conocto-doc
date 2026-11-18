@@ -130,13 +130,6 @@ describe('takeDemoFromUrl', () => {
     expect(takeDemoFromUrl()).toBeUndefined();
   });
 
-  it('öffnet bei alten Links auf die früheren Demos das Demo-Projekt', () => {
-    for (const id of ['muster', 'angebot']) {
-      window.history.replaceState(null, '', `/doc/?demo=${id}`);
-      expect(takeDemoFromUrl()).toBe(DEMO_PROJEKT);
-    }
-  });
-
   it('entfernt unbekannte Werte, ohne etwas zu öffnen', () => {
     window.history.replaceState(null, '', '/doc/?demo=gibtsnicht&x=1');
     expect(takeDemoFromUrl()).toBeUndefined();

@@ -1,11 +1,11 @@
-// Demo-Projekt erzeugen: drei erfundene Begleit-PDFs und eine Notiz-Datei zum Demo-LV mit
+// Demo-Projekt erzeugen: drei erfundene Begleit-PDFs und eine Arbeitsstand-Datei zum Demo-LV mit
 // Preisen. Aufruf: npm run demo-projekt
 //
 // Ergebnis liegt unter src/assets/demo/projekt/ und wird mit eingecheckt; die App lädt es
 // beim Klick auf „Demo-Projekt öffnen" (lib/pipeline/loadDemoLv.ts). Alle Texte und Pläne
 // sind erfunden (Datenschutz: keine echten Ausschreibungen).
 //
-// Die Notiz-Datei braucht Positions-Hashes (Kern) und die Lage jeder Stelle im Seitentext,
+// Die Arbeitsstand-Datei braucht Positions-Hashes (Kern) und die Lage jeder Stelle im Seitentext,
 // genau wie PDF.js ihn in der App liefert. Deshalb schreibt das Skript die PDFs selbst
 // (feste Bytes ⇒ feste Kennung) und liest sie danach mit PDF.js wieder.
 
@@ -20,7 +20,7 @@ type Core = typeof import('../../packages/core/src/index.ts');
 const HERE = new URL('.', import.meta.url);
 const LV_FILE = fileURLToPath(new URL('../src/assets/demo/conocto-demo-angebot.x84', HERE));
 const OUT = fileURLToPath(new URL('../src/assets/demo/projekt/', HERE));
-const NOTES_FILE = 'conocto-demo-notizen.json';
+const NOTES_FILE = 'conocto-demo-arbeitsstand.json';
 const FONTS = fileURLToPath(new URL('../node_modules/pdfjs-dist/standard_fonts/', HERE));
 /** Fester Zeitpunkt, damit ein neuer Lauf dieselbe Datei schreibt. */
 const ZEIT = '2026-11-08T09:00:00.000Z';
@@ -350,7 +350,7 @@ async function pageTexts(lib: PdfJs, bytes: Uint8Array): Promise<string[]> {
   return out;
 }
 
-// --- Notiz-Datei --------------------------------------------------------------------------
+// --- Arbeitsstand-Datei ------------------------------------------------------------------
 
 interface ExportPosition {
   readonly oz: string;
@@ -557,8 +557,8 @@ async function main(): Promise<void> {
   ]);
 
   const file = {
-    art: 'conocto-notizen',
-    version: 4,
+    art: 'conocto-arbeitsstand',
+    version: 5,
     datei: 'conocto-demo-angebot.x84',
     dateiId: core.fileIdOf(lvBytes),
     gesichert: ZEIT,

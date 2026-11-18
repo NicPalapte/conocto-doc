@@ -2,7 +2,7 @@
 // Bildschirm — dieselbe Mechanik wie die Tabelle (TableWindow.tsx): ↗ im Bereichskopf
 // löst es aus dem Splitscreen, ↙ hier holt es zurück. Sonst steht das Dokument als
 // Bereich in `SplitView`. Im Fenster zwei gleichfarbige Leisten, keine Titelzeile dazwischen:
-// „↙“ sitzt rechts in der Kopfleiste (Issue #225, Variante A).
+// „↙“ sitzt rechts in der Kopfleiste (Issue #225).
 
 import { useCallback, useEffect } from 'react';
 import { ExternalWindow } from '../common/ExternalWindow';

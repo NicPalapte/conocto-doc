@@ -82,7 +82,7 @@ export type AnsatzOp = '+' | '-' | '*' | '/' | '(' | ')';
 export const ANSATZ_OPS: readonly AnsatzOp[] = ['+', '-', '*', '/', '(', ')'];
 
 /**
- * Baustein eines Rechenansatzes. Zahlen werden nie getippt (Nico, 05.11.2026): ein
+ * Baustein eines Rechenansatzes. Zahlen werden nie getippt: ein
  * Maß wird im Plan angetippt (gedruckte Zahl einer Maßkette, mit Fundstelle) oder eine
  * eigene Messung übernommen; dazwischen stehen Rechenzeichen.
  */

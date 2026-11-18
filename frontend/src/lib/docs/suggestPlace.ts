@@ -11,7 +11,7 @@ export interface Box {
 }
 
 /**
- * Platz der Leiste an der markierten Stelle (Nico, 12.11.2026): rechts daneben, sonst
+ * Platz der Leiste an der markierten Stelle: rechts daneben, sonst
  * darunter, sonst darüber, sonst links. Immer ganz in `view`, der PDF-Ansicht: Scrollt die
  * Stelle hinaus, bleibt die Leiste an deren Rand stehen.
  */

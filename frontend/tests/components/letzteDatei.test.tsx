@@ -12,6 +12,16 @@ import { clearLastLv, readLastLvMeta, saveLastLv } from '../../src/lib/persist/l
 const NAME = 'gaeb-xml-beispiel.x83';
 const FIXTURE = readFileSync(resolve(process.cwd(), '../packages/core/tests/fixtures', NAME));
 
+/** Angaben, wie Conocto sie seit 0.66 speichert. */
+function gespeichert() {
+  return {
+    fileName: NAME,
+    positionCount: 3,
+    id: 'projekt-1',
+    files: [{ key: 'LV1', fileName: NAME, positionCount: 3 }],
+  };
+}
+
 function fixtureBytes(): ArrayBuffer {
   return FIXTURE.buffer.slice(
     FIXTURE.byteOffset,
@@ -44,7 +54,7 @@ describe('Letzte Datei öffnen', () => {
   });
 
   it('öffnet die gespeicherte Datei', async () => {
-    await saveLastLv({ fileName: NAME, positionCount: 3, savedAt: Date.now() }, fixtureBytes());
+    await saveLastLv({ ...gespeichert(), savedAt: Date.now() }, fixtureBytes());
     render(<App />);
     const knopf = await screen.findByRole('button', { name: `Letzte Datei öffnen: ${NAME}` });
     expect(screen.getByText('3 Positionen')).toBeInTheDocument();
@@ -55,7 +65,7 @@ describe('Letzte Datei öffnen', () => {
   });
 
   it('löscht erst nach Rückfrage', async () => {
-    await saveLastLv({ fileName: NAME, positionCount: 3, savedAt: Date.now() }, fixtureBytes());
+    await saveLastLv({ ...gespeichert(), savedAt: Date.now() }, fixtureBytes());
     render(<App />);
     fireEvent.click(await screen.findByRole('button', { name: 'Gespeicherte Datei löschen' }));
     fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }));
@@ -68,7 +78,7 @@ describe('Letzte Datei öffnen', () => {
   });
 
   it('meldet es, wenn die Datei inzwischen gelöscht wurde', async () => {
-    await saveLastLv({ fileName: NAME, positionCount: 3, savedAt: Date.now() }, fixtureBytes());
+    await saveLastLv({ ...gespeichert(), savedAt: Date.now() }, fixtureBytes());
     render(<App />);
     const knopf = await screen.findByRole('button', { name: `Letzte Datei öffnen: ${NAME}` });
     // z. B. in einem zweiten Tab gelöscht, während diese Startseite offen war
@@ -80,7 +90,7 @@ describe('Letzte Datei öffnen', () => {
 
   it('zeigt einen Ladefehler, wenn die gespeicherte Datei nicht lesbar ist', async () => {
     const kaputt = new TextEncoder().encode('kein GAEB').buffer as ArrayBuffer;
-    await saveLastLv({ fileName: NAME, positionCount: 3, savedAt: Date.now() }, kaputt);
+    await saveLastLv({ ...gespeichert(), savedAt: Date.now() }, kaputt);
     render(<App />);
     fireEvent.click(await screen.findByRole('button', { name: `Letzte Datei öffnen: ${NAME}` }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
@@ -88,7 +98,7 @@ describe('Letzte Datei öffnen', () => {
   });
 
   it('ersetzt die gespeicherte Datei nicht durch eine, die beim Laden scheitert', async () => {
-    await saveLastLv({ fileName: NAME, positionCount: 3, savedAt: Date.now() }, fixtureBytes());
+    await saveLastLv({ ...gespeichert(), savedAt: Date.now() }, fixtureBytes());
     render(<App />);
     await screen.findByRole('button', { name: `Letzte Datei öffnen: ${NAME}` });
     fireEvent.change(screen.getByLabelText('GAEB-Datei auswählen'), {
@@ -99,7 +109,7 @@ describe('Letzte Datei öffnen', () => {
   });
 
   it('zeigt das Feld weiter, wenn das Löschen scheitert', async () => {
-    await saveLastLv({ fileName: NAME, positionCount: 3, savedAt: Date.now() }, fixtureBytes());
+    await saveLastLv({ ...gespeichert(), savedAt: Date.now() }, fixtureBytes());
     render(<App />);
     fireEvent.click(await screen.findByRole('button', { name: 'Gespeicherte Datei löschen' }));
     globalThis.indexedDB = {

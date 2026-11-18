@@ -113,7 +113,7 @@ describe('annotations', () => {
     expect(fromStored(null)).toBe(EMPTY_ANNOTATIONS);
     expect(
       fromStored({
-        v: 4,
+        v: 6,
         progress: [['m', 'bearbeitung'], ['x', 'kaputt'], 3],
         important: ['m', 7],
         log: [
@@ -138,48 +138,6 @@ describe('annotations', () => {
     ).toEqual(a);
   });
 
-  it('übernimmt die drei Marker bis v0.25 samt Verlauf', () => {
-    const alt = fromStored({
-      v: 3,
-      markers: [
-        ['m', 'markiert'],
-        ['w', 'wichtig'],
-        ['e', 'erledigt'],
-        ['x', 'kaputt'],
-      ],
-      log: [
-        [
-          'e',
-          [
-            { kind: 'marker', at: 1, marker: 'markiert' },
-            { kind: 'comment', at: 2, text: 'prüfen' },
-            { kind: 'marker', at: 3, marker: 'wichtig' },
-            { kind: 'marker', at: 4, marker: 'erledigt' },
-          ],
-        ],
-        [
-          'w',
-          [
-            { kind: 'marker', at: 5, marker: 'erledigt' },
-            { kind: 'marker', at: 6, marker: null },
-          ],
-        ],
-      ],
-    });
-    expect([...alt.progress]).toEqual([['e', 'fertig']]);
-    expect([...alt.important].sort()).toEqual(['m', 'w']);
-    expect(alt.log.get('e')).toEqual([
-      { kind: 'important', at: 1, on: true },
-      { kind: 'comment', at: 2, text: 'prüfen' },
-      { kind: 'progress', at: 4, progress: 'fertig' },
-      { kind: 'important', at: 4, on: false },
-    ]);
-    expect(alt.log.get('w')).toEqual([
-      { kind: 'progress', at: 5, progress: 'fertig' },
-      { kind: 'progress', at: 6, progress: null },
-    ]);
-  });
-
   it('speichert unter dem Positions-Hash und findet beim Laden die Knoten-ID wieder', () => {
     const keys = storageKeys([
       { id: 'position:01', position: { hashes: { id: 'h1' } } },
@@ -198,20 +156,20 @@ describe('annotations', () => {
     expect(rekey(fromStored(stored), keys.toNode)).toEqual(a);
   });
 
-  it('findet Notizen aus v0.21 (Knoten-ID) direkt wieder', () => {
+  it('lässt leere Notizen beim Umschlüsseln unverändert', () => {
     const keys = storageKeys([
       { id: 'position:01', position: { hashes: { id: 'h1' } } },
     ] as unknown as Parameters<typeof storageKeys>[0]);
-    const alt = fromStored({ v: 2, markers: [['position:01', 'markiert']], log: [] });
-    expect([...rekey(alt, keys.toNode).important]).toEqual(['position:01']);
     expect(rekey(EMPTY_ANNOTATIONS, keys.toHash)).toBe(EMPTY_ANNOTATIONS);
   });
 
-  it('übernimmt Markierung und Kommentar aus v0.15', () => {
-    const alt = fromStored({ marked: ['m', 3], notes: [['k', 'Text'], ['l', ' '], 'kaputt'] });
-    expect([...alt.important]).toEqual(['m']);
-    expect(alt.log.get('k')).toEqual([{ kind: 'comment', at: 0, text: 'Text' }]);
-    expect(alt.log.has('l')).toBe(false);
+  it('liest keinen Speicher von vor 0.66 (neu-kompatibel-ab-0-66)', () => {
+    const notiz = [['k', [{ kind: 'comment', at: 1, text: 'Text' }]]];
+    expect(fromStored({ v: 5, progress: [], important: ['m'], log: notiz })).toBe(
+      EMPTY_ANNOTATIONS,
+    );
+    expect(fromStored({ v: 3, markers: [['m', 'markiert']], log: [] })).toBe(EMPTY_ANNOTATIONS);
+    expect(fromStored({ marked: ['m'], notes: [['k', 'Text']] })).toBe(EMPTY_ANNOTATIONS);
   });
 });
 

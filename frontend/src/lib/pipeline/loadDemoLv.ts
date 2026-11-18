@@ -4,11 +4,11 @@
 //  - **LV mit Preisen** — eigene Demodatei (x84) auf Basis der BVBS-Musterdatei, Preise und
 //    Zusatzpositionen erfunden (docs/decisions/0014-demo-lv-mit-preisen.md).
 //  - **Drei Begleit-PDFs** — Baubeschreibung, Vorbemerkungen, Grundriss (alles erfunden).
-//  - **Notizen dazu** als Notiz-Datei (`conocto-notizen`, Entscheidung 0061): Stellen in den
+//  - **Notizen dazu** als Arbeitsstand-Datei (`conocto-arbeitsstand`, 0101): Stellen in den
 //    PDFs schon mit Positionen verknüpft, im Grundriss Maßstab und Messungen mit Positionen.
 //    Weitere OZ und Mengen im Text rechnet die App wie immer als offene Vorschläge.
 //
-// PDFs und Notiz-Datei erzeugt `npm run demo-projekt` (scripts/makeDemoProjekt.ts).
+// PDFs und Arbeitsstand-Datei erzeugt `npm run demo-projekt` (scripts/makeDemoProjekt.ts).
 //
 // Die Dateien liegen als Assets im eigenen Bundle und werden erst beim Klick geholt — sie
 // wandern nicht in das Start-Bundle. Der `fetch` geht an die eigene Auslieferung (gleiche
@@ -16,7 +16,7 @@
 // Gespeichert wird die Demo nie: Notizen dazu gelten nur in der Sitzung.
 
 import lvUrl from '../../assets/demo/conocto-demo-angebot.x84?url';
-import notesUrl from '../../assets/demo/projekt/conocto-demo-notizen.json?url';
+import notesUrl from '../../assets/demo/projekt/conocto-demo-arbeitsstand.json?url';
 import baubeschreibungUrl from '../../assets/demo/projekt/baubeschreibung.pdf?no-inline';
 import vorbemerkungenUrl from '../../assets/demo/projekt/vorbemerkungen.pdf?no-inline';
 import grundrissUrl from '../../assets/demo/projekt/grundriss-eg.pdf?no-inline';
@@ -62,8 +62,8 @@ export const DEMO_PROJEKT: DemoProjekt = {
   ],
 };
 
-/** Kennungen in `doc/?demo=…`; ältere Links auf die zwei früheren Demos öffnen das Projekt. */
-const DEMO_IDS = new Set(['projekt', 'angebot', 'muster']);
+/** Kennungen in `doc/?demo=…`. */
+const DEMO_IDS = new Set(['projekt']);
 
 export interface LoadedDemo {
   readonly lv: LoadedLV;

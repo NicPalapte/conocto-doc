@@ -1,6 +1,6 @@
-// Ein Blätterer in der Kopfleiste des Dokuments (Issue #191, Runde 3, Nico 11.11.: Variante A):
+// Ein Blätterer in der Kopfleiste des Dokuments (Issue #191):
 // ‹ 1 / 8 › geht entweder durch die offenen Vorschläge oder durch die „Verknüpfungen“, also
-// die eigenen Stellen (angestrichen oder verknüpft; Name von Nico, 11.11.). Was er durchgeht,
+// die eigenen Stellen (angestrichen oder verknüpft). Was er durchgeht,
 // wählt das Menü davor; dort stehen auch die Schalter je Art von Vorschlag
 // (OZ, Mengen, Beton, Entscheidung 0087) als Häkchenliste.
 

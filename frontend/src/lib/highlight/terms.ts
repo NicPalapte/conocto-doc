@@ -3,8 +3,6 @@
 // Ein gelernter Begriff ist eine eigene Regel `conocto-rule-v1`: ein Baustein „Begriff“,
 // Suchort Langtext, Wirkung „hervorheben“ (Material, Maße, Wichtig oder „Nicht
 // hervorheben“). Angewendet wird er wie jede Regel (`applyRules` in lib/rules/rules.ts).
-// Begriffe, die ältere Versionen getrennt im Browser gespeichert haben, zieht
-// `state/rules.tsx` beim Start einmal in eigene Regeln um.
 //
 // Schreibweise wie in den Materialtabellen (lib/classify/material/stichwort.ts):
 // `#` = eine Zahl, `*` = beliebige Buchstaben, sonst wörtlich, ohne Groß/klein.
@@ -134,7 +132,7 @@ export function learnedRule(
   };
 }
 
-/** Altbestand aus dem Browser als eigene Regeln; Kennungen ohne Doppelte. */
+/** Mehrere Begriffe als eigene Regeln; bekannte fallen weg, Kennungen ohne Doppelte. */
 export function termsToRules(terms: readonly LearnedTerm[], ownRules: readonly Rule[]): Rule[] {
   const taken = new Set(ownRules.map((rule) => rule.id));
   const out: Rule[] = [];

@@ -1,5 +1,5 @@
 // LVs im Bereich „Dokument“ (Entscheidung 0110): jedes offene LV als Karte unter der
-// Kategorie „LV“, neben den PDFs (Nico, 13.11.2026). Keine Lesefassung, nur ein Symbol.
+// Kategorie „LV“, neben den PDFs. Keine Lesefassung, nur ein Symbol.
 // Antippen blendet das LV im Graphen, in der Tabelle und der Suche ein oder aus — über die
 // Facette „LV“, also derselbe Filter wie in der Filterleiste. Der Papierkorb schließt ein
 // LV; das letzte bleibt, dafür gibt es „Anderes LV öffnen“.

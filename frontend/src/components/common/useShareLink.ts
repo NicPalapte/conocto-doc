@@ -62,15 +62,12 @@ export function useShareLink(): void {
     if (window.location.hash === '' || window.location.hash === '#') return;
     const { state: shared, verworfen } = decodeSharedChecked(window.location.hash);
 
-    // Der Hash im Link zeigt auf eine Position mit genau diesem Inhalt; ältere
-    // Links tragen die OZ. Findet sich keine, gilt der Rest des Links trotzdem —
+    // Der Hash im Link zeigt auf eine Position mit genau diesem Inhalt. Findet sich
+    // keine, gilt der Rest des Links trotzdem —
     // ein Link aus einer anderen Fassung des LV soll nicht alles verwerfen.
     let positionId: string | null = null;
     if (shared.pos !== null) {
       const treffer = index.nodes.find((node) => node.position?.hashes.id === shared.pos);
-      positionId = treffer?.id ?? null;
-    } else if (shared.oz !== null) {
-      const treffer = index.nodes.find((node) => node.position?.oz === shared.oz);
       positionId = treffer?.id ?? null;
     }
     const nodeId = positionId === null ? null : (parents.get(positionId)?.id ?? null);
@@ -79,8 +76,7 @@ export function useShareLink(): void {
     // Was am Link nicht passte, nicht still verschlucken (Issue #95): sonst
     // wundert sich jemand über den leeren Standardzustand, ohne zu erfahren,
     // dass der Link die Ursache ist.
-    const gesucht = shared.pos !== null || shared.oz !== null;
-    if (gesucht && positionId === null && !verworfen.includes('Auswahl')) {
+    if (shared.pos !== null && positionId === null && !verworfen.includes('Auswahl')) {
       verworfen.push('Auswahl');
     }
     const andereDatei =
@@ -127,7 +123,6 @@ export function useShareLink(): void {
       hideMode: filter.hideMode,
       pos,
       lv: pos === null ? null : fileIdOfPosition(lv, position?.position?.lv),
-      oz: null,
     };
     const hash = sharedHash(shared);
     const timer = window.setTimeout(() => {

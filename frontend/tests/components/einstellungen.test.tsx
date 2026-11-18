@@ -3,13 +3,12 @@
 
 import 'fake-indexeddb/auto';
 import { readFileSync } from 'node:fs';
-import { StrictMode } from 'react';
 import { resolve } from 'node:path';
 import { IDBFactory } from 'fake-indexeddb';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../src/App';
-import { readLearnedTerms, readOwnRules, saveLearnedTerms } from '../../src/lib/persist/lastLv';
+import { readOwnRules } from '../../src/lib/persist/lastLv';
 
 const NAME = 'gaeb-xml-beispiel.x83';
 const FIXTURE = readFileSync(resolve(process.cwd(), '../packages/core/tests/fixtures', NAME));
@@ -114,7 +113,6 @@ describe('Einstellungen', () => {
         { name: wort, wirkung: { hervorheben: 'wichtig' }, status: 'freigegeben' },
       ]),
     );
-    expect(await readLearnedTerms()).toEqual([]);
 
     const dialog = await oeffneEinstellungen();
     const liste = within(dialog).getByRole('navigation', { name: 'Regeln' });
@@ -125,28 +123,5 @@ describe('Einstellungen', () => {
     expect(geladen).toEqual([expect.stringMatching(/treffer.*\.csv$/)]);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Löschen' }));
     await waitFor(async () => expect(await readOwnRules()).toEqual([]));
-  });
-
-  it('zieht Begriffe älterer Versionen einmal in eigene Regeln um', async () => {
-    await saveLearnedTerms([
-      { begriff: 'bauseits', kategorie: 'wichtig' },
-      { begriff: 'Kies', kategorie: 'material' },
-    ]);
-    // StrictMode liest zweimal; der Umzug darf trotzdem nur einmal laufen.
-    render(
-      <StrictMode>
-        <App />
-      </StrictMode>,
-    );
-    await waitFor(async () =>
-      expect((await readOwnRules())?.map((rule) => [rule.name, rule.wirkung])).toEqual([
-        ['bauseits', { hervorheben: 'wichtig' }],
-        ['Kies', { hervorheben: 'material' }],
-      ]),
-    );
-    expect(await readLearnedTerms()).toEqual([]);
-    // Nach dem Umzug bleibt der Stand, auch wenn ein späterer Lauf schreibt.
-    await new Promise((done) => setTimeout(done, 50));
-    expect((await readOwnRules())?.map((rule) => rule.name)).toEqual(['bauseits', 'Kies']);
   });
 });

@@ -1,5 +1,11 @@
 # Review: Zukunftsfähigkeit des LV Viewers (Bubble)
 
+> **Historisch – nicht mehr aktuell.** Stand v0.15.1 (14.10.2026). Seitdem: neuer Name
+> Conocto (0069, 0091), Kern unter `packages/core/` (0054, Parser jetzt
+> `packages/core/src/gaeb/`), Splitscreen statt Fenster (0074) und vieles mehr. Pfade,
+> Zahlen und Empfehlungen unten gelten nicht mehr. Bleibt nur, weil Entscheidung 0056
+> darauf verweist. Aktueller Stand: `docs/entwicklung.md` und `docs/decisions/`.
+
 Stand: 2026-10-14, Commit `037b4d3` (main, v0.15.1). Rein lesendes Review; geändert wurde
 nur diese Datei.
 
@@ -65,7 +71,7 @@ Pfade relativ zum Repo; `src/…` meint `frontend/src/…`.
 
 | Prüfpunkt | Status | Beleg | Begründung |
 |---|---|---|---|
-| XML: externe Entitäten (XXE) | erfüllt | `src/lib/gaeb/parser.ts:66` (`DOMParser`, `application/xml`); `docs/reviews/2026-10-02-code-review.md` | Browser-`DOMParser` lädt keine externen Entitäten (Annahme auf Basis des Browser-Verhaltens, im Repo nicht getestet). |
+| XML: externe Entitäten (XXE) | erfüllt | `src/lib/gaeb/parser.ts:66` (`DOMParser`, `application/xml`); `docs/archiviert/2026-10-02-code-review.md` | Browser-`DOMParser` lädt keine externen Entitäten (Annahme auf Basis des Browser-Verhaltens, im Repo nicht getestet). |
 | XML: Entitäts-Bombe („Billion Laughs") | nicht beurteilbar | kein Test in `frontend/tests/gaeb/` gefunden | Schutz hängt vom Browser ab. Fehlt: ein Test im echten Browser (Chrome, Firefox, Safari). |
 | XML: riesige / tief verschachtelte Dateien | teilweise | `MAX_FILE_BYTES` 50 MB (`loadLv.ts:46`), `MAX_SECTION_DEPTH = 100` (`parser.ts:209`) | Grenzen vorhanden. Aber: Parsen läuft im Haupt-Thread, eine 50-MB-Datei blockiert die Oberfläche; kein Timeout für den Worker (`classifyInWorker` in `loadLv.ts`). |
 | Sichere Darstellung (XSS) | erfüllt | kein `dangerouslySetInnerHTML`/`innerHTML`/`eval` in `src`; Texte als React-Textknoten (`src/components/common/Highlighted.tsx`); Zweitfenster per `createElement`/`textContent` (`src/components/common/externalWindowHost.ts`) | Langtext wird zu reinem Text reduziert (`src/lib/gaeb/text.ts`), es gelangt kein HTML aus der Datei in die Seite. |

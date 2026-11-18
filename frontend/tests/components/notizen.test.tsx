@@ -64,7 +64,13 @@ function waehlePunkt(slot: number): void {
 describe('Markierungen und Kommentare', () => {
   it('markiert und kommentiert eine Position und speichert beides zur Datei', async () => {
     await saveLastLv(
-      { fileName: NAME, positionCount: 3, savedAt: Date.now(), id: ID },
+      {
+        fileName: NAME,
+        positionCount: 3,
+        savedAt: Date.now(),
+        id: ID,
+        files: [{ key: 'LV1', fileName: NAME, positionCount: 3 }],
+      },
       fixtureBytes(),
     );
     await oeffneGespeicherte();
@@ -102,7 +108,13 @@ describe('Markierungen und Kommentare', () => {
 
   it('findet unter dem Positions-Hash gespeicherte Notizen beim Öffnen wieder', async () => {
     await saveLastLv(
-      { fileName: NAME, positionCount: 3, savedAt: Date.now(), id: ID },
+      {
+        fileName: NAME,
+        positionCount: 3,
+        savedAt: Date.now(),
+        id: ID,
+        files: [{ key: 'LV1', fileName: NAME, positionCount: 3 }],
+      },
       fixtureBytes(),
     );
     const hashes = positionHashes();
@@ -159,7 +171,13 @@ describe('Markierungen und Kommentare', () => {
 
   it('bringt die Notizen beim nächsten Öffnen zurück und filtert danach', async () => {
     await saveLastLv(
-      { fileName: NAME, positionCount: 3, savedAt: Date.now(), id: ID },
+      {
+        fileName: NAME,
+        positionCount: 3,
+        savedAt: Date.now(),
+        id: ID,
+        files: [{ key: 'LV1', fileName: NAME, positionCount: 3 }],
+      },
       fixtureBytes(),
     );
     const ids = positionIds();
@@ -217,7 +235,13 @@ describe('Markierungen und Kommentare', () => {
 
   it('schreibt eine ausstehende Notiz beim Schließen sofort zur alten Datei', async () => {
     await saveLastLv(
-      { fileName: NAME, positionCount: 3, savedAt: Date.now(), id: ID },
+      {
+        fileName: NAME,
+        positionCount: 3,
+        savedAt: Date.now(),
+        id: ID,
+        files: [{ key: 'LV1', fileName: NAME, positionCount: 3 }],
+      },
       fixtureBytes(),
     );
     await oeffneGespeicherte();
@@ -231,7 +255,13 @@ describe('Markierungen und Kommentare', () => {
 
   it('schreibt beim bloßen Öffnen nichts zurück', async () => {
     await saveLastLv(
-      { fileName: NAME, positionCount: 3, savedAt: Date.now(), id: ID },
+      {
+        fileName: NAME,
+        positionCount: 3,
+        savedAt: Date.now(),
+        id: ID,
+        files: [{ key: 'LV1', fileName: NAME, positionCount: 3 }],
+      },
       fixtureBytes(),
     );
     const ids = positionIds();
@@ -245,7 +275,13 @@ describe('Markierungen und Kommentare', () => {
 
   it('zeigt die Filter erst, wenn es etwas zu filtern gibt', async () => {
     await saveLastLv(
-      { fileName: NAME, positionCount: 3, savedAt: Date.now(), id: ID },
+      {
+        fileName: NAME,
+        positionCount: 3,
+        savedAt: Date.now(),
+        id: ID,
+        files: [{ key: 'LV1', fileName: NAME, positionCount: 3 }],
+      },
       fixtureBytes(),
     );
     await oeffneGespeicherte();

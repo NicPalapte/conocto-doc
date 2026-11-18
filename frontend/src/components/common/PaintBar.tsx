@@ -2,7 +2,7 @@
 // „In Suche übernehmen“ (eine Suche für LV und PDFs, Entscheidung 0103), Kopieren, sechs
 // Farben zum Markieren, je mit eigenem Namen, Anstreichung entfernen,
 // dazu „Farben benennen", „Begriff lernen" und „Als Regel…" (Entscheidungen 0053, 0109).
-// Eine Auswahl allein öffnet es nicht mehr. Unter den Eigenschaften der Abschnitt
+// Eine Auswahl allein öffnet es nicht. Unter den Eigenschaften der Abschnitt
 // „Meine Textmarkierungen".
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
@@ -135,7 +135,7 @@ export function PaintBar({
       }}
       onContextMenu={(event) => event.preventDefault()}
     >
-      {/* Reihenfolge (Nico, 16.11.2026): Verknüpfen, Suche, Kopieren, Notiz. */}
+      {/* Reihenfolge: Verknüpfen, Suche, Kopieren, Notiz. */}
       {onLink !== undefined && (
         <button
           type="button"

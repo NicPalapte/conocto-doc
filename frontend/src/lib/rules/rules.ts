@@ -144,8 +144,8 @@ const overlaps = (a: TextRange, b: TextRange): boolean => a.start < b.end && b.s
 /**
  * Fundstellen aktiver Hervorhebungsregeln im Langtext, dazu `spans` (Erkennung der
  * Klassifizierung). `aus`-Regeln nehmen jede Fundstelle weg, die sie berühren. Sonst
- * haben `spans` Vorrang, dann längere Treffer: „Sichtbetonklasse SB2" vor „SB2" —
- * so wie früher die gelernten Begriffe (Entscheidung 0088).
+ * haben `spans` Vorrang, dann längere Treffer: „Sichtbetonklasse SB2" vor „SB2"
+ * (Entscheidung 0088).
  */
 export function applyRules(
   position: PositionSummary,

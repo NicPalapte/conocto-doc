@@ -167,8 +167,8 @@ function trimCells(cells: Iterable<TreemapCell>): TreemapCell[] {
 }
 
 /**
- * Abschnitte nach Größe. Kein Zusammenfassen mehr zu „Weitere N Abschnitte“ (Issue #191,
- * 12.11.2026): das wirkte zufällig. Kleine Kästen zeigen ihren Namen beim Überfahren.
+ * Abschnitte nach Größe. Kein Zusammenfassen zu „Weitere N Abschnitte“ (Issue #191):
+ * das wirkte zufällig. Kleine Kästen zeigen ihren Namen beim Überfahren.
  */
 function sortGroups(groups: TreemapGroup[]): TreemapGroup[] {
   return groups.sort((a, b) => b.value - a.value);

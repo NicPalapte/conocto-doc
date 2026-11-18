@@ -89,7 +89,7 @@ export function NoteBlock({ positionId }: { positionId: string }) {
   const [draft, setDraft] = useState('');
   const entries = annotations.log.get(positionId) ?? [];
   const mentions = useMemo(() => mentionsOf(annotations, positionId), [annotations, positionId]);
-  // Eigene Einträge und Erwähnungen in einer Liste nach Zeit (Nico, 14.11.2026).
+  // Eigene Einträge und Erwähnungen in einer Liste nach Zeit.
   const rows = useMemo(() => {
     const own = entries.map((entry, i) => ({ at: entry.at, own: { entry, i } as const }));
     const other = mentions.map((mention) => ({ at: mention.at, mention }));

@@ -103,7 +103,7 @@ export interface DocumentsApi {
   /** Startet einen Ansatz: zeigt den Bereich „Dokument“ und verlangt einen Plan. */
   setAnsatzFor: (id: string | null) => void;
   /**
-   * Ein Ansatz wurde gerade gestartet und braucht einen Plan (Nico, 06.11.2026): das offene
+   * Ein Ansatz wurde gerade gestartet und braucht einen Plan: das offene
    * PDF zeigt nur seine Pläne, hat es keine, springt der Bereich in die Übersicht.
    */
   readonly planWanted: boolean;

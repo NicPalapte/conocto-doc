@@ -8,7 +8,7 @@
 
 - Bubble soll kostenlos öffentlich starten, um zu testen, ob es Bedarf gibt.
 - Ohne Zahlen lässt sich das nicht beurteilen. 0017 hatte jede Messung ausgeschlossen
-  (siehe `docs/review-zukunftsfaehigkeit.md`, Top 10, Punkt 2).
+  (siehe `docs/archiviert/review-zukunftsfaehigkeit.md`, Top 10, Punkt 2).
 - Nico hat am 15.10.2026 entschieden: anonym zählen ist erlaubt.
 
 ## Entscheidung

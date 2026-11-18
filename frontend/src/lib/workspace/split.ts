@@ -47,7 +47,7 @@ export interface Arrangement {
 
 const leaf = (id: string, pane: PaneId): Leaf => ({ kind: 'leaf', id, stack: [pane], front: pane });
 
-// Wie bisher: links Überblick über Prüfung, Mitte Graph über Tabelle, rechts Position.
+// Grundanordnung: links Überblick über Prüfung, Mitte Graph über Tabelle, rechts Position.
 export const INITIAL_ARRANGEMENT: Arrangement = {
   root: {
     kind: 'split',

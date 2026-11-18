@@ -1,5 +1,5 @@
 // Gliederung des Graphen (docs/decisions/0035-graph-gliederung.md): nach LV oder
-// als Matrix mit Zeilen und Spalten. Steht seit Issue #154 in der aufklappbaren
+// als Matrix mit Zeilen und Spalten. Steht in der aufklappbaren
 // Darstellung an der Graph-Steuerung (GraphControls), neben der Größe.
 // Der Umgang mit Nicht-Treffern steht in der Suche (TopBar, Entscheidung 0058).
 

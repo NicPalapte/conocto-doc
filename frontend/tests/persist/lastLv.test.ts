@@ -7,15 +7,12 @@ import { addComment, commentsOf, EMPTY_ANNOTATIONS, setImportant } from '../../s
 import {
   clearLastLv,
   newPersistId,
-  persistIdOf,
   readLastLv,
   readLastLvMeta,
-  readLearnedTerms,
   readWorkspace,
   saveAnnotations,
   saveLastLv,
   saveLastLvFiles,
-  saveLearnedTerms,
   storedSources,
   saveWorkspace,
   touchLastLv,
@@ -23,7 +20,13 @@ import {
 import { INITIAL_WORKSPACE } from '../../src/state/viewState';
 import { edgePane, toStoredWorkspace } from '../../src/lib/workspace/split';
 
-const meta = { fileName: 'rohbau.x83', positionCount: 12, savedAt: 1_760_000_000_000 };
+const meta = {
+  fileName: 'rohbau.x83',
+  positionCount: 12,
+  savedAt: 1_760_000_000_000,
+  id: 'projekt-1',
+  files: [{ key: 'LV1', fileName: 'rohbau.x83', positionCount: 12 }],
+};
 /** Angaben für die Startseite: ohne Notizen zählen beide Zähler 0. */
 const info = { ...meta, marked: 0, comments: 0, painted: 0, docMarks: 0 };
 
@@ -169,10 +172,25 @@ describe('letzte Datei — Markierungen und Kommentare', () => {
     expect(await readLastLvMeta()).toMatchObject({ marked: 0, comments: 0 });
   });
 
-  it('nimmt Einträge aus v0.14 ohne eigene Kennung an', async () => {
-    await saveLastLv(meta, bytesOf('x'));
-    expect(await saveAnnotations(persistIdOf(meta), notizen)).toBe(true);
-    expect(await readLastLvMeta()).toMatchObject({ marked: 1, comments: 1 });
+  it('übergeht Einträge von vor 0.66 ohne Kennung und LV-Liste', async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('conocto', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('letztesLv');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const tx = db.transaction('letztesLv', 'readwrite');
+    const alt = {
+      fileName: meta.fileName,
+      positionCount: meta.positionCount,
+      savedAt: meta.savedAt,
+    };
+    tx.objectStore('letztesLv').put(alt, 'meta');
+    tx.objectStore('letztesLv').put(bytesOf('x'), 'bytes');
+    await new Promise((resolve) => (tx.oncomplete = resolve));
+    db.close();
+    expect(await readLastLvMeta()).toBeNull();
+    expect(await readLastLv()).toBeNull();
   });
 
   it('behält die Kennung beim Antippen', async () => {
@@ -180,43 +198,6 @@ describe('letzte Datei — Markierungen und Kommentare', () => {
     await saveLastLv({ ...meta, id }, bytesOf('x'));
     await touchLastLv(meta.savedAt + 1);
     expect(await saveAnnotations(id, notizen)).toBe(true);
-  });
-});
-
-describe('gelernte Begriffe (Entscheidung 0053)', () => {
-  it('bleiben über neue Datei und „Letzte Datei löschen" hinweg', async () => {
-    const begriffe = [
-      { begriff: 'SB#', kategorie: 'wichtig' as const },
-      { begriff: 'bauseits', kategorie: 'aus' as const },
-    ];
-    expect(await saveLearnedTerms(begriffe)).toBe(true);
-    await saveLastLv({ ...meta, id: newPersistId() }, bytesOf('x'));
-    await clearLastLv();
-    expect(await readLastLvMeta()).toBeNull();
-    expect(await readLearnedTerms()).toEqual(begriffe);
-  });
-
-  it('verwirft Unbrauchbares und liefert ohne IndexedDB nichts', async () => {
-    await saveLearnedTerms([
-      { begriff: 'ok', kategorie: 'masse' },
-      // @ts-expect-error -- kaputter Eintrag aus einer älteren Version nachstellen
-      { begriff: ' ', kategorie: 'quatsch' },
-    ]);
-    expect(await readLearnedTerms()).toEqual([{ begriff: 'ok', kategorie: 'masse' }]);
-    // @ts-expect-error -- privates Fenster nachstellen
-    delete globalThis.indexedDB;
-    expect(await readLearnedTerms()).toEqual([]);
-    expect(await saveLearnedTerms([])).toBe(false);
-  });
-
-  it('meldet ein gescheitertes Lesen als null statt als leere Liste', async () => {
-    await saveLearnedTerms([{ begriff: 'SB#', kategorie: 'wichtig' }]);
-    const open = vi.spyOn(indexedDB, 'open').mockImplementation(() => {
-      throw new Error('kaputt');
-    });
-    expect(await readLearnedTerms()).toBeNull();
-    open.mockRestore();
-    expect(await readLearnedTerms()).toEqual([{ begriff: 'SB#', kategorie: 'wichtig' }]);
   });
 });
 
@@ -287,12 +268,6 @@ describe('mehrere LVs in einem Projekt (Entscheidung 0110)', () => {
       false,
     );
     expect((await readLastLv())?.more).toEqual([]);
-  });
-
-  it('liest Einträge mit einer Datei weiter als LV1', async () => {
-    await saveLastLv(meta, bytesOf('<rohbau/>'));
-    const last = await readLastLv();
-    expect(last === null ? [] : storedSources(last).map((source) => source.key)).toEqual(['LV1']);
   });
 
   it('löscht beim Löschen auch die weiteren LVs', async () => {

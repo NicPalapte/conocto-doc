@@ -148,8 +148,8 @@ describe('Hinweisleiste: Teilen-Link (Issue #95)', () => {
     expect(hinweisleiste()).toHaveTextContent('Filter „gibtsnicht"');
   });
 
-  it('meldet eine OZ, die es in dieser Datei nicht gibt', async () => {
-    setzeFragment('#p=99.9999.9999');
+  it('meldet eine Position, die es in dieser Datei nicht gibt', async () => {
+    setzeFragment('#pos=ffffffffff');
     render(<App />);
     legeAb(fixtureDatei('gaeb-xml-beispiel.x83'));
     await warteAufLv();

@@ -41,7 +41,7 @@ async function pageTexts(bytes: Uint8Array): Promise<string[]> {
 
 let nodes: LVNode[] = [];
 const notes = parseNotesFile(
-  readFileSync(resolve(DEMO, 'projekt/conocto-demo-notizen.json'), 'utf8'),
+  readFileSync(resolve(DEMO, 'projekt/conocto-demo-arbeitsstand.json'), 'utf8'),
 );
 /** Seitentexte je Dokument-Kennung. */
 const texts = new Map<string, string[]>();

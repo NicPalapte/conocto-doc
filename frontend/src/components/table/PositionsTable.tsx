@@ -8,10 +8,10 @@
 // Tabelle, während der Baum daneben Treffer anzeigt (Issue #12).
 //
 // Alle Spalten lassen sich ein-/ausblenden, verschieben und in der Breite ziehen
-// (Issue #41). Sortierung, Umfang, Spalten und Scrollposition liegen seit WP-L
-// im Ansichts-Zustand (`view.table`) statt als lokaler `useState`: die
+// (Issue #41). Sortierung, Umfang, Spalten und Scrollposition liegen
+// im Ansichts-Zustand (`view.table`), nicht in lokalem `useState`: die
 // Komponente wird beim Ansichtswechsel abgebaut, der Zustand soll ihn aber
-// überleben. Persistenz über die Sitzung hinaus gibt es weiterhin nicht —
+// überleben. Persistenz über die Sitzung hinaus gibt es nicht —
 // kein localStorage.
 //
 // Arbeitsliste: Fortschritt, „Wichtig" und Kommentar lassen sich direkt in der Zeile
@@ -200,7 +200,7 @@ const COLUMNS: ReadonlyArray<Column<Row>> = [
       return facetOptionLabel(facet, value);
     },
   },
-  // Verknüpfte Stellen in Dokumenten statt Druckfestigkeit (Issue #191, 13.11.2026).
+  // Verknüpfte Stellen in Dokumenten statt Druckfestigkeit (Issue #191).
   {
     key: 'links',
     label: 'Verknüpfungen',

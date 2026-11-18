@@ -1,8 +1,8 @@
 // Filterleiste unter der Kopfleiste (Issue #154): „+ Filter" klappt sie auf. Ein Chip
 // je Gruppe öffnet eine Auswahlliste. „Material" fasst das Material und seine Merkmale
 // zusammen (Material → Beton → Art, Druckfestigkeit …), „Status" Fortschritt, „Wichtig"
-// und Kommentare. Nur Oberfläche: Filter und matchPos sind dieselben wie vorher, die
-// aktiven Filter stehen weiter als Chips in der Suche (TopBar).
+// und Kommentare. Nur Oberfläche: die Logik liegt in matchPos, die
+// aktiven Filter stehen als Chips in der Suche (TopBar).
 //
 // Escape schließt zuerst eine offene Liste, dann — wenn der Fokus in der Leiste
 // steht — die Leiste. Sonst gehört Escape weiter dem Hauptscreen (Auswahl aufheben).
@@ -29,7 +29,7 @@ const HEADING =
   'px-[8px] pb-[2px] pt-[8px] font-mono text-[9.5px] uppercase tracking-[0.7px] text-mute first:pt-[2px]';
 
 /**
- * Reihenfolge der Chips (Nico, 2026-10-22): Menge, Einheit, Material, dann die übrigen
+ * Reihenfolge der Chips: Menge, Einheit, Material, dann die übrigen
  * Facetten wie hier, zuletzt Status. Nicht genannte Facetten hinten.
  */
 const CHIP_ORDER = [

@@ -253,7 +253,7 @@ function gruppiere(flags: readonly Flag[]): Array<[string, Array<[string, Flag[]
     .map(([label, teile]) => [label, [...teile].sort(([a], [b]) => deutsch(a, b))]);
 }
 
-/** Ab dieser Breite stehen die Funde als Spalte neben den Regeln (Issue #191, 12.11.2026). */
+/** Ab dieser Breite stehen die Funde als Spalte neben den Regeln (Issue #191). */
 const SIDE_BY_SIDE = 560;
 
 /**
