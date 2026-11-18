@@ -165,14 +165,6 @@ describe('Geteilter Link · Positions-Hash', () => {
     await waitFor(() => expect(screen.getAllByText(OZ).length).toBeGreaterThan(0));
   });
 
-  it('schreibt die Auswahl als Datei-ID und Hash, nicht als OZ', async () => {
-    // Ein älterer Link mit OZ wählt die Position; die App schreibt ihn neu.
-    setzeFragment(`#p=${OZ}`);
-    await ladeApp(NAME);
-    const { pos, lv } = erwartet();
-    await waitFor(() => expect(fragment()).toBe(`#lv=${lv}~pos=${pos}`));
-  });
-
   it('sagt, wenn der Link aus einer anderen Datei stammt', async () => {
     setzeFragment(`#lv=000000000000~pos=${erwartet().pos}`);
     await ladeApp(NAME);

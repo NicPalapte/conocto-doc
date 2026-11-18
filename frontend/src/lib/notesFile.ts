@@ -2,22 +2,18 @@
 //
 // Eine JSON-Datei je LV: Fortschritt, „Wichtig" und Verlauf je Position (Entscheidung
 // 0062), dazu OZ, Kurztext und Menge, damit ein Mensch sie lesen kann und das Laden
-// Positionen auch in einer geänderten Fassung wiederfindet. Seit Version 3 auch die
-// Anstreichungen im Langtext (Entscheidung 0063), seit Version 4 die Stellen in
-// Begleitdokumenten samt Verknüpfung (Entscheidung 0072). Zuordnung in drei Stufen
+// Positionen auch in einer geänderten Fassung wiederfindet, dazu die Anstreichungen im
+// Langtext (Entscheidung 0063) und die Stellen in Begleitdokumenten samt Verknüpfung
+// (Entscheidung 0072). Zuordnung in drei Stufen
 // (Entscheidung 0055): gleicher Positions-Hash, sonst gleicher Text-Fingerabdruck
 // (umnummeriert), sonst gleiche OZ (Text oder Menge geändert). Mehrdeutiges wird
 // nicht zugeordnet. Die Datei entsteht und wird gelesen im Browser — kein Request.
 
 import {
-  isOldMarker,
   isProgress,
   markedIds,
   mergeHighlights,
   toHighlight,
-  oldIsDone,
-  oldIsImportant,
-  toEntriesOld,
   toEntry,
   type Annotations,
   type Highlight,
@@ -55,16 +51,11 @@ import {
 
 /** Kennung der Arbeitsstand-Datei (Entscheidung 0101). */
 export const NOTES_FILE_KIND = 'conocto-arbeitsstand';
-/** Kennung bis Version 4 („Notizen“); solche Dateien werden weiter gelesen (0101). */
+/** Kennung vor 0.66 („Notizen“): erkannt, nicht mehr gelesen (neu-kompatibel-ab-0-66). */
 const OLD_NOTES_FILE_KIND = 'conocto-notizen';
 /**
- * Version 5: neue Kennung `conocto-arbeitsstand`, Inhalt wie Version 4 (0101).
- *
- * Seit 0080 dazu je Position `quelle` an Dokumentstellen und `abgelehnt` — nur ergänzt,
- * deshalb weiter Version 4: ältere Fassungen lesen die Datei und übergehen die Felder.
- * Version 4: dazu Stellen in Begleitdokumenten (0072). Version 3: dazu Anstreichungen (0063).
- * Version 2: Fortschritt + Wichtig (0062).
- * Ältere Versionen werden gelesen, Version 1 (drei Marker) umgedeutet.
+ * Einzige gelesene Version, wie sie Conocto 0.66 schreibt. Neue Felder nur ergänzen, die
+ * ältere Fassungen übergehen; ein Bruch braucht eine neue Version, die 5 weiter liest.
  */
 const NOTES_FILE_VERSION = 5;
 
@@ -287,21 +278,6 @@ function readEntry(value: unknown): LogEntry | null {
   return null;
 }
 
-/** Version 1: drei Marker; Verlauf und Stand werden wie im Speicher umgedeutet. */
-function readVerlaufV1(value: unknown): LogEntry[] {
-  if (!Array.isArray(value)) return [];
-  return toEntriesOld(
-    value.map((item: unknown) => {
-      if (typeof item !== 'object' || item === null) return null;
-      const raw = item as Record<string, unknown>;
-      const zeit = at(raw.zeit);
-      if ('kommentar' in raw) return { kind: 'comment', at: zeit, text: raw.kommentar };
-      if ('marker' in raw) return { kind: 'marker', at: zeit, marker: raw.marker };
-      return null;
-    }),
-  );
-}
-
 /** Stelle aus der Datei; `links` setzt der Aufrufer. Unbrauchbares wird `null`. */
 function readDocSpot(value: unknown, links: readonly string[]): DocMark | null {
   if (typeof value !== 'object' || value === null) return null;
@@ -359,30 +335,16 @@ function readDocSpots(value: unknown, links: readonly string[]): DocMark[] {
  * bleiben auch ohne eigene Notiz stehen, sonst fände ihre Messung beim Laden nicht zur
  * Position zurück.
  */
-function readPosition(
-  value: unknown,
-  version: number,
-  planned: ReadonlySet<string>,
-): NotesFilePosition | null {
+function readPosition(value: unknown, planned: ReadonlySet<string>): NotesFilePosition | null {
   if (typeof value !== 'object' || value === null) return null;
   const raw = value as Record<string, unknown>;
   const hash = text(raw.hash);
   if (hash === '') return null;
-  let verlauf: LogEntry[];
-  let fortschritt: Progress | null;
-  let wichtig: boolean;
-  if (version === 1) {
-    verlauf = readVerlaufV1(raw.verlauf);
-    const marker = isOldMarker(raw.marker) ? raw.marker : null;
-    fortschritt = oldIsDone(marker) ? 'fertig' : null;
-    wichtig = oldIsImportant(marker);
-  } else {
-    verlauf = Array.isArray(raw.verlauf)
-      ? raw.verlauf.map(readEntry).filter((entry): entry is LogEntry => entry !== null)
-      : [];
-    fortschritt = isProgress(raw.fortschritt) ? raw.fortschritt : null;
-    wichtig = raw.wichtig === true;
-  }
+  const verlauf = Array.isArray(raw.verlauf)
+    ? raw.verlauf.map(readEntry).filter((entry): entry is LogEntry => entry !== null)
+    : [];
+  const fortschritt: Progress | null = isProgress(raw.fortschritt) ? raw.fortschritt : null;
+  const wichtig = raw.wichtig === true;
   const anstreichungen = Array.isArray(raw.anstreichungen)
     ? raw.anstreichungen
         .map((item: unknown) => {
@@ -468,13 +430,16 @@ export function parseNotesFile(content: string): NotesFile {
     throw new NotesFileError('Die Datei ist keine Arbeitsstand-Datei von Conocto.');
   }
   const file = raw as Record<string, unknown>;
-  const isNew = file.art === NOTES_FILE_KIND;
-  if ((!isNew && file.art !== OLD_NOTES_FILE_KIND) || !Array.isArray(file.positionen)) {
+  if (file.art === OLD_NOTES_FILE_KIND) {
+    throw new NotesFileError(
+      'Die Datei stammt aus einer Conocto-Version vor 0.66 und wird nicht mehr gelesen.',
+    );
+  }
+  if (file.art !== NOTES_FILE_KIND || !Array.isArray(file.positionen)) {
     throw new NotesFileError('Die Datei ist keine Arbeitsstand-Datei von Conocto.');
   }
   const version = file.version;
-  const known = isNew ? [NOTES_FILE_VERSION] : [1, 2, 3, 4];
-  if (typeof version !== 'number' || !known.includes(version)) {
+  if (version !== NOTES_FILE_VERSION) {
     throw new NotesFileError('Die Arbeitsstand-Datei stammt aus einer neueren Conocto-Version.');
   }
   const plaene = fromStoredPlanNotes(file.plaene);
@@ -484,7 +449,7 @@ export function parseNotesFile(content: string): NotesFile {
     gesichert: at(file.gesichert),
     farben: toPaintNames(file.farben),
     positionen: file.positionen
-      .map((position) => readPosition(position, version, planned))
+      .map((position) => readPosition(position, planned))
       .filter((position): position is NotesFilePosition => position !== null),
     dokumente: readDokumente(file),
     plaene,
@@ -664,7 +629,7 @@ export function mergeNotes(
     const before = log.get(nodeId) ?? [];
     const seen = new Set(before.map(entryKey));
     const added = entry.verlauf.map(local).filter((item) => !seen.has(entryKey(item)));
-    // Stabil sortiert: Einträge ohne Zeitpunkt (v0.15) bleiben vorn, wie gespeichert.
+    // Stabil sortiert: Einträge ohne Zeitpunkt bleiben vorn, wie gespeichert.
     const merged = [...before, ...added].sort((a, b) => a.at - b.at);
     if (merged.length > 0) log.set(nodeId, merged);
 

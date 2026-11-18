@@ -9,8 +9,6 @@
 // **Was im Link steht:** die Ansicht, die Filter (Facetten, Suche,
 // Mengenbereich, Umgang mit Nicht-Treffern) und die gewählte Position als
 // Inhalts-Hash `pos` samt Datei-ID `lv` (docs/decisions/0055-positions-hash.md).
-// Ältere Links tragen statt des Hashes die OZ (`p`); sie werden weiter gelesen,
-// aber nicht mehr geschrieben.
 //
 // Ein Teil davon stammt aus der Datei, und zwar mehr als nur die OZ: die
 // Facetten `normen` und `beton` tragen die Bezeichnung, die im Langtext steht
@@ -42,8 +40,6 @@ export interface SharedState {
   pos: string | null;
   /** Datei-ID der Datei, aus der der Link stammt; nur zusammen mit `pos`. */
   lv: string | null;
-  /** OZ aus einem älteren Link (`p=`); wird nur gelesen. */
-  oz: string | null;
 }
 
 // Der Graph ist der Hauptscreen (docs/decisions/0034-graph-als-hauptscreen.md) —
@@ -57,7 +53,6 @@ export const EMPTY_SHARED: SharedState = {
   hideMode: 'dim',
   pos: null,
   lv: null,
-  oz: null,
 };
 
 const POS_MUSTER = /^[0-9a-f]{10}(-[0-9]+)?$/;
@@ -90,8 +85,6 @@ export function encodeShared(state: SharedState): string {
   if (state.pos !== null) {
     if (state.lv !== null) teile.push(`lv=${state.lv}`);
     teile.push(`pos=${state.pos}`);
-  } else if (state.oz !== null) {
-    teile.push(`p=${enc(state.oz)}`);
   }
   for (const [facetId, values] of Object.entries(state.facets)) {
     if (values.length === 0) continue;
@@ -190,12 +183,6 @@ export function decodeSharedChecked(fragment: string): CheckedShared {
     if (schluessel === 'lv') {
       // Die Datei-ID dient nur dem Hinweis „andere Datei" — fehlt sie, gilt der Rest.
       state.lv = LV_MUSTER.test(wert) ? wert : null;
-      continue;
-    }
-    if (schluessel === 'p') {
-      const oz = dec(wert);
-      if (oz === null) verworfen.push('Auswahl');
-      state.oz = oz === null || oz === '' ? null : oz;
       continue;
     }
     if (schluessel.startsWith('f.')) {

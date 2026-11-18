@@ -2,8 +2,8 @@
 //
 // Seit 0109 für alle, ohne Passwort: zu sehen und zu ändern unter Logo-Menü → „Einstellungen“
 // (components/settings/). Die eigenen Regeln bleiben in diesem Browser
-// (lib/persist/lastLv.ts) und wirken in jeder Datei. Ein gelernter Begriff ist seit 0088 eine
-// solche Regel; Begriffe älterer Versionen zieht `readOwnRulesAndTerms` beim Start einmal um.
+// (lib/persist/lastLv.ts) und wirken in jeder Datei. Ein gelernter Begriff ist eine solche
+// Regel (Entscheidung 0088).
 // Der Grundstock kommt aus docs/domain/reference/regeln.json und lässt sich hier nicht ändern,
 // nur je Regel abschalten (Entscheidung 0089); die Liste der abgeschalteten bleibt ebenfalls in
 // diesem Browser. Ebenso die eigenen Wörter und Listen (Entscheidung 0090): `context` ist das,
@@ -21,15 +21,13 @@ import {
 import type { Rule, RuleContext } from '@core';
 import {
   readGrundstockOff,
-  readLearnedTerms,
   readOwnRules,
   readWordLists,
   saveGrundstockOff,
-  saveLearnedTerms,
   saveOwnRules,
   saveWordLists,
 } from '../lib/persist/lastLv';
-import { learnedRule, termsToRules, type LearnedTerm } from '../lib/highlight/terms';
+import { learnedRule, type LearnedTerm } from '../lib/highlight/terms';
 import { GRUNDSTOCK } from '../lib/rules/rules';
 import { WISSEN } from '../lib/rules/wissen';
 import {
@@ -125,43 +123,13 @@ function usePersistedList<T>(
   return [items, setItems];
 }
 
-/**
- * Eigene Regeln lesen und gelernte Begriffe älterer Versionen einmal als Regeln dazunehmen
- * (Entscheidung 0088). Erst die Regeln sichern, dann die Begriffe leeren: scheitert das
- * Sichern, bleiben die Begriffe und der Umzug läuft beim nächsten Start noch einmal.
- */
-// Einmal je Seitenaufruf: Ein zweiter Lauf (StrictMode, neuer Provider) läse sonst die
-// Regeln vor und die Begriffe nach dem Umzug des ersten und überschriebe dessen Ergebnis.
-let ownRulesOnce: Promise<Rule[] | null> | null = null;
-
-function readOwnRulesAndTerms(): Promise<Rule[] | null> {
-  // Ein Fehler zählt wie gescheitertes Lesen (`null`): ohne Speicher weiter, nichts schreiben.
-  ownRulesOnce ??= migrateTerms()
-    .catch(() => null)
-    .finally(() => {
-      // Nur das erste Lesen teilt sich den Umzug; spätere Provider lesen frisch.
-      ownRulesOnce = null;
-    });
-  return ownRulesOnce;
-}
-
-async function migrateTerms(): Promise<Rule[] | null> {
-  const rules = await readOwnRules();
-  if (rules === null) return null;
-  const terms = await readLearnedTerms();
-  if (terms === null || terms.length === 0) return rules;
-  const merged = [...rules, ...termsToRules(terms, [...GRUNDSTOCK, ...rules])];
-  if (await saveOwnRules(merged)) await saveLearnedTerms([]);
-  return merged;
-}
-
 const sameRule = (a: Rule, b: Rule): boolean => a.id === b.id;
 const sameId = (a: string, b: string): boolean => a === b;
 
 const RulesContext = createContext<RulesContextValue | null>(null);
 
 export function RulesProvider({ children }: { children: ReactNode }) {
-  const [ownRules, changeRules] = usePersistedList(readOwnRulesAndTerms, saveOwnRules, sameRule);
+  const [ownRules, changeRules] = usePersistedList(readOwnRules, saveOwnRules, sameRule);
   const [offIds, changeOff] = usePersistedList(readGrundstockOff, saveGrundstockOff, sameId);
   const [wordEntries, changeWords] = usePersistedList(readWordLists, saveWordLists, sameEntry);
   const [ruleRequest, setRuleRequest] = useState<Rule | null>(null);

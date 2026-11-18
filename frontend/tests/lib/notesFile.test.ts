@@ -70,41 +70,7 @@ describe('notesFileText und parseNotesFile', () => {
     expect(file.positionen[1].verlauf).toEqual([{ kind: 'comment', at: 2000, text: 'Boden' }]);
   });
 
-  it('liest Notiz-Dateien mit drei Markern (Version 1) und deutet sie um', () => {
-    const alt = parseNotesFile(
-      JSON.stringify({
-        art: 'conocto-notizen',
-        version: 1,
-        positionen: [
-          {
-            hash: 'h1',
-            marker: 'erledigt',
-            verlauf: [
-              { zeit: '2026-10-20T10:00:00.000Z', marker: 'markiert' },
-              { zeit: '2026-10-20T11:00:00.000Z', marker: 'erledigt' },
-              { zeit: null, kommentar: 'Boden' },
-            ],
-          },
-          { hash: 'h2', marker: 'wichtig' },
-          { hash: 'h3', marker: 'kaputt' },
-        ],
-      }),
-    );
-    expect(alt.positionen.map((p) => [p.hash, p.fortschritt, p.wichtig])).toEqual([
-      ['h1', 'fertig', false],
-      ['h2', null, true],
-    ]);
-    const zehn = Date.UTC(2026, 9, 20, 10);
-    const elf = Date.UTC(2026, 9, 20, 11);
-    expect(alt.positionen[0].verlauf).toEqual([
-      { kind: 'important', at: zehn, on: true },
-      { kind: 'progress', at: elf, progress: 'fertig' },
-      { kind: 'important', at: elf, on: false },
-      { kind: 'comment', at: 0, text: 'Boden' },
-    ]);
-  });
-
-  it('nimmt Anstreichungen mit und liest Version 2 ohne sie', () => {
+  it('nimmt Anstreichungen mit', () => {
     const notizen = addHighlight(EMPTY_ANNOTATIONS, 'p1', {
       paint: 'orange',
       start: 4,
@@ -115,14 +81,6 @@ describe('notesFileText und parseNotesFile', () => {
     expect(file.positionen.map((p) => [p.hash, p.anstreichungen])).toEqual([
       ['h1', [{ paint: 'orange', start: 4, text: 'Bewehrung', at: Date.UTC(2026, 9, 21) }]],
     ]);
-    const v2 = parseNotesFile(
-      JSON.stringify({
-        art: 'conocto-notizen',
-        version: 2,
-        positionen: [{ hash: 'h1', wichtig: true, verlauf: [] }],
-      }),
-    );
-    expect(v2.positionen[0].anstreichungen).toEqual([]);
 
     const zusammen = mergeNotes(
       addHighlight(EMPTY_ANNOTATIONS, 'p1', { paint: 'gelb', start: 0, text: 'Beton', at: 1 }),
@@ -135,17 +93,17 @@ describe('notesFileText und parseNotesFile', () => {
   it('meldet fremde, kaputte und zu neue Dateien verständlich', () => {
     expect(() => parseNotesFile('kein json')).toThrow(NotesFileError);
     expect(() => parseNotesFile('{"art":"etwas"}')).toThrow('keine Arbeitsstand-Datei');
-    expect(() => parseNotesFile('{"art":"conocto-notizen","version":5,"positionen":[]}')).toThrow(
-      'neueren Conocto-Version',
-    );
     expect(() =>
       parseNotesFile('{"art":"conocto-arbeitsstand","version":6,"positionen":[]}'),
     ).toThrow('neueren Conocto-Version');
   });
 
-  it('liest alte Notiz-Dateien (conocto-notizen, Version 4) weiter (Entscheidung 0101)', () => {
-    const alt = parseNotesFile('{"art":"conocto-notizen","version":4,"positionen":[]}');
-    expect(alt.positionen).toEqual([]);
+  it('liest Notiz-Dateien von vor 0.66 (conocto-notizen) nicht mehr', () => {
+    for (const version of [1, 4]) {
+      expect(() =>
+        parseNotesFile(`{"art":"conocto-notizen","version":${version},"positionen":[]}`),
+      ).toThrow('vor 0.66');
+    }
   });
 });
 
@@ -197,9 +155,9 @@ describe('matchNotes: jede Position nur einmal', () => {
   function datei(...eintraege: Array<[string, string, string]>) {
     return parseNotesFile(
       JSON.stringify({
-        art: 'conocto-notizen',
-        version: 1,
-        positionen: eintraege.map(([hash, text, oz]) => ({ hash, text, oz, marker: 'wichtig' })),
+        art: 'conocto-arbeitsstand',
+        version: 5,
+        positionen: eintraege.map(([hash, text, oz]) => ({ hash, text, oz, wichtig: true })),
       }),
     );
   }

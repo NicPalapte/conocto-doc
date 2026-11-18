@@ -43,7 +43,13 @@ function positionen() {
 
 async function speichere(mitNotizen: boolean): Promise<void> {
   await saveLastLv(
-    { fileName: NAME, positionCount: 3, savedAt: Date.now(), id: ID },
+    {
+      fileName: NAME,
+      positionCount: 3,
+      savedAt: Date.now(),
+      id: ID,
+      files: [{ key: 'LV1', fileName: NAME, positionCount: 3 }],
+    },
     fixtureBytes(),
   );
   if (!mitNotizen) return;
@@ -189,10 +195,10 @@ describe('Logo-Menü', () => {
     await oeffneGespeicherte();
     const oz = positionen()[0].position?.oz ?? '';
     const fremd = JSON.stringify({
-      art: 'conocto-notizen',
-      version: 1,
+      art: 'conocto-arbeitsstand',
+      version: 5,
       datei: 'anderes.x83',
-      positionen: [{ hash: 'fremd', text: 'fremd', oz, marker: 'wichtig', verlauf: [] }],
+      positionen: [{ hash: 'fremd', text: 'fremd', oz, wichtig: true, verlauf: [] }],
     });
     fireEvent.change(screen.getByLabelText('Arbeitsstand-Datei auswählen'), {
       target: { files: [new File([fremd], 'anderes.json')] },

@@ -52,8 +52,7 @@ _Linting/Formatierung laufen automatisch via Claude Code Hook nach jedem Edit/Wr
   und Textmarkierungen je Positions-Hash `hashes.id`, `lib/annotations.ts`, Entscheidung 0057,
   dazu Stellen in Begleit-PDFs samt Notizen (`comments`, 0111) und ausgeblendete Vorschlagsarten `lib/docs/docNotes.ts`,
   0072, 0087),
-  löschbar auf der Startseite. Dazu, unabhängig von der Datei, der Altbestand gelernter
-  Begriffe (`readLearnedTerms`, beim Start einmal zu eigenen Regeln, 0088), die eigenen Namen
+  löschbar auf der Startseite. Dazu, unabhängig von der Datei, die eigenen Namen
   der Markierfarben
   (`lib/paintNames.ts`, `state/paintNames.tsx`) und der Merker der Kurzumfrage
   (`state/survey.tsx`, Schlüssel `umfrage`, Entscheidung 0071) und der Merker „Tour gesehen“
@@ -66,6 +65,11 @@ _Linting/Formatierung laufen automatisch via Claude Code Hook nach jedem Edit/Wr
   Kein geparstes LV speichern, keine Demo-LVs, kein zweites Projekt, keine PDF-Bytes. Notizen
   nur schreiben, wenn die Projekt-Kennung (`persistIdOf`) noch passt. Fehlt IndexedDB ⇒ still ohne
   Speicher weiter, kein Fehler (Entscheidungen 0046, 0047, 0053).
+- **Rückwärtskompatibel ab v0.66.0** (`neu-kompatibel-ab-0-66`): Arbeitsstand-Datei
+  (`conocto-arbeitsstand` Version 5), Speicher (`StoredAnnotations` `v: 6`, Meta mit `id` +
+  `files`) und Links (`pos=`), wie 0.66 sie schreibt, bleiben lesbar. Verboten: Lesewege für
+  Formate von vor 0.66 neu anlegen. Neue Felder nur optional ergänzen; ein Bruch braucht eine
+  neue Version, die die Form von 0.66 weiter liest, plus Test.
 
 ### Client-seitige Pipeline (Kern)
 - `GaebParser` ist die **einzige** Stelle mit GAEB-XML-Kenntnis
@@ -110,7 +114,7 @@ _Linting/Formatierung laufen automatisch via Claude Code Hook nach jedem Edit/Wr
 ## Code-Style
 - Produktname **Conocto** (`docs/decisions/0069-conocto-look.md`). Kennungen heißen `conocto-…`
   (Entscheidung 0091): `conocto-pos-v1`, `conocto-graph-v1`, `conocto-lv-export-v1`,
-  `conocto-rule-v1`, `conocto-arbeitsstand` (alt `conocto-notizen`), `@conocto/core`, IndexedDB `conocto`. Keine neuen
+  `conocto-rule-v1`, `conocto-arbeitsstand`, `@conocto/core`, IndexedDB `conocto`. Keine neuen
   Kennungen mit `bubble`. Ausnahmen: GoatCounter-Code `bubble` (externes Konto), Repo-Name,
   „Bubble" als Blase im Graphen (`BubbleGraph`).
 - Farben nur über CSS-Variablen aus dem Paket `@conocto/design` (`tokens.css`, Entscheidung

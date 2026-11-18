@@ -491,7 +491,7 @@ function dateiNamen(dateien: readonly File[]): string {
 
 /** Name des gespeicherten Projekts für die Startseite. */
 function projektName(meta: LastLvInfo): string {
-  return mitWeiteren(meta.fileName, meta.files?.length ?? 1);
+  return mitWeiteren(meta.fileName, meta.files.length);
 }
 
 /** „⚑ 4 mit Marker · ✎ 7 Kommentare" — leer ohne Notizen. */

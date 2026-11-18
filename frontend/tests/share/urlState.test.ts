@@ -29,7 +29,7 @@ describe('encodeShared / decodeShared', () => {
       facets: { beton: ['Decke', 'Wand'], einheit: ['m3'] },
       menge: [10, 500],
       hideMode: 'hide',
-      oz: '001.004.0030',
+      pos: 'a81c55d2e0',
     });
     expect(decodeShared(encodeShared(vorher))).toEqual(vorher);
   });
@@ -39,7 +39,6 @@ describe('encodeShared / decodeShared', () => {
     const vorher = zustand({
       search: 'a=b~c,d #e',
       facets: { beton: ['C30/37', 'C35/45'], normen: ['DIN EN 1992-1-1'] },
-      oz: '01.002~0010',
     });
     expect(decodeShared(encodeShared(vorher))).toEqual(vorher);
   });
@@ -54,8 +53,8 @@ describe('encodeShared / decodeShared', () => {
     expect(encodeShared(zustand({ lv: '3f9a1c2e7b04' }))).toBe('');
   });
 
-  it('schreibt den Hash statt der OZ, wenn beides da ist', () => {
-    expect(encodeShared(zustand({ pos: 'a81c55d2e0', oz: '001.004.0030' }))).toBe('pos=a81c55d2e0');
+  it('übergeht die OZ aus Links von vor 0.66 (`p=`)', () => {
+    expect(decodeShared('p=001.004.0030~v=table')).toEqual(zustand({ view: 'table' }));
   });
 
   it('nimmt das Fragment mit und ohne führendes #', () => {
@@ -92,7 +91,6 @@ describe('decodeShared · fremde Links', () => {
     for (const kaputt of ['v', '=', '~~~', 'f.=', 'q', 'p=']) {
       expect(() => decodeShared(kaputt)).not.toThrow();
     }
-    expect(decodeShared('p=').oz).toBeNull();
   });
 
   it('übersteht eine defekte Prozent-Kodierung', () => {
@@ -102,7 +100,6 @@ describe('decodeShared · fremde Links', () => {
       expect(() => decodeShared(kaputt)).not.toThrow();
     }
     expect(decodeShared('q=%').search).toBe('');
-    expect(decodeShared('p=%E4%').oz).toBeNull();
     expect(decodeShared('f.beton=%3').facets).toEqual({});
     // Und was daneben steht, gilt weiter.
     expect(decodeShared('q=%~v=graph').view).toBe('graph');
@@ -113,10 +110,10 @@ describe('Was im Link steht', () => {
   it('trägt keinen Dateinamen, keinen Text, keine Menge, keinen Preis', () => {
     // Ein Link ohne dieselbe Datei ist nutzlos — genau so ist es gewollt.
     const fragment = encodeShared(
-      zustand({ view: 'table', facets: { beton: ['Wand'] }, oz: '001.004.0030' }),
+      zustand({ view: 'table', facets: { beton: ['Wand'] }, pos: 'a81c55d2e0' }),
     );
     const schluessel = fragment.split('~').map((teil) => teil.split('=')[0]);
-    expect(new Set(schluessel)).toEqual(new Set(['v', 'f.beton', 'p']));
+    expect(new Set(schluessel)).toEqual(new Set(['v', 'f.beton', 'pos']));
   });
 
   it('trägt für die Auswahl nur Hash und Datei-ID — keine OZ', () => {
@@ -155,7 +152,7 @@ describe('decodeSharedChecked (Issue #95)', () => {
 
   it('meldet jeden verworfenen Teil mit deutschem Namen', () => {
     const { verworfen } = decodeSharedChecked(
-      '#v=nope~q=%~m=5,1~h=weg~p=%~f.gibtsnicht=a~f.beton=%E0%A4%A',
+      '#v=nope~q=%~m=5,1~h=weg~pos=%~f.gibtsnicht=a~f.beton=%E0%A4%A',
     );
     expect(verworfen).toEqual([
       'Ansicht',

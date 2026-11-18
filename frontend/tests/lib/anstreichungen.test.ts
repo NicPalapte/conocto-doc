@@ -44,14 +44,14 @@ describe('Anstreichungen im Datenmodell', () => {
     expect(a.highlights.has('p')).toBe(false);
   });
 
-  it('übersteht Speicher und Umschlüsseln, liest v4 ohne Anstreichungen', () => {
+  it('übersteht Speicher und Umschlüsseln und verwirft kaputte Anstreichungen', () => {
     const a = addHighlight(EMPTY_ANNOTATIONS, 'position:01', gelb(3, 'Beton', 7));
     const keys = new Map([['position:01', 'h1']]);
     const stored = toStored(rekey(a, keys));
     expect(stored.highlights).toEqual([['h1', [gelb(3, 'Beton', 7)]]]);
     expect(rekey(fromStored(stored), new Map([['h1', 'position:01']]))).toEqual(a);
     const kaputt = fromStored({
-      v: 5,
+      v: 6,
       progress: [],
       important: [],
       log: [],
@@ -61,8 +61,6 @@ describe('Anstreichungen im Datenmodell', () => {
     expect(toHighlight({ paint: 'gelb', start: 0, text: 'x'.repeat(MAX_PAINT_LENGTH + 1) })).toBe(
       null,
     );
-    const v4 = fromStored({ v: 4, progress: [], important: ['h'], log: [] });
-    expect(v4.highlights.size).toBe(0);
   });
 });
 
