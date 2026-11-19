@@ -192,7 +192,7 @@ jobs:
             Priorität der Prüfpunkte:
             - Verstöße gegen die Architekturregeln aus `.claude/CLAUDE.md`: eigener
               Server/Backend, Fachdaten in localStorage/sessionStorage/Cookies,
-              GAEB-Wissen außerhalb von `frontend/src/lib/gaeb/`, Fixture-Daten im UI.
+              GAEB-Wissen außerhalb von `packages/core/src/gaeb/`, Fixture-Daten im UI.
             - Fehler in der Logik, falsch behandelte Grenzfälle, verschluckte Exceptions.
             - Sicherheitsprobleme.
             - Fehlende Tests: jede neue Exception und jeder neue Parserpfad braucht einen.
