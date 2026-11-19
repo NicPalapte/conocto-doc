@@ -129,6 +129,7 @@ Designsystem `DS-`). Neue Nummern vergibt erst der Bot nach dem Merge (0113).
 | 0117 | [Rückwärtskompatibel erst ab 0.66](0117-kompatibel-ab-0-66.md)                                                 | akzeptiert                         | 2026-11-18 |
 | 0118 | [Beziehungen zwischen Dokumenten gehören zum Auftrag](0118-beziehungen-zwischen-dokumenten.md)                 | akzeptiert                         | 2026-11-19 |
 | 0119 | [CLAUDE.md schlank, Doku nur bei Bedarf lesen](0119-claude-md-schlank.md)                                      | akzeptiert                         | 2026-11-19 |
+| 0120 | [Links zu Beta und Arbeitsversion auf der Repo-Seite](0120-deployment-links.md)                                | akzeptiert                         | 2026-11-19 |
 
 ## Wann schreibe ich eine neue Datei?
 

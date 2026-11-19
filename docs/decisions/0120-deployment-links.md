@@ -1,4 +1,4 @@
-# NEU – Links zu Beta und Arbeitsversion auf der Repo-Seite
+# DOC-0120 – Links zu Beta und Arbeitsversion auf der Repo-Seite
 
 - **Status:** akzeptiert
 - **Datum:** 2026-11-19
