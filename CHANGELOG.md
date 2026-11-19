@@ -12,6 +12,12 @@ dem Merge daraus Version und Abschnitt.
 
 ---
 
+## 0.66.3 — 19.11.2026 · Kürzere Tooltips
+
+- **Tooltips** im Logo-Menü, in den Einstellungen, in der Tabelle und im Dokument sagen nur
+  noch das Nötige.
+- **„Verweis zu bestätigen“** zeigt keinen Pfad aus dem Quellcode mehr.
+
 ## 0.66.2 — 18.11.2026 · Daten von vor 0.66 werden nicht mehr gelesen
 
 - **Arbeitsstand-Dateien** aus Versionen vor 0.66 („Notizen“) lassen sich nicht mehr laden.
