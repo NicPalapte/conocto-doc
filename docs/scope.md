@@ -9,7 +9,7 @@
 **Conocto macht ein Leistungsverzeichnis lesbar.** Es zeigt jede Information, die in der
 Datei steckt, hebt das Wichtige hervor und macht die Beziehungen zwischen Positionen und
 zwischen den Dokumenten (LVs und Begleit-PDFs) sichtbar — im Browser, ohne Server, ohne dass
-eine Datei den Rechner verlässt (neu-beziehungen-zwischen-dokumenten).
+eine Datei den Rechner verlässt (0118).
 
 Das ist die einzige Aufgabe. Alles, was nicht dem Verstehen der geladenen Dateien dient,
 gehört nicht in dieses Produkt.

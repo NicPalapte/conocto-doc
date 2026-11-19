@@ -3,7 +3,7 @@
 ## Auftrag
 Conocto macht **ein Leistungsverzeichnis lesbar**: jede Information der Datei zeigen, das
 Wichtige hervorheben, Beziehungen zwischen Positionen und zwischen den Dokumenten (LVs und
-Begleit-PDFs) sichtbar machen (neu-beziehungen-zwischen-dokumenten). Was nicht dem Verstehen
+Begleit-PDFs) sichtbar machen (0118). Was nicht dem Verstehen
 der geladenen Dateien dient, gehört nicht ins Produkt. Reine Frontend-App: GAEB-Dateien und
 Begleit-PDFs im Browser laden, klassifizieren, prüfen, im Graphen durchsuchen und filtern.
 - Beziehungen nur aus dem, was wörtlich in den Dateien steht, oder von Hand verknüpft. Verboten:

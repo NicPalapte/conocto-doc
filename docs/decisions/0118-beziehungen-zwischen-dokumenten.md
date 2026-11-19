@@ -1,4 +1,4 @@
-# NEU – Beziehungen zwischen Dokumenten gehören zum Auftrag
+# DOC-0118 – Beziehungen zwischen Dokumenten gehören zum Auftrag
 
 - **Status:** akzeptiert
 - **Datum:** 2026-11-19

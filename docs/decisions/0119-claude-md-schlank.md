@@ -1,4 +1,4 @@
-# NEU – CLAUDE.md schlank, Doku nur bei Bedarf lesen
+# DOC-0119 – CLAUDE.md schlank, Doku nur bei Bedarf lesen
 
 - **Status:** akzeptiert
 - **Datum:** 2026-11-19
