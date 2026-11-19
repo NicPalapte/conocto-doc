@@ -8,6 +8,7 @@ import { GROUP_OF, type PlanTool, type ToolGroup } from './planTools';
 import {
   formatMeasure,
   MEASURE_LABEL,
+  MEASURE_UNIT,
   measureValue,
   parseMass,
   ratioLabel,
@@ -432,6 +433,78 @@ export function MeasureBar({
       <button
         type="button"
         aria-label="Schließen"
+        onClick={onClose}
+        className="h-[36px] w-[36px] cursor-pointer rounded-[var(--r-pill)] border-none bg-transparent text-mute hover:bg-sunken hover:text-ink"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Mehrere Messungen gewählt (Shift): Summe und Verknüpfen nur bei gleicher Art (gleiche
+ * Einheit, Länge und Kette zählen zusammen); verschiedene Arten lassen sich nur löschen.
+ */
+export function SelectionBar({
+  measures,
+  valueOf,
+  onLink,
+  onRemove,
+  onClose,
+}: {
+  measures: readonly PlanMeasure[];
+  valueOf: (measure: PlanMeasure) => number | null;
+  onLink: (anchor: { left: number; top: number }) => void;
+  onRemove: () => void;
+  onClose: () => void;
+}) {
+  const units = new Set(measures.map((measure) => MEASURE_UNIT[measure.kind]));
+  const same = units.size === 1;
+  const values = measures.map(valueOf);
+  const sum =
+    same && values.every((value) => value !== null)
+      ? values.reduce<number>((total, value) => total + (value ?? 0), 0)
+      : null;
+  return (
+    <div
+      role="group"
+      aria-label="Gewählte Messungen"
+      className="flex shrink-0 flex-wrap items-center gap-[8px] border-t border-line bg-surface px-[12px] py-[8px]"
+    >
+      <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.6px] text-mute">
+        {measures.length} gewählt
+      </span>
+      {same ? (
+        <span className="font-sans text-[14px] font-semibold text-ink">
+          Σ {formatMeasure(sum, measures[0].kind)}
+        </span>
+      ) : (
+        <span className="font-sans text-[12px] text-amber">Verschiedene Arten</span>
+      )}
+      <span className="flex-1" />
+      <button
+        type="button"
+        disabled={!same}
+        title={same ? undefined : 'Nur Messungen gleicher Art verknüpfen'}
+        onClick={(event) => {
+          const box = event.currentTarget.getBoundingClientRect();
+          onLink({ left: box.left, top: box.top - 8 });
+        }}
+        className="h-[36px] cursor-pointer rounded-[var(--r-sm)] border border-accent bg-accent-fill px-[12px] font-sans text-[13px] text-white disabled:cursor-default disabled:border-line disabled:bg-sunken disabled:text-mute"
+      >
+        Mit Position verknüpfen…
+      </button>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="h-[36px] cursor-pointer rounded-[var(--r-sm)] border border-line bg-surface px-[12px] font-sans text-[13px] text-ink hover:border-line2"
+      >
+        Löschen
+      </button>
+      <button
+        type="button"
+        aria-label="Auswahl aufheben"
         onClick={onClose}
         className="h-[36px] w-[36px] cursor-pointer rounded-[var(--r-pill)] border-none bg-transparent text-mute hover:bg-sunken hover:text-ink"
       >
