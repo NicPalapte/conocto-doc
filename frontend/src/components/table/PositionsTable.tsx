@@ -1099,7 +1099,7 @@ export function PositionsTable({ root }: { root: LVNode }) {
         {fellBack && (
           <span
             className="shrink-0 text-accent"
-            title="Im gewählten Abschnitt passt keine Position — gezeigt werden die Treffer des ganzen LV."
+            title="Kein Treffer im Abschnitt – gezeigt wird das ganze LV"
           >
             · LV-weite Treffer
           </span>

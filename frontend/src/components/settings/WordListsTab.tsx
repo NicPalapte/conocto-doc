@@ -234,7 +234,7 @@ export function WordListsTab() {
           type="button"
           disabled={wordEntries.length === 0}
           onClick={() => downloadText('wortlisten.csv', wordListsCsv(wordEntries), 'csv')}
-          title="Geänderte und eigene Listen als wortlisten.csv — zum Übernehmen in den Grundstock"
+          title="Geänderte und eigene Listen als wortlisten.csv"
           className={BUTTON}
         >
           Wortlisten exportieren

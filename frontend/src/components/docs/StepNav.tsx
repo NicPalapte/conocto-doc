@@ -112,7 +112,7 @@ export function StepNav({
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        title="Was ‹ › durchgeht; Arten von Vorschlägen ein- und ausblenden"
+        title="Was ‹ › durchgeht, Vorschlagsarten ein/aus"
         onClick={() => setOpen((current) => !current)}
         className={`${TOOL} gap-[4px] aria-expanded:border-accent aria-expanded:bg-accent-soft`}
       >

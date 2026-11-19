@@ -232,7 +232,7 @@ export function AboutMenu({
               setOpen(false);
               onDokumentHinzufuegen();
             }}
-            title="PDF neben dem LV lesen oder ein weiteres LV dazunehmen — oder auf die App ziehen"
+            title="PDF oder weiteres LV, auch per Ziehen auf die App"
           >
             Dokument hinzufügen…
           </PopoverRow>
@@ -250,7 +250,7 @@ export function AboutMenu({
               {mitnehmen.hatBeton && (
                 <PopoverRow
                   onClick={() => nimmMit(mitnehmen.betonsortenAlsCsv)}
-                  title="Die Betonsorten im aktuellen Filter mit Angaben als Tabelle für Excel"
+                  title="Betonsorten im aktuellen Filter, für Excel"
                 >
                   Betonsorten als Tabelle (CSV)
                 </PopoverRow>
@@ -272,7 +272,7 @@ export function AboutMenu({
               {notizen !== undefined && notizen > 0 && (
                 <PopoverRow
                   onClick={() => nimmMit(mitnehmen.notizenSichern)}
-                  title="Alle eigenen Marker und Kommentare als Datei — zum Aufheben oder Weitergeben"
+                  title="Eigene Marker, Kommentare und Markierungen als Datei"
                   trailing={<span className="font-mono text-[11px] text-mute">{notizen}</span>}
                 >
                   Arbeitsstand sichern
@@ -328,7 +328,7 @@ export function AboutMenu({
               setOpen(false);
               onFehlerMelden();
             }}
-            title="Fertige Meldung zum Kopieren, Mailen oder als GitHub-Issue — ohne Inhalte aus deiner Datei"
+            title="Per Kopie, Mail oder GitHub – ohne Inhalte deiner Datei"
           >
             Fehler melden
           </PopoverRow>
@@ -370,7 +370,7 @@ export function AboutMenu({
               window.open(LIZENZEN_URL, '_blank', 'noopener,noreferrer');
               setOpen(false);
             }}
-            title="Conocto: alle Rechte vorbehalten. Dazu die Lizenzen der verwendeten Bausteine"
+            title="Rechte an Conocto und Lizenzen der Bausteine"
           >
             Lizenzen ↗
           </FussLink>

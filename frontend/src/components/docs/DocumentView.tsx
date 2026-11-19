@@ -1201,7 +1201,7 @@ function OpenDocument({ doc, ownWindow }: { doc: OpenedPdf; ownWindow: boolean }
   const wholeEl = (
     <button
       type="button"
-      title="Das ganze Dokument mit Positionen verknüpfen, ohne Textstelle"
+      title="Mit Positionen verknüpfen, ohne bestimmte Textstelle"
       onClick={(event) => {
         const box = event.currentTarget.getBoundingClientRect();
         setLinking({ spot: wholeDocSpot(doc.id), left: box.left, top: box.bottom + 4 });
