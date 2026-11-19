@@ -1,294 +1,227 @@
 # Conocto – Coding Agent
 
-## Projektbeschreibung
-Conocto macht **ein Leistungsverzeichnis lesbar**: es zeigt jede Information, die in der
-Datei steckt, hebt das Wichtige hervor und macht die Beziehungen zwischen Positionen
-sichtbar. Das ist die einzige Aufgabe — alles, was nicht dem Verstehen einer geladenen
-Datei dient, gehört nicht in dieses Produkt.
+## Auftrag
+Conocto macht **ein Leistungsverzeichnis lesbar**: jede Information der Datei zeigen, das
+Wichtige hervorheben, Beziehungen zwischen Positionen und zwischen den Dokumenten (LVs und
+Begleit-PDFs) sichtbar machen (neu-beziehungen-zwischen-dokumenten). Was nicht dem Verstehen
+der geladenen Dateien dient, gehört nicht ins Produkt. Reine Frontend-App: GAEB-Dateien und
+Begleit-PDFs im Browser laden, klassifizieren, prüfen, im Graphen durchsuchen und filtern.
+- Beziehungen nur aus dem, was wörtlich in den Dateien steht, oder von Hand verknüpft. Verboten:
+  inhaltliche Deutung oder Ähnlichkeit zwischen Dokumenten erraten (0049, 0072, 0080).
 
-**Reine Frontend-Anwendung** – kein Server, keine Datenbank, kein Login. GAEB-Datei im
-Browser laden, klassifizieren, prüfen und im Graphen mit Fenstern darüber
-durchsuchen und filtern. Die Datei verlässt den Browser nie. Einzige Ausnahme vom
-Nicht-Speichern: die zuletzt geöffnete eigene Datei samt eigenen Markierungen und Kommentaren
-bleibt in der IndexedDB dieses Browsers (`docs/decisions/0046-letzte-datei-im-browser.md`,
-`docs/decisions/0047-kommentare-und-markierungen.md`), dazu die in den Einstellungen gelernten
-Begriffe für die Langtext-Hervorhebung (`docs/decisions/0053`); sonst verwirft ein Reload
-den Stand.
+## Bei Bedarf lesen (nicht vorab laden)
+- Aufbau, Ordner, Deployment: `docs/entwicklung.md`
+- Scope und Anwendungsfälle: `docs/scope.md` · Plan: `docs/implementation-plan.md`
+- Architektur: `docs/architecture/pipeline.md`, `frontend.md`, `data-model.md`
+- Prüfregeln und Norm-Verweise: `docs/domain/vob-pruefungen.md`, Index `docs/domain/README.md`
+- Entscheidungen: `docs/decisions/README.md` (Übersicht), Einzeldatei je Nummer
+- CI und Agenten: `docs/setup/ci-und-agenten.md`
+- `README.md` ist nur für Besucher: Produkt/Vision, keine Entwicklerinhalte.
+- `docs/archiviert/` ist veraltet: nicht als Maßstab verwenden.
 
-Technischer Überblick (Aufbau, Ordner, Deployment, Review): @docs/entwicklung.md
-Öffentliche Beschreibung für Besucher: `README.md` – nur Produkt/Vision, keine Agent-/Entwicklerinhalte
-Scope: @docs/scope.md · Plan: @docs/implementation-plan.md · Prüfregeln: @docs/domain/vob-pruefungen.md
-Architektur: @docs/architecture/pipeline.md · @docs/architecture/frontend.md · @docs/architecture/data-model.md
-Entscheidungen: @docs/decisions/README.md · Einrichtung CI/Agenten: @docs/setup/ci-und-agenten.md
-
-## Bash-Befehle
-- `cd frontend && npm run dev` – App lokal starten
-- `cd frontend && npm test` – Vitest (Unit-Tests, inkl. GAEB-Parser gegen Fixtures)
-- `cd frontend && npm run typecheck` – TypeScript über `src`, `vite.config.ts` und `tests`
-- `cd frontend && npm run build` – Production-Build (statisches Bundle)
-
-_Linting/Formatierung laufen automatisch via Claude Code Hook nach jedem Edit/Write
-(`.claude/hooks/lint.sh`)._
+## Befehle
+- `cd frontend && npm run dev` – App lokal
+- `cd frontend && npm test` – Vitest
+- `cd frontend && npm run typecheck` – TypeScript über `src`, `vite.config.ts`, `tests`
+- `cd frontend && npm run build` – statisches Bundle
+- Lint/Format laufen per Hook nach jedem Edit/Write (`.claude/hooks/lint.sh`).
 
 ## Stack
-- **App:** Vite · React · TypeScript · Tailwind (alles in `frontend/`)
-- **Parsing:** eigener TS-Parser für GAEB DA XML, gekapselt hinter `GaebParser`
-- **Persistenz:** keine – alles im Browser-Speicher einer Session
+Vite · React · TypeScript · Tailwind in `frontend/`; Fachkern in `packages/core/`; eigener
+GAEB-DA-XML-Parser hinter `GaebParser`.
 
 ## Architektur (nicht verhandelbar)
-- **Kein eigenes Backend**, keine DB, kein Login. Jede Fachfunktion – Parsen,
-  Klassifizieren, Filtern, Rendern – läuft im Browser und darf keinen eigenen
-  Server voraussetzen. Fachdaten verlassen den Browser nie.
-- Statische Fremd-Assets (Webfonts, npm-Pakete, CDN-Ressourcen) sind **erlaubt**;
-  sie transportieren keine Nutzdaten. Hanken Grotesk (Titel) und Schibsted Grotesk (Text)
-  kommen über `@conocto/design/fonts` (selbst gehostet, im Bundle, `frontend/src/main.tsx`) –
-  kein Fremdaufruf an Google Fonts.
-- **Kein `localStorage`/`sessionStorage`/Cookies für Fachdaten.** Reiner UI-Zustand
-  (Auswahl, Zoom, aktive Filter) darf in React-State/Context leben, muss aber einen
-  Reload nicht überleben. Ausnahme: die Anordnung im Splitscreen (Entscheidung 0073).
-- **IndexedDB nur über `frontend/src/lib/persist/lastLv.ts`:** genau ein Projekt
-  (Original-Bytes + Angaben der zuletzt geöffneten eigenen Datei(en), weitere LVs unter
-  `weitereLvs`, Entscheidung 0110, + Marker, Kommentar-Verlauf
-  und Textmarkierungen je Positions-Hash `hashes.id`, `lib/annotations.ts`, Entscheidung 0057,
-  dazu Stellen in Begleit-PDFs samt Notizen (`comments`, 0111) und ausgeblendete Vorschlagsarten `lib/docs/docNotes.ts`,
-  0072, 0087),
-  löschbar auf der Startseite. Dazu, unabhängig von der Datei, die eigenen Namen
-  der Markierfarben
-  (`lib/paintNames.ts`, `state/paintNames.tsx`) und der Merker der Kurzumfrage
-  (`state/survey.tsx`, Schlüssel `umfrage`, Entscheidung 0071) und der Merker „Tour gesehen“
-  (`components/tour/Tour.tsx`, Schlüssel `tour`, Entscheidung 0098) und die letzte Anordnung
-  im Splitscreen (`state/ViewerProvider.tsx`, Schlüssel `anordnung`, Entscheidung 0073)
-  und die eigenen Regeln `conocto-rule-v1` (`state/rules.tsx`, Schlüssel `regeln`, 0081)
-  und die abgeschalteten Grundstock-Regeln (Schlüssel `grundstock-aus`, 0089)
-  und die eigenen Wortlisten (Schlüssel `wortlisten`, `lib/rules/wordLists.ts`, 0090).
-  Urteile über Verbindungen aus Regeln liegen in den Notizen der Datei (`links`, 0081).
-  Kein geparstes LV speichern, keine Demo-LVs, kein zweites Projekt, keine PDF-Bytes. Notizen
-  nur schreiben, wenn die Projekt-Kennung (`persistIdOf`) noch passt. Fehlt IndexedDB ⇒ still ohne
-  Speicher weiter, kein Fehler (Entscheidungen 0046, 0047, 0053).
-- **Rückwärtskompatibel ab v0.66.0** (`0117`): Arbeitsstand-Datei
-  (`conocto-arbeitsstand` Version 5), Speicher (`StoredAnnotations` `v: 6`, Meta mit `id` +
-  `files`) und Links (`pos=`), wie 0.66 sie schreibt, bleiben lesbar. Verboten: Lesewege für
-  Formate von vor 0.66 neu anlegen. Neue Felder nur optional ergänzen; ein Bruch braucht eine
-  neue Version, die die Form von 0.66 weiter liest, plus Test.
+- Kein Backend, keine DB, kein Login. Parsen, Klassifizieren, Filtern, Rendern im Browser.
+  Fachdaten verlassen den Browser nie. Bei Zweifel, ob ein Feature einen Server braucht:
+  nachfragen.
+- Erlaubt: statische Fremd-Assets (Fonts, npm, CDN), lokale Downloads als Blob, Browser-Druck.
+  Schriften nur über `@conocto/design/fonts` (im Bundle), kein Aufruf an Google Fonts.
+- Verboten: `localStorage`/`sessionStorage`/Cookies für Fachdaten. UI-Zustand nur in
+  React-State/Context, überlebt keinen Reload. Ausnahme: Anordnung im Splitscreen (0073).
+- **IndexedDB nur über `frontend/src/lib/persist/lastLv.ts`.** Erlaubt sind genau:
+  - ein Projekt: Bytes + Angaben der zuletzt geöffneten Datei(en), weitere LVs unter
+    `weitereLvs` (0046, 0110); Notizen je Positions-Hash `hashes.id` (`lib/annotations.ts`,
+    0047, 0057): Marker, Verlauf, Textmarkierungen, Stellen und Notizen in Begleit-PDFs
+    (`lib/docs/docNotes.ts`, 0072, 0111), ausgeblendete Vorschlagsarten (0087), Urteile über
+    Verbindungen (`links`, 0081). Löschbar auf der Startseite.
+  - unabhängig von der Datei, je ein Schlüssel: Farbnamen (`lib/paintNames.ts`,
+    `state/paintNames.tsx`), `umfrage` (`state/survey.tsx`, 0071), `tour`
+    (`components/tour/Tour.tsx`, 0098), `anordnung` (`state/ViewerProvider.tsx`, 0073),
+    `regeln` (`state/rules.tsx`, 0081), `grundstock-aus` (0089), `wortlisten`
+    (`lib/rules/wordLists.ts`, 0090).
+  - Verboten: geparstes LV, Demo-LVs, zweites Projekt, PDF-Bytes speichern. Notizen nur
+    schreiben, wenn `persistIdOf` noch passt. Ohne IndexedDB still weiter, kein Fehler.
+- **Rückwärtskompatibel ab v0.66.0** (0117): lesbar bleibt, was 0.66 schreibt –
+  `conocto-arbeitsstand` Version 5, `StoredAnnotations` `v: 6`, Meta mit `id` + `files`,
+  Links `pos=`. Verboten: Lesewege für Formate vor 0.66. Neue Felder nur optional; ein Bruch
+  braucht eine neue Version, die 0.66 weiter liest, plus Test.
 
-### Client-seitige Pipeline (Kern)
-- `GaebParser` ist die **einzige** Stelle mit GAEB-XML-Kenntnis
-  (`packages/core/src/gaeb/parser.ts`); Exceptions nur `GAEBParseError`,
-  `GAEBValidationError`, `GAEBVersionError`.
-- Der Parser liefert das neutrale Zwischenmodell `LVDraft`
-  (`packages/core/src/model/lvDraft.ts`) – **ohne** GAEB-Begriffe.
-- Kern `packages/core/` (Entscheidung 0054): App importiert nur über `@core`; im Kern kein
-  React und kein Import aus `frontend/`. Neue Fachlogik ohne UI-Bezug gehört dorthin.
-- Positionen tragen Inhalts-Hashes (`PositionHashes`, Entscheidung 0055). Preis,
-  Klassifizierung und Notizen gehen nie in den Hash ein; Normierung nur mit neuer
-  Schema-Kennung (`conocto-pos-v1`) ändern.
-- Klassifizierung läuft über das `LVDraft` **vor** dem Baum-Aufbau und schreibt nach
-  `Position.attributes` – quellenunabhängig, siehe `docs/architecture/data-model.md`.
-- Klassifizierung liegt hinter `ClassifierProtocol`-äquivalentem TS-Interface
-  (`frontend/src/lib/classify/`). MVP: regelbasiert; LLM ist Post-MVP und nicht Teil
-  dieses Repos, solange es keinen Server gibt.
-- `buildTree(draft): LVNode` erzeugt den rekursiven Baum für Tree, Graph und Tabelle –
-  reine Funktion, kein Fetch. Für Filter, Summen und Beziehungen kommt ein **flacher
-  Positions-Index** dazu (WP-I) – der Baum bleibt die Struktur, der Index die Rechenbasis.
-- Prüfregeln sind Grundstock-Regeln `conocto-rule-v1` mit Wirkung `pruefhinweis` in
-  `docs/domain/reference/regeln.json` (Entscheidung 0086); Auswertung in
-  `frontend/src/lib/check/index.ts`, eingebaute Logik nur in `lib/check/builtins.ts`,
-  Wortlisten als CSV (`lib/rules/wissen.ts`). Katalog und Norm-Verweise:
-  @docs/domain/vob-pruefungen.md
-- Große LVs (Richtung ~10k Positionen): Parsing + Klassifizierung laufen in einem
-  Web Worker, damit die UI nicht blockiert.
+### Pipeline (Kern)
+- GAEB-XML-Wissen nur in `packages/core/src/gaeb/parser.ts` (`GaebParser`). Exceptions nur
+  `GAEBParseError`, `GAEBValidationError`, `GAEBVersionError`.
+- Parser liefert `LVDraft` (`packages/core/src/model/lvDraft.ts`) ohne GAEB-Begriffe.
+- Kern `packages/core/` (0054): App importiert nur über `@core`; im Kern kein React, kein
+  Import aus `frontend/`. Fachlogik ohne UI-Bezug gehört in den Kern.
+- Positions-Hashes `PositionHashes` (0055): Preis, Klassifizierung, Notizen nie im Hash;
+  Normierung nur mit neuer Schema-Kennung (`conocto-pos-v1`).
+- Klassifizierung läuft auf dem `LVDraft` vor dem Baum, schreibt nach `Position.attributes`,
+  hinter einem Interface in `frontend/src/lib/classify/`; regelbasiert, kein LLM.
+- `buildTree(draft): LVNode` ist eine reine Funktion. Filter, Summen, Beziehungen rechnen auf
+  dem flachen Positions-Index, nicht per Baum-Traversierung.
+- Prüfregeln: Grundstock `conocto-rule-v1` mit Wirkung `pruefhinweis` in
+  `docs/domain/reference/regeln.json` (0086); Auswertung `frontend/src/lib/check/index.ts`,
+  eingebaute Logik nur `lib/check/builtins.ts`, Wortlisten als CSV (`lib/rules/wissen.ts`).
+- Regel-Auswerter nur in `packages/core/src/rules/`.
+- Parsen + Klassifizieren großer LVs im Web Worker.
 
 ### Frontend
-- Zwei Seiten in einem Build (`docs/decisions/0092`): Startseite `frontend/index.html` +
-  `frontend/src/landing/` (ohne React, kein Import aus App-Code außer `@conocto/design/fonts`),
-  Viewer `frontend/doc/index.html` → `conocto.app/doc/`. Demo-Start nur über
-  `?demo=<id>` (`takeDemoFromUrl`)
-- Daten kommen aus der lokalen Pipeline (Datei → Parser → Klassifizierung → Baum) –
-  **keine** Fixture-Daten, **kein** `localStorage` für Fachdaten
-- `matchPos` ist die einzige Quelle für Filter-/Suchlogik
-- Tree und Bubble-Graph konsumieren **denselben** rekursiven `LVNode`-Baum
-- Alle Bereiche des Splitscreens und alle Fenster arbeiten auf derselben gefilterten Menge
-  und derselben Auswahl;
-  Zustand getrennt in `filterState` / `selectionState` / `viewState`
+- Zwei Seiten (0092): Startseite `frontend/index.html` + `frontend/src/landing/` (ohne React,
+  kein App-Import außer `@conocto/design/fonts`); Viewer `frontend/doc/index.html`. Demo nur
+  über `?demo=projekt` (`takeDemoFromUrl`).
+- Daten nur aus der lokalen Pipeline; keine Fixture-Daten im UI.
+- `matchPos` ist die einzige Filter-/Suchlogik; `searchKeyOf` (Kern) die einzige Suchregel.
+- Graph, Tabelle und Baum nutzen denselben `LVNode`-Baum.
+- Ein Filterzustand für alle Bereiche und Fenster; Zustand getrennt in `filterState` /
+  `selectionState` / `viewState`. Bereich, Reiter oder Fenster öffnen/schließen ändert nie
+  Filter, Suche oder Auswahl. Bereiche nur über `view.workspace` (0074).
 
-## Code-Style
-- Produktname **Conocto** (`docs/decisions/0069-conocto-look.md`). Kennungen heißen `conocto-…`
-  (Entscheidung 0091): `conocto-pos-v1`, `conocto-graph-v1`, `conocto-lv-export-v1`,
-  `conocto-rule-v1`, `conocto-arbeitsstand`, `@conocto/core`, IndexedDB `conocto`. Keine neuen
-  Kennungen mit `bubble`. Ausnahmen: GoatCounter-Code `bubble` (externes Konto), Repo-Name,
-  „Bubble" als Blase im Graphen (`BubbleGraph`).
-- Farben nur über CSS-Variablen aus dem Paket `@conocto/design` (`tokens.css`, Entscheidung
-  0076); `--accent*` ist der Ziegelrot-Akzent (Auswahl, Interaktion). Neue/geänderte Tokens
-  im Repo `conocto-design`, nicht in `frontend/src/index.css`. Hinweise amber, nie rot. Titel `font-display`
-  (Hanken Grotesk), sonst Schibsted Grotesk; kein `tabular-nums` (verbreitert `.` und `,`).
-- Strikte TS-Types überall – kein `any` ohne Kommentar
-- Kurze, gezielte Kommentare nur bei nicht-offensichtlichem WARUM (z. B. GAEB-Format-
-  Eigenheiten)
-- Zeilenlänge ≤ 100 Zeichen
-
-## Domänenwissen
-Norm-/DIN-/VOB-Nummer zitieren; bei Unsicherheit über normative Inhalte nachfragen
-statt erfinden. Details/Index: @docs/domain/
-
-## Commits (Conventional Commits)
-Vor jeder neuen Aufgabe prüfen, ob ein passender Branch aktiv ist. Falls `main` aktiv
-ist, darauf hinweisen – keinen Branch selbst erstellen.
-
-`feat|fix|refactor|test|chore|docs|perf(<scope>): <beschreibung>`
-Scopes: `gaeb · classify · tree · viewer · graph · relate · check · frontend`
-
-## Tests
-- Unit: `GaebParser`, Klassifizierer, `buildTree`, `matchPos` – mit Vitest
-- Parser-Tests laufen gegen echte GAEB-Fixtures unter `packages/core/tests/fixtures/`
-- Jede eigene Exception hat mindestens einen Test, der den Fehlerfall auslöst
+## Leistung
+- ~10k Positionen flüssig in Graph und jedem Fenster: erste Ansicht < 5 s, Filterwechsel
+  < 100 ms, Fenster öffnen < 200 ms. Mittel: flacher Index, Worker, Virtualisierung,
+  LOD + Culling.
+- Beziehungen einmal beim Laden im Worker, nie im Render; kein All-Paare-Vergleich, erst nach
+  Einheit vorgruppieren.
 
 ## Produkt-Scope
-**In Scope:** GAEB-Import im Browser (x83 **und** preisführende x84/x86) · mehrere LVs
-nebeneinander (`LvFilesProvider`, Kennung `LV1…` an `PositionSummary.lv`, Knoten `file` nur ab
-zwei LVs, Facette `lv`, Insel je LV, Verwaltung im Bereich „Dokument“, ein Menüpunkt
-„Dokument hinzufügen…“ für PDF und GAEB, `docs/decisions/0110`) ·
-Klassifizierung Kurz-/Langtext inkl. Textstellen · Hervorhebung der vier
-Wichtig-Kategorien (Geld/Menge · Risiko · Norm · Frist) · VOB-Check als Hinweis ·
-fachliche Filter · **Graph als Hauptscreen** auf einem Filterzustand
-(`docs/decisions/0034-graph-als-hauptscreen.md`): Graph, Tabelle, Positionskarte, Überblick
-(mit Import-Log), Prüfung und Dokument **nur** als nahtloser Splitscreen mit tausch-,
-stapel- und schließbaren Bereichen, ein- und ausblendbar über „Ansicht“, schmal Graph + ein
-Platz mit Reitern (`docs/decisions/0074-nur-noch-splitscreen.md`); Graph ↔ Tabelle am selben Platz
-nur über Aktion `switchGraphTable` (Taste T, Rechtsklick, `docs/decisions/0107`); Filterleiste und
-Vergleich (max. 4 Positionen, `docs/decisions/0037-vergleichsfenster.md`) darüber
-(`view.workspace`, `docs/decisions/0064-splitscreen.md`,
-`docs/decisions/0070-splitscreen-nahtlos-stapeln.md`; frei teilbar, letzte Anordnung
-gemerkt: `docs/decisions/0073-splitscreen-frei-teilen-und-merken.md`) · Beziehungen zwischen Positionen nur als
-ähnliche Positionen im Vergleich, keine wertende Prüfregel (`docs/decisions/0049`) · eigene Marker (Fortschritt Offen/In Bearbeitung/Fertig + Wichtig, `docs/decisions/0062`) + Kommentar-Verlauf je Position zur letzten
-Datei (`docs/decisions/0047-kommentare-und-markierungen.md`, `docs/decisions/0053`) ·
-Notizen an PDF-Stellen über Rechtsklick „Notiz…“ und @-Verweise auf Positionen in Notizen und Kommentaren, im Text als `@[Knoten-ID]`, gespeichert als `@[hash]`, nur Hinweis, keine Verknüpfung, Anzeige im Verlauf der Positionskarte (`lib/mentions.ts`, `docs/decisions/0111`) · eigene Textmarkierungen im Langtext (6 feste Farben mit eigenen Namen, `docs/decisions/0063`) ·
-gelernte Hervorhebungen im Langtext über Rechtsklick „Begriff lernen…“, je Begriff eine eigene
-Regel (0053, 0088) · Regeleditor in Logo-Menü → „Einstellungen“ (Overlay, für alle, kein
-Passwort, kein Bereich im Splitscreen, `components/settings/`, `docs/decisions/0109`;
-`conocto-rule-v1`, Auswerter nur in `packages/core/src/rules/`; Verbindungen
-zwischen Positionen nur als Vorschlag, gilt erst nach Bestätigung, `docs/decisions/0081`;
-ein Format für alle Regelarten, Wortlisten/Einheiten-Gruppen liefert die App, `docs/decisions/0085`;
-jede Regel an/aus, Grundstock nur abschalten oder kopieren, eigene Prüfhinweise,
-`docs/decisions/0089`; Wortlisten: Grundstock-Wörter nur abschalten, eigene Wörter/Listen,
-Regeln suchen nur über `useRules().context`, `docs/decisions/0090`) · lokaler Export/Druck über das
-Logo-Menü · Arbeitsstand als Datei sichern/laden (`lib/notesFile.ts`, `conocto-arbeitsstand`, 0061, 0101) · freiwillige Kurzumfrage
-zum Produkt (Owner-Wunsch, `docs/decisions/0071-kurzumfrage.md`). · Begleit-PDF im
-Fenster „Dokument“ lesen, anstreichen, Stellen oder das ganze Dokument (Seite 0, 0099) von Hand
-mit Positionen verknüpfen, keine
-Interpretation (`components/docs/`, `docs/decisions/0072-begleitdokument-pdf.md`; im
-Graphen als PDF-Karten am Rand mit Linien, nur Anzeige, `docs/decisions/0097`; Linien nur für
-hervorgehobenes PDF, gewählte Position, hervorgehobenen Abschnitt, Matrix-Achsen `dokument`/
-`dokumentart` mit Sammelwert „mehrere PDFs“, `0114`); Pläne im PDF messen (Länge, Fläche,
-Stück; Maßstab nur nach „Übernehmen“; Wert immer aus aktuellem Maßstab, nie gespeichert;
-Rechenansatz ⇒ VA-Menge je Position mit Herkunft; `lib/docs/planNotes.ts`,
-`packages/core/src/plan/`, `docs/decisions/0095`, Ausnahme vom Feature-Freeze); Vorschläge nur
-bei exakt passender OZ oder eindeutiger Menge+Einheit (gleiche Menge: eigene Kurztext-Wörter im
-Satzteil, bei Aufzählung/„je“ mehrere Positionen), Übernahme erst per Klick, „Nein“ gemerkt,
-kein inhaltliches Matching (`lib/docs/docSuggest.ts`, `docs/decisions/0080`; an/aus und Werte nur
-über Grundstock-Regeln `pdf-oz`/`pdf-menge`/`pdf-beton`/`pdf-text`, `lib/docs/suggestRules.ts`,
-0087; Betonsorte im PDF nur bei wörtlich gleicher Sorte, sonst eigene Kurztext-Wörter, 0106;
-OZ ohne „Pos.“/„OZ“ nur in LV-Schreibweise und nicht als Kapitelnummer, Kurztext nur wörtlich
-und eindeutig, Positionskarte markiert offenen Vorschlag nur als Anzeige, 0108);
-eine Suchleiste für LV und alle PDFs mit Treffer-Navigator, PDF-Treffer filtern das LV nie,
-Suchregel nur über `searchKeyOf` im Kern (`docs/decisions/0103`); ganzer Kopf auch in
-ausgelagerten Fenstern (`docs/decisions/0102`). Betonsortenliste im Überblick: Sorte aus
-wörtlichen Klassen, fehlende Angaben nur als Hinweis, Klick filtert über Facette `betonsorte`
-(`lib/beton/sorten.ts`, `docs/decisions/0104`); Angabe nur in verknüpfter Dokumentstelle ⇒
-„fehlt im LV“ (0106). Eigene Matrix-Ansicht und
-Ähnlichkeit sind entfernt (`docs/decisions/0031-drei-ansichten.md`); die Matrix lebt als
-Graph-Gliederung weiter (`docs/decisions/0035`, `docs/decisions/0059`); keine
-Befehlspalette (`docs/decisions/0038-keine-befehlspalette.md`).
+Jede Zeile: Funktion – bindende Regel – Entscheidung. Details in der Entscheidung.
 
-**Out of Scope** (ablehnen / vertrösten): Server jeglicher Art, Persistenz über die
-Session hinaus (außer 0046/0047/0053/0073), Auth/SSO (kein Passwort, auch nicht als
-Sichtschutz, 0109), **Versionsvergleich und x83+x84-Merge** (perspektivisch gewollt, jetzt
-draußen; mehrere LVs nebeneinander erlaubt, 0110; Begleit-PDF erlaubt, 0072), Aufgaben, Notizen außer
-Markierung/Kommentar je Position und Notiz an PDF-Stelle (0111), Vergabepakete, NU-Anfragen, Bieterfragen **verwalten**, Zuständigkeit/Zuweisung,
-Status-**Änderung**, EP-Kalkulation, Excel-/Manuell-Import, Multi-Tenant, GAEB-Export,
-LLM-Klassifizierung. Details → @docs/scope.md #out-of-scope
+**In Scope**
+- GAEB-Import x83 und preisführend x84/x86.
+- Mehrere LVs nebeneinander (`LvFilesProvider`) – Kennung `LV1…` an `PositionSummary.lv`,
+  Knoten `file` erst ab zwei LVs, Facette `lv`, ein Menüpunkt „Dokument hinzufügen…“ für PDF
+  und GAEB – 0110.
+- Klassifizierung Kurz-/Langtext mit Textstellen; vier Wichtig-Kategorien Geld/Menge · Risiko
+  · Norm · Frist; fachliche Filter.
+- VOB-Check als Hinweis – siehe „Prüfregeln“ unten.
+- Graph als Hauptscreen (0034); alle Bereiche nur als Splitscreen, tausch-, stapel-,
+  schließbar, über „Ansicht“ (0064, 0070, 0073, 0074). Graph ↔ Tabelle am selben Platz nur
+  über `switchGraphTable` (0107). Vergleich max. 4 Positionen (0037).
+- Beziehungen nur als ähnliche Positionen im Vergleich, keine wertende Regel – 0049.
+- Eigene Marker (Fortschritt Offen/In Bearbeitung/Fertig + Wichtig) und Kommentar-Verlauf je
+  Position – 0047, 0062.
+- Textmarkierungen im Langtext, 6 feste Farben mit eigenen Namen – 0063.
+- Begriff lernen per Rechtsklick = eine eigene Regel – 0053, 0088.
+- Einstellungen im Logo-Menü als Overlay (`components/settings/`), ohne Passwort, kein
+  Splitscreen-Bereich (0109).
+  Jede Regel an/aus; Grundstock nur abschalten oder kopieren (0089); Wortlisten: Grundstock-
+  Wörter nur abschalten, Suche nur über `useRules().context` (0090); ein Format für alle
+  Regelarten (0085); Verbindungen aus Regeln nur als Vorschlag bis zur Bestätigung (0081).
+- Export/Druck lokal über das Logo-Menü; Arbeitsstand sichern/laden (`lib/notesFile.ts`,
+  0061, 0101).
+- Begleit-PDF im Bereich „Dokument“ (`components/docs/`, 0072): lesen, anstreichen, Stellen
+  oder ganzes Dokument (Seite 0, 0099) von Hand verknüpfen, keine Interpretation.
+  - Notiz an PDF-Stelle; @-Verweise als `@[Knoten-ID]`, gespeichert `@[hash]`, nur Hinweis
+    (`lib/mentions.ts`, 0111).
+  - Im Graphen als PDF-Karten mit Linien, nur Anzeige (0097); Linien nur für hervorgehobenes
+    PDF, gewählte Position, hervorgehobenen Abschnitt, Matrix-Achsen `dokument`/`dokumentart`
+    mit Sammelwert „mehrere PDFs“ (0114).
+  - Pläne messen: Maßstab erst nach „Übernehmen“, Wert immer aus aktuellem Maßstab, nie
+    gespeichert; Rechenansatz ⇒ VA-Menge mit Herkunft (`lib/docs/planNotes.ts`,
+    `packages/core/src/plan/`, 0095).
+  - Vorschläge (`lib/docs/docSuggest.ts`, 0080): nur exakte OZ oder eindeutige Menge+Einheit,
+    Übernahme erst per Klick, „Nein“ gemerkt, kein inhaltliches Matching. An/aus und Werte nur
+    über Grundstock-Regeln `pdf-oz`/`pdf-menge`/`pdf-beton`/`pdf-text`
+    (`lib/docs/suggestRules.ts`, 0087). Betonsorte nur
+    wörtlich gleich (0106). OZ ohne „Pos.“/„OZ“ nur in LV-Schreibweise, nie Kapitelnummer;
+    Kurztext nur wörtlich und eindeutig (0108).
+- Eine Suchleiste für LV und alle PDFs; PDF-Treffer filtern das LV nie – 0103. Ganzer Kopf auch
+  in ausgelagerten Fenstern – 0102.
+- Betonsortenliste im Überblick: Sorte nur aus wörtlichen Klassen, fehlende Angaben nur als
+  Hinweis, Klick filtert über Facette `betonsorte` (`lib/beton/sorten.ts`, 0104, 0106).
+- Kurzumfrage nur als Owner-Wunsch (0071).
+- Entfernt, nicht wieder einführen: eigene Matrix-Ansicht und Ähnlichkeit (0031; Matrix lebt
+  als Graph-Gliederung, 0035, 0059), Befehlspalette (0038).
 
-## Kritische Constraints
-- **~10k Positionen** müssen flüssig laufen — im Graphen und in jedem Fenster. Messbare
-  Zielwerte: erste Ansicht < 5 s, Filterwechsel < 100 ms, Fenster öffnen < 200 ms
-  (siehe @docs/scope.md). Mittel: flacher Positions-Index statt Baum-Traversierung
-  je Render, Aggregation im Web Worker, Virtualisierung, LOD + Culling im Graphen.
-- **Ein Filterzustand für alle Bereiche.** Einen Bereich, Reiter oder ein Fenster öffnen/
-  schließen ändert nie Filter, Suche oder Auswahl. Bereiche nur über `view.workspace`;
-  kein zweiter Fenster-Modus (Entscheidung 0074).
-- **Beziehungen werden einmal beim Laden im Worker berechnet**, nie im Render. Kein
-  All-Paare-Vergleich — erst nach Einheit vorgruppieren.
-- **Prüfregeln sind Hinweise, keine Urteile.** Jede Regel nennt ihren Norm-Verweis, wo es
-  einen geprüften gibt (sonst keinen, nie erfinden; Entscheidung 0086), zeigt die Fundstelle
-  und ist einzeln abschaltbar. Fehlende Referenzdaten ⇒ Regel
-  inaktiv, kein Fehler. Formulierungen nie als Rechtsrat.
-- Status ist Default `OPEN` aus dem Import, nur Anzeige, nicht editierbar, kein Filter
-  (`docs/decisions/0051-kein-status-filter.md`)
-- Kein Request, der Fachdaten irgendwohin schickt – bei Unsicherheit nachfragen,
-  bevor ein Feature einen eigenen Server voraussetzt. Statische Fremd-Assets
-  (Fonts, CDN-Pakete) sind davon nicht betroffen. Lokale Downloads (CSV/Markdown/
-  Notiz-JSON als Blob) und Browser-Druck sind erlaubt – sie erzeugen keinen Request.
-- **Nutzungszählung nur über `frontend/src/lib/usage/count.ts`** (GoatCounter,
-  Entscheidung 0056): nur feste Namen aus `USAGE_EVENTS`. Verboten: Dateinamen, LV-Texte,
-  Suchtexte, Filterwerte, Positions-IDs, URL-Fragment mitsenden. Neues Ereignis ⇒ Namen
-  in `USAGE_EVENTS` ergänzen, Zuordnung in `usageEventOf` oder Aufruf von `countEvent`.
-  Hauptschalter `VITE_USAGE_COUNT=1` in `frontend/.env.production` nur nach Freigabe des
-  Owners setzen (Datenschutzerklärung muss GoatCounter nennen).
+**Out of Scope** (ablehnen/vertrösten; Details `docs/scope.md`)
+- Server jeder Art; Persistenz über die Session hinaus außer der IndexedDB-Liste oben.
+- Auth/SSO, auch kein Passwort als Sichtschutz (0109).
+- Versionsvergleich, x83+x84-Merge (perspektivisch gewollt, jetzt draußen).
+- Aufgaben, Vergabepakete, NU-Anfragen, Bieterfragen verwalten, Zuständigkeit/Zuweisung,
+  Status-Änderung, EP-Kalkulation, Excel-/Manuell-Import, Multi-Tenant, GAEB-Export,
+  LLM-Klassifizierung.
+- Notizen außer Kommentar je Position und Notiz an PDF-Stelle (0111).
 
-## Sprache & Zielgruppen
-Der Repo-Owner ist **kein Software-Experte**. Zwei Textsorten, zwei Stile – Begründung:
-@docs/decisions/0003-sprache-und-dokumentation.md
+## Prüfregeln
+- Hinweise, keine Urteile; nie als Rechtsrat formulieren.
+- Norm-Verweis nur, wo ein geprüfter existiert – nie erfinden (0086). Fundstelle zeigen,
+  einzeln abschaltbar. Fehlende Referenzdaten ⇒ Regel inaktiv, kein Fehler.
+- Status ist `OPEN` aus dem Import, nur Anzeige, nicht editierbar, kein Filter (0051).
+- Norm-/DIN-/VOB-Nummer zitieren; bei Unsicherheit über normative Inhalte nachfragen.
 
-**Texte für den Owner** (Chat-Antworten, Commit-Messages, PR-Beschreibungen, `README.md`,
-`docs/decisions/`, `docs/setup/`, Kommentare in `.github/workflows/`):
-- Einfache Sprache, kurze Sätze, Stichpunkte statt Absätze
-- Ergebnis zuerst, dann der Weg dorthin
-- Fachbegriff nur wenn nötig – dann beim ersten Vorkommen in einem Halbsatz erklären
-  (nicht erklären: GAEB, LV, Position, Los, iTwo – das ist sein Fachgebiet)
-- Manuelle Schritte des Owners explizit benennen, inkl. Folge, wenn er sie auslässt
-- Keine Statusfloskeln, keine Wiederholung der Aufgabenstellung
+## Nutzungszählung
+- Nur über `frontend/src/lib/usage/count.ts` (0056), nur feste Namen aus `USAGE_EVENTS`.
+  Neues Ereignis ⇒ in `USAGE_EVENTS` und `usageEventOf` oder `countEvent`.
+- Verboten mitzusenden: Dateinamen, LV-Texte, Suchtexte, Filterwerte, Positions-IDs,
+  URL-Fragment.
+- `VITE_USAGE_COUNT=1` in `frontend/.env.production` nur nach Freigabe des Owners.
 
-**Texte für die KI** (`.claude/CLAUDE.md`, `.claude/commands/`, `.claude/skills/`,
-Prompts in Workflows):
-- Regeln als Aufzählung, knapp und eindeutig, keine Erzählform
-- Exakte Pfade und Symbolnamen statt Umschreibungen
-- Verbote als Verbot formulieren + erlaubte Alternative nennen
-- Keine Höflichkeitsfloskeln, keine Redundanz
+## Code-Style
+- Produktname **Conocto** (0069); Kennungen `conocto-…` (0091): `conocto-pos-v1`,
+  `conocto-graph-v1`, `conocto-lv-export-v1`, `conocto-rule-v1`, `conocto-arbeitsstand`,
+  `@conocto/core`, IndexedDB `conocto`. Verboten: neue Kennungen mit `bubble`. Ausnahmen:
+  GoatCounter-Code `bubble`, Repo-Name, `BubbleGraph`.
+- Farben nur über CSS-Variablen aus `@conocto/design` (`tokens.css`, 0076); neue Tokens im Repo
+  `conocto-design`, nicht in `frontend/src/index.css`. `--accent*` = Ziegelrot für Auswahl und
+  Interaktion. Hinweise amber, nie rot.
+- Titel `font-display` (Hanken Grotesk), sonst Schibsted Grotesk. Verboten: `tabular-nums`.
+- Strikte Types; `any` nur mit Kommentar. Zeilenlänge ≤ 100.
+- Kommentare nur für nicht offensichtliches Warum. Verboten: Namen, Datum, Arbeitsstände,
+  „früher/nicht mehr“ – Historie gehört in Git und `docs/decisions/`.
+
+## Tests
+- Vitest für `GaebParser`, Klassifizierer, `buildTree`, `matchPos`.
+- Parser-Tests gegen echte Fixtures unter `packages/core/tests/fixtures/`.
+- Jede eigene Exception hat einen Test, der sie auslöst.
+
+## Commits und Branches
+- Vor jeder Aufgabe prüfen, ob ein passender Branch aktiv ist. Ist `main` aktiv: darauf
+  hinweisen, keinen Branch selbst anlegen.
+- `feat|fix|refactor|test|chore|docs|perf(<scope>): <beschreibung>`; Scopes `gaeb · classify ·
+  tree · viewer · graph · relate · check · frontend`.
 
 ## Dokumentation
-- Weichenstellungen gehören nach `docs/decisions/` – eine Datei je Entscheidung, Vorlage und
-  Kriterien in @docs/decisions/README.md
-- Neue Entscheidung nur als `docs/decisions/neu-<titel>.md` mit `# NEU – Titel`; Verweise im
-  selben PR als `neu-<titel>`. Verboten: Nummer selbst vergeben, Zeile in der Übersichtstabelle
-  ergänzen. Nummer + Zeile setzt `.github/workflows/entscheidungen.yml` nach dem Merge
-  (Entscheidung 0113). Verweis in ein anderes Repo mit Präfix: `CORE-0005`,
-  `BIM-0002`, `DS-0001`.
-- App-Änderung ⇒ Baustein `changes/<titel>.md` (`art: funktion|korrektur`, Format in
-  `changes/README.md`). Verboten: Version in `frontend/package.json`/`package-lock.json` oder
-  `CHANGELOG.md` von Hand ändern.
+- Weichenstellung ⇒ `docs/decisions/neu-<titel>.md` mit `# NEU – Titel`, Verweise im selben PR
+  als `neu-<titel>`. Verboten: Nummer vergeben, Zeile in der Übersicht ergänzen – macht
+  `.github/workflows/entscheidungen.yml` nach dem Merge (0113). Fremde Repos mit Präfix
+  (`CORE-0005`, `BIM-0002`, `DS-0001`).
+- Prüfen vor Abschluss: neue Abhängigkeit, neuer Workflow, geänderte Architekturregel,
+  verworfene Alternative ⇒ Eintrag. Kein Eintrag für Bugfix, Test, Umbenennung, Format.
+- Getroffene Entscheidungen nicht umschreiben: Status `ersetzt durch NNNN`, neue Datei.
+- App-Änderung ⇒ Baustein `changes/<titel>.md` (`art: funktion|korrektur`, `changes/README.md`).
+  Verboten: Version in `frontend/package.json`/`package-lock.json` oder `CHANGELOG.md` von Hand.
 - `.github/conocto/entscheidungen.py` ist in bubbleLV, bauonto, conocto-bim, conocto-design
-  gleich. Änderung ⇒ in allen vier Repos gleich übernehmen.
-- Vor Abschluss einer Aufgabe prüfen: neue Abhängigkeit, neuer Workflow, geänderte
-  Architekturregel oder verworfene Alternative? → Eintrag `neu-<titel>.md` anlegen
-- Getroffene Entscheidungen nicht umschreiben: Status auf `ersetzt durch NNNN` setzen,
-  neue Datei anlegen
-- Kein Eintrag für Bugfixes, Tests, Umbenennungen, Formatierung
-- Anleitungen für manuelle Schritte des Owners nach `docs/setup/`
+  gleich; Änderung in allen vier Repos.
+- Manuelle Schritte des Owners ⇒ `docs/setup/`.
 
-## Automatik im Repo (nicht ohne Rückfrage ändern)
-- `.github/workflows/ci.yml` – Lint, Format, Typecheck, Test, Build bei jedem PR
-- `.github/workflows/claude-review.yml` – Review-Agent, max. 3 automatische Läufe je PR
-- `.github/workflows/pr-preview.yml` – Preview-App je PR unter `pr-preview/pr-<nr>/`,
-  nur auf Kommentar `/preview`
-- `.github/workflows/deploy-pages.yml` – Release-Tag `v*` → Branch `gh-pages` (Wurzel) =
-  conocto.app (stabile Beta). `main` → Cloudflare Pages (Arbeitsversion, Einstellungen im
-  Cloudflare-Dashboard, Entscheidung 0112)
-- `.github/workflows/entscheidungen.yml` – nach Merge auf `main`: Nummer, Tabellenzeile,
-  Version, Changelog in einem Commit (Secret `BOT_SCHLUESSEL`, `docs/setup/bot-schluessel.md`).
-  Release-Tag `v*` erst nach diesem Bot-Commit setzen.
-- `gh-pages` wird ausschließlich von Workflows geschrieben – niemals von Hand committen
-- Der Review-Agent misst am Inhalt dieser Datei; Regeländerungen hier ändern den
-  Review-Maßstab
+## Automatik (nicht ohne Rückfrage ändern)
+- `ci.yml` – Lint, Format, Typecheck, Test, Build je PR.
+- `claude-review.yml` – Review-Agent, max. 3 Läufe je PR; misst an dieser Datei.
+- `pr-preview.yml` – Preview unter `pr-preview/pr-<nr>/`, nur auf Kommentar `/preview`.
+- `deploy-pages.yml` – Tag `v*` ⇒ `gh-pages` = conocto.app (Beta); `main` ⇒ Cloudflare Pages
+  (Arbeitsversion, 0112).
+- `entscheidungen.yml` – nach Merge: Nummer, Tabellenzeile, Version, Changelog in einem Commit
+  (Secret `BOT_SCHLUESSEL`, `docs/setup/bot-schluessel.md`). Tag `v*` erst nach diesem Commit.
+- `gh-pages` nur durch Workflows. Verboten: von Hand committen.
+
+## Sprache
+Owner ist kein Software-Experte (0003).
+- **Für den Owner** (Chat, Commits, PRs, `README.md`, `docs/decisions/`, `docs/setup/`,
+  Workflow-Kommentare): einfache Sprache, kurze Sätze, Stichpunkte, Ergebnis zuerst.
+  Fachbegriff beim ersten Vorkommen in einem Halbsatz erklären (nicht: GAEB, LV, Position,
+  Los, iTwo). Manuelle Schritte samt Folge beim Auslassen nennen. Keine Statusfloskeln.
+- **Für die KI** (`.claude/`, Workflow-Prompts): Regeln als Aufzählung, exakte Pfade und
+  Symbole, Verbot + erlaubte Alternative, keine Floskeln, keine Redundanz.
 
 ## Antwortformat
-Beginne jede neue Komponente mit einem kurzen Implementierungsplan (3–5 Punkte).
-Kein Code mit Platzhaltern (`# TODO: implement`).
+- Neue Komponente: zuerst Plan in 3–5 Punkten.
+- Kein Code mit Platzhaltern (`TODO: implement`).
