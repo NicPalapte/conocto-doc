@@ -160,7 +160,7 @@ Die alte Adresse `https://nicpalapte.github.io/bubbleLV/` leitet GitHub dorthin 
 | Was           | Wann                         | Wo                                     |
 | ------------- | ---------------------------- | -------------------------------------- |
 | Stabile Beta  | Release (Tag `v…`) oder manuell | `https://conocto.app/`              |
-| Arbeitsversion | Push auf `main` (Cloudflare Pages) | Adresse `*.pages.dev`, per Zero Trust geschützt |
+| Arbeitsversion | Push auf `main` (Cloudflare Pages) | `https://dev.conocto.app/`, per Zero Trust geschützt |
 | Preview je PR | Kommentar `/preview` im PR   | `https://conocto.app/pr-preview/pr-<nummer>/` |
 
 - [`deploy-pages.yml`](../.github/workflows/deploy-pages.yml) baut `frontend/` und schreibt
