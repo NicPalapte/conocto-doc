@@ -36,6 +36,11 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Zeigt den Link zur Beta auf der Repo-Seite rechts unter „Deployments“.
+    # GitHub legt das Environment beim ersten Lauf selbst an.
+    environment:
+      name: Beta
+      url: https://conocto.app/doc/
     steps:
       - uses: actions/checkout@v4
 

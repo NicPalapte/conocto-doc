@@ -1,0 +1,31 @@
+name: Link zur Arbeitsversion
+
+# Was macht dieser Workflow?
+# Trägt nach jedem Merge nach `main` den Link zur Arbeitsversion bei Cloudflare Pages ein.
+# Er erscheint auf der Repo-Seite rechts unter „Deployments“ als „Arbeitsversion“.
+#
+# Gebaut wird hier nichts: Cloudflare baut `main` selbst (Entscheidung 0112). Der Link steht
+# deshalb schon da, während Cloudflare noch baut (1–2 Minuten).
+# Die Adresse ist der feste Name des Cloudflare-Projekts, nicht die Adresse eines einzelnen
+# Builds (`<kennung>.conocto.pages.dev`), damit der Link immer den neuesten Stand zeigt.
+# Siehe docs/decisions/neu-deployment-links.md.
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: arbeitsversion-link
+  cancel-in-progress: true
+
+jobs:
+  link:
+    runs-on: ubuntu-latest
+    environment:
+      name: Arbeitsversion
+      url: https://conocto.pages.dev/
+    steps:
+      - name: Link eintragen
+        run: echo "Arbeitsversion https://conocto.pages.dev/ (gebaut von Cloudflare)"
