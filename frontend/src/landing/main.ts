@@ -10,6 +10,7 @@
 import '@conocto/design/fonts';
 import '@conocto/design/tokens.css';
 import './landing.css';
+import { pointLinksToViewer } from './viewerLink';
 
 const NS = 'http://www.w3.org/2000/svg';
 const SCENE = 6;
@@ -469,5 +470,6 @@ function startRotator(): void {
   }, 3000);
 }
 
+pointLinksToViewer(window.location.origin);
 startStage();
 startRotator();
