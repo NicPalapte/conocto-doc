@@ -12,6 +12,11 @@ dem Merge daraus Version und Abschnitt.
 
 ---
 
+## 0.67.1 — 20.11.2026 · Startseite führt direkt zu doc.conocto.app
+
+- Die Knöpfe „Mit eigenen Daten ausprobieren“ und „Demo starten“ auf conocto.app öffnen den
+  Viewer direkt unter doc.conocto.app, ohne Umweg über die Weiterleitung.
+
 ## 0.67.0 — 20.11.2026 · Eigene Adresse doc.conocto.app
 
 - Conocto liegt jetzt unter **doc.conocto.app**.
