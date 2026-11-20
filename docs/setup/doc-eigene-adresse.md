@@ -9,23 +9,16 @@ Dauer: etwa 30 Minuten. In Teil B ist conocto.app ein paar Minuten nicht erreich
 ## Teil A – vorbereiten (stört nichts)
 
 Erst, wenn der PR mit diesem Umbau in `main` ist.
+Danach zeigt dev.conocto.app unter `/doc/` weiter die Arbeitsversion.
 
-1. **Neues Cloudflare-Projekt für die Startseite**
-   - Cloudflare → **Workers & Pages** → **Create** → Reiter **Pages** → **Connect to Git**.
-   - Repo `bubbleLV` wählen. Projektname: `conocto-start`. Production branch: `main`.
-   - Build-Einstellungen wie beim Projekt für dev.conocto.app:
-     - Framework preset: **None**
-     - Root directory: `frontend`
-     - Build command: `npm ci && npm run build`
-     - Build output directory: `dist`
-   - **Environment variables** → zwei Einträge:
-     - `NODE_VERSION` = `22.18.0`
-     - `VITE_NUR_UMZUG` = `1` (sorgt dafür, dass dort nie der Viewer läuft, nur die
-       Weiterleitung)
-   - **Save and Deploy**.
-   - Kein Zero Trust für dieses Projekt: die Startseite ist öffentlich.
-   - Prüfen: `https://conocto-start.pages.dev/` zeigt die Startseite.
-   - Fehlt `VITE_NUR_UMZUG`, ist dort die Arbeitsversion ohne Schutz offen.
+1. **Zero Trust prüfen**
+   - Die Startseite kommt aus dem vorhandenen Cloudflare-Projekt, das schon dev.conocto.app
+     baut. Es bekommt nur eine zweite Adresse. Ein neues Projekt ist nicht nötig.
+   - Cloudflare → **Zero Trust** → **Access** → **Applications**: der Schutz darf nur für
+     `dev.conocto.app` gelten, nicht für `conocto.app` oder `*.conocto.app`. Sonst müssten
+     Besucher der Startseite sich anmelden.
+   - Unter conocto.app startet der Viewer nie, dort leitet `/doc/` nur weiter. Das erkennt die
+     App an der Adresse, dafür ist keine Einstellung nötig.
 2. **DNS-Eintrag für doc**
    - Cloudflare → `conocto.app` → **DNS** → **Records** → **Add record**.
    - Type `CNAME`, Name `doc`, Target `nicpalapte.github.io`.
@@ -37,10 +30,10 @@ Erst, wenn der PR mit diesem Umbau in `main` ist.
 3. **Release** wie gewohnt (Tag `v…` nach dem Bot-Commit).
    - Der Release-Lauf schreibt die neue Domain nach `gh-pages`. Ab dann liefert GitHub
      doc.conocto.app aus, und conocto.app ist weg, bis Schritt 4 fertig ist.
-4. **conocto.app auf das neue Cloudflare-Projekt legen**
+4. **conocto.app auf das Cloudflare-Projekt legen**
    - Cloudflare → `conocto.app` → **DNS** → **Records**: die vier **A**-Einträge für
      `conocto.app` (185.199.108–111.153) und den **CNAME `www`** löschen.
-   - Cloudflare → **Workers & Pages** → `conocto-start` → **Custom domains** →
+   - Cloudflare → **Workers & Pages** → das Projekt von dev.conocto.app → **Custom domains** →
      **Set up a custom domain** → `conocto.app` → bestätigen.
    - Dasselbe noch einmal mit `www.conocto.app`.
    - Nach ein paar Minuten zeigt https://conocto.app/ wieder die Startseite.
@@ -63,5 +56,5 @@ Erst, wenn der PR mit diesem Umbau in `main` ist.
 
 - Daten sind nie weg: die alte Adresse löscht erst, wenn die neue alles übernommen hat.
 - Zurück zum alten Stand: in GitHub → Settings → Pages wieder `conocto.app` eintragen,
-  in Cloudflare die Custom domains bei `conocto-start` entfernen und die A-Einträge wieder
+  in Cloudflare die Custom domains `conocto.app` und `www.conocto.app` entfernen und die A-Einträge wieder
   anlegen (Werte in [ci-und-agenten.md](ci-und-agenten.md), Schritt 2a).

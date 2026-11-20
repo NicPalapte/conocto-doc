@@ -21,9 +21,10 @@
 - **doc.conocto.app:** GitHub Pages wie bisher, nur bei Release. Der Viewer liegt in der
   Wurzel; `deploy-pages.yml` kopiert dafür `doc/index.html` nach `index.html`. `/doc/` bleibt
   zusätzlich erreichbar. PR-Vorschauen unter `doc.conocto.app/pr-preview/pr-<nr>/`.
-- **conocto.app:** eigenes Cloudflare-Pages-Projekt, baut `main`, öffentlich (ohne Zero Trust).
-  Umgebungsvariable `VITE_NUR_UMZUG=1`: der Viewer startet dort nie, er leitet nur weiter.
-  Damit ist die Arbeitsversion auch unter der `*.pages.dev`-Adresse dieses Projekts nicht offen.
+- **conocto.app:** zweite Adresse des vorhandenen Cloudflare-Projekts von dev.conocto.app
+  (baut `main`). Zero Trust schützt nur dev.conocto.app, die Startseite ist öffentlich. Unter
+  conocto.app startet der Viewer nie, er leitet nur weiter (Erkennung an der Adresse).
+  `VITE_NUR_UMZUG=1` erzwingt dasselbe für ein Projekt, das nur weiterleiten soll.
 - **Umzug der Daten, nur im Browser:** `conocto.app/doc/` lädt unsichtbar
   `doc.conocto.app/uebernahme.html` und gibt ihr per `postMessage` alle gespeicherten Einträge.
   - Die neue Seite nimmt nur Nachrichten von `https://conocto.app` und `https://www.conocto.app`.
@@ -45,6 +46,6 @@
 
 ## Was der Owner tun muss
 
-- Einmalig, Anleitung in `docs/setup/doc-eigene-adresse.md`: Cloudflare-Projekt für die
-  Startseite, DNS-Eintrag `doc`, Domain in den GitHub-Einstellungen, dann ein Release.
+- Einmalig, Anleitung in `docs/setup/doc-eigene-adresse.md`: Zero Trust prüfen, DNS-Eintrag
+  `doc`, Release, dann conocto.app als Custom domain im Cloudflare-Projekt.
 - Ohne diese Schritte bleibt alles wie bisher unter conocto.app.
