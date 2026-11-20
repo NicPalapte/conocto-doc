@@ -6,9 +6,9 @@ name: Link zur Arbeitsversion
 #
 # Gebaut wird hier nichts: Cloudflare baut `main` selbst (Entscheidung 0112). Der Link steht
 # deshalb schon da, während Cloudflare noch baut (1–2 Minuten).
-# Die Adresse ist der feste Name des Cloudflare-Projekts, nicht die Adresse eines einzelnen
+# Die Adresse ist die eigene Domain des Cloudflare-Projekts, nicht die Adresse eines einzelnen
 # Builds (`<kennung>.conocto.pages.dev`), damit der Link immer den neuesten Stand zeigt.
-# Siehe docs/decisions/neu-deployment-links.md.
+# Geschützt per Cloudflare Zero Trust Access. Siehe docs/decisions/0120-deployment-links.md.
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: Arbeitsversion
-      url: https://conocto.pages.dev/
+      url: https://dev.conocto.app/
     steps:
       - name: Link eintragen
-        run: echo "Arbeitsversion https://conocto.pages.dev/ (gebaut von Cloudflare)"
+        run: echo "Arbeitsversion https://dev.conocto.app/ (gebaut von Cloudflare)"
