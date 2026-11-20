@@ -101,18 +101,22 @@ function handOver(entries: readonly StoredEntry[]): Promise<ImportResult | null>
  * die neue Adresse alles übernommen hat; sonst bleibt es für den nächsten Versuch.
  */
 export async function moveAndRedirect(target: string): Promise<void> {
-  const entries = await readAllStored();
-  if (entries !== null && entries.length > 0) {
-    const result = await handOver(entries);
-    // Löschen kann hängen, wenn ein anderer Tab die Datenbank offen hält.
-    if (result === 'uebernommen') {
-      await Promise.race([
-        deleteAllStored(),
-        new Promise((resolve) => window.setTimeout(resolve, 2_000)),
-      ]);
+  try {
+    const entries = await readAllStored();
+    if (entries !== null && entries.length > 0) {
+      const result = await handOver(entries);
+      // Löschen kann hängen, wenn ein anderer Tab die Datenbank offen hält.
+      if (result === 'uebernommen') {
+        await Promise.race([
+          deleteAllStored(),
+          new Promise((resolve) => window.setTimeout(resolve, 2_000)),
+        ]);
+      }
     }
+  } finally {
+    // Auch nach einem Fehler weiter: die Daten bleiben dann für den nächsten Versuch hier.
+    window.location.replace(target);
   }
-  window.location.replace(target);
 }
 
 /** Neue Adresse, Seite `uebernahme.html`: Einträge annehmen und das Ergebnis melden. */
