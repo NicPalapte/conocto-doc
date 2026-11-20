@@ -671,3 +671,103 @@ export async function saveWordLists(entries: readonly WordListEntry[]): Promise<
     db.close();
   }
 }
+
+/** Schlüssel des Projekts; sie ziehen nur gemeinsam um (Entscheidung neu-doc-eigene-adresse). */
+const PROJECT_KEYS: readonly string[] = [KEY_META, KEY_BYTES, KEY_NOTES, KEY_MORE];
+/** Schlüssel ohne Bezug zur Datei; jeder zieht einzeln um. */
+const LOOSE_KEYS: readonly string[] = [
+  KEY_PAINT_NAMES,
+  KEY_SURVEY,
+  KEY_TOUR,
+  KEY_WORKSPACE,
+  KEY_RULES,
+  KEY_GRUNDSTOCK_OFF,
+  KEY_WORD_LISTS,
+];
+
+/** Ein gespeicherter Wert samt Schlüssel, unverändert wie in der IndexedDB. */
+export interface StoredEntry {
+  readonly key: string;
+  readonly value: unknown;
+}
+
+/** Ergebnis der Übernahme: `teilweise`, wenn schon Vorhandenes stehen blieb. */
+export type ImportResult = 'uebernommen' | 'teilweise' | 'fehler';
+
+/**
+ * Alles Gespeicherte dieses Browsers für den Umzug auf eine neue Adresse. Leer, wenn nichts
+ * gespeichert ist; `null`, wenn das Lesen scheitert. Öffnet die Datenbank nur, wenn es sie
+ * gibt, damit ein bloßer Besuch der alten Adresse keine leere anlegt.
+ */
+export async function readAllStored(): Promise<StoredEntry[] | null> {
+  if (typeof indexedDB === 'undefined') return [];
+  try {
+    if (typeof indexedDB.databases === 'function') {
+      const names = (await indexedDB.databases()).map((info) => info.name);
+      if (!names.includes(DB_NAME)) return [];
+    }
+  } catch {
+    // Ohne Liste der Datenbanken einfach öffnen.
+  }
+  const db = await openDb();
+  if (db === null) return null;
+  try {
+    const store = db.transaction(STORE, 'readonly').objectStore(STORE);
+    const keys = [...PROJECT_KEYS, ...LOOSE_KEYS];
+    const values = await Promise.all(keys.map((key) => requestResult(store.get(key))));
+    return keys
+      .map((key, index) => ({ key, value: values[index] as unknown }))
+      .filter((entry) => entry.value !== undefined);
+  } catch {
+    return null;
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * Übernimmt Einträge von der alten Adresse. Überschreibt nie: ein vorhandenes Projekt bleibt
+ * samt Notizen stehen, ebenso jeder vorhandene Schlüssel ohne Dateibezug. Unbekannte Schlüssel
+ * fallen weg; die Werte prüfen die Lesefunktionen oben wie jeden gespeicherten Wert.
+ */
+export async function importAllStored(entries: readonly StoredEntry[]): Promise<ImportResult> {
+  const db = await openDb();
+  if (db === null) return 'fehler';
+  try {
+    const tx = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    const known = entries.filter(
+      (entry) => PROJECT_KEYS.includes(entry.key) || LOOSE_KEYS.includes(entry.key),
+    );
+    const present = await Promise.all(
+      [KEY_META, ...LOOSE_KEYS].map(async (key) => {
+        const value: unknown = await requestResult(store.get(key));
+        return [key, value !== undefined] as const;
+      }),
+    );
+    const has = new Map(present);
+    let skipped = false;
+    for (const entry of known) {
+      const taken = PROJECT_KEYS.includes(entry.key) ? has.get(KEY_META) : has.get(entry.key);
+      if (taken === true) skipped = true;
+      else store.put(entry.value, entry.key);
+    }
+    await transactionDone(tx);
+    return skipped ? 'teilweise' : 'uebernommen';
+  } catch {
+    return 'fehler';
+  } finally {
+    db.close();
+  }
+}
+
+/** Löscht alles Gespeicherte dieses Browsers an dieser Adresse, nach gelungenem Umzug. */
+export async function deleteAllStored(): Promise<boolean> {
+  if (typeof indexedDB === 'undefined') return true;
+  try {
+    await requestResult(indexedDB.deleteDatabase(DB_NAME));
+    return true;
+  } catch {
+    return false;
+  }
+}

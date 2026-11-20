@@ -39,13 +39,13 @@ Modell ist GAEB-spezifisch. Details: [`docs/architecture/data-model.md`](archite
 
 ### Stack
 
-| Schicht      | Technologie                                                          |
-| ------------ | -------------------------------------------------------------------- |
-| App          | Vite · React · TypeScript · Tailwind (`frontend/`)                   |
-| GAEB-Parsing | eigener TS-Parser, gekapselt hinter `GaebParser`                     |
-| Persistenz   | keine für Fachdaten; nur letzte Datei + Notizen in IndexedDB (0046)  |
-| Testing      | Vitest                                                               |
-| Linting      | ESLint + Prettier                                                    |
+| Schicht      | Technologie                                                         |
+| ------------ | ------------------------------------------------------------------- |
+| App          | Vite · React · TypeScript · Tailwind (`frontend/`)                  |
+| GAEB-Parsing | eigener TS-Parser, gekapselt hinter `GaebParser`                    |
+| Persistenz   | keine für Fachdaten; nur letzte Datei + Notizen in IndexedDB (0046) |
+| Testing      | Vitest                                                              |
+| Linting      | ESLint + Prettier                                                   |
 
 Es gibt kein Backend, keine Datenbank, keinen Login. Eine geladene Datei wird per
 `File.arrayBuffer()` im Browser gelesen, geparst, klassifiziert und in React-State
@@ -109,7 +109,7 @@ bubble/
 │   ├── ci.yml                    # Lint, Format, Typecheck, Test, Build bei jedem PR
 │   ├── claude-review.yml         # KI-Review je PR, gedeckelt auf 3 automatische Läufe
 │   ├── pr-preview.yml            # Preview-App je PR
-│   ├── deploy-pages.yml          # Release v… → gh-pages → conocto.app
+│   ├── deploy-pages.yml          # Release v… → gh-pages → doc.conocto.app
 │   └── entscheidungen.yml        # nach Merge: Nummer, Version, Changelog (Bot)
 ├── .claude/
 │   ├── CLAUDE.md                 # Coding-Agent-Instruktionen
@@ -153,15 +153,19 @@ Details → [docs/scope.md](scope.md) · Umsetzungsplan →
 
 ## Deployment und Previews (GitHub Pages)
 
-Die App ist ein statisches Bundle und wird über GitHub Pages unter eigener Domain ausgeliefert:
-**https://conocto.app/** (DNS bei Cloudflare, [Entscheidung 0082](decisions/0082-eigene-domain.md)).
-Die alte Adresse `https://nicpalapte.github.io/bubbleLV/` leitet GitHub dorthin weiter.
+Die App ist ein statisches Bundle. Der Viewer liegt über GitHub Pages unter
+**https://doc.conocto.app/**, die Startseite **https://conocto.app/** in einem eigenen
+Cloudflare-Pages-Projekt aus `main` (DNS bei Cloudflare,
+[Entscheidung 0082](decisions/0082-eigene-domain.md),
+[neu-doc-eigene-adresse](decisions/neu-doc-eigene-adresse.md)).
+`conocto.app/doc/` leitet auf doc.conocto.app weiter und nimmt die gespeicherten Daten mit.
 
-| Was           | Wann                         | Wo                                     |
-| ------------- | ---------------------------- | -------------------------------------- |
-| Stabile Beta  | Release (Tag `v…`) oder manuell | `https://conocto.app/`              |
+| Was            | Wann                               | Wo                                                   |
+| -------------- | ---------------------------------- | ---------------------------------------------------- |
+| Stabile Beta   | Release (Tag `v…`) oder manuell    | `https://doc.conocto.app/`                           |
+| Startseite     | Push auf `main` (Cloudflare Pages) | `https://conocto.app/`                               |
 | Arbeitsversion | Push auf `main` (Cloudflare Pages) | `https://dev.conocto.app/`, per Zero Trust geschützt |
-| Preview je PR | Kommentar `/preview` im PR   | `https://conocto.app/pr-preview/pr-<nummer>/` |
+| Preview je PR  | Kommentar `/preview` im PR         | `https://doc.conocto.app/pr-preview/pr-<nummer>/`    |
 
 - [`deploy-pages.yml`](../.github/workflows/deploy-pages.yml) baut `frontend/` und schreibt
   das Ergebnis in den Branch `gh-pages` (Wurzelverzeichnis). Manuell auslösbar über

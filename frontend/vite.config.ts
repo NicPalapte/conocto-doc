@@ -26,11 +26,14 @@ export default defineConfig({
   plugins: [react(), thirdPartyLicenses(fileURLToPath(new URL('.', import.meta.url)))],
   // Zwei Seiten (Entscheidung 0092): Startseite in der Wurzel (index.html, ohne React),
   // der Viewer unter doc/ (doc/index.html). Beide teilen sich den Ordner assets/.
+  // uebernahme.html nimmt beim Umzug auf doc.conocto.app die Daten der alten Adresse an
+  // (Entscheidung neu-doc-eigene-adresse).
   build: {
     rolldownOptions: {
       input: {
         start: fileURLToPath(new URL('./index.html', import.meta.url)),
         doc: fileURLToPath(new URL('./doc/index.html', import.meta.url)),
+        uebernahme: fileURLToPath(new URL('./uebernahme.html', import.meta.url)),
       },
     },
   },
