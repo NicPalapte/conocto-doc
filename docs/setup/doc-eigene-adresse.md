@@ -2,7 +2,7 @@
 
 Ergebnis danach: Der Viewer läuft unter **https://doc.conocto.app/**. Die Startseite bleibt auf
 **https://conocto.app/**. Alte Links auf `conocto.app/doc/` leiten weiter und nehmen die
-gespeicherten Daten mit. Hintergrund: [neu-doc-eigene-adresse](../decisions/neu-doc-eigene-adresse.md).
+gespeicherten Daten mit. Hintergrund: [0121](../decisions/0121-doc-eigene-adresse.md).
 
 Dauer: etwa 30 Minuten. In Teil B ist conocto.app ein paar Minuten nicht erreichbar.
 

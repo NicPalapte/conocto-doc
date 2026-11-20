@@ -1,5 +1,5 @@
 // Umzug des Viewers von conocto.app/doc/ auf doc.conocto.app
-// (Entscheidung neu-doc-eigene-adresse).
+// (Entscheidung 0121).
 //
 // Eine neue Adresse ist für den Browser ein neuer Speicher. Deshalb reicht die alte Adresse
 // das Gespeicherte vor der Weiterleitung selbst weiter: sie lädt die Seite `uebernahme.html`

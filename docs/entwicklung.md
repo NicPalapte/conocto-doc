@@ -157,7 +157,7 @@ Die App ist ein statisches Bundle. Der Viewer liegt über GitHub Pages unter
 **https://doc.conocto.app/**, die Startseite **https://conocto.app/** aus dem
 Cloudflare-Pages-Projekt der Arbeitsversion (`main`) (DNS bei Cloudflare,
 [Entscheidung 0082](decisions/0082-eigene-domain.md),
-[neu-doc-eigene-adresse](decisions/neu-doc-eigene-adresse.md)).
+[0121](decisions/0121-doc-eigene-adresse.md)).
 `conocto.app/doc/` leitet auf doc.conocto.app weiter und nimmt die gespeicherten Daten mit.
 
 | Was            | Wann                               | Wo                                                   |

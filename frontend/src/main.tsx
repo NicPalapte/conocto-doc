@@ -12,7 +12,7 @@ import { countPageview } from './lib/usage/count';
 import { moveAndRedirect, moveTarget } from './lib/persist/umzug';
 
 // Unter der alten Adresse startet der Viewer nicht, er zieht um (Entscheidung
-// neu-doc-eigene-adresse).
+// 0121).
 const target = moveTarget(window.location, import.meta.env.VITE_NUR_UMZUG === '1');
 if (target !== null) {
   document.getElementById('root')!.textContent = 'Conocto zieht um nach doc.conocto.app …';

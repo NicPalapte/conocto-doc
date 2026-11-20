@@ -672,7 +672,7 @@ export async function saveWordLists(entries: readonly WordListEntry[]): Promise<
   }
 }
 
-/** Schlüssel des Projekts; sie ziehen nur gemeinsam um (Entscheidung neu-doc-eigene-adresse). */
+/** Schlüssel des Projekts; sie ziehen nur gemeinsam um (Entscheidung 0121). */
 const PROJECT_KEYS: readonly string[] = [KEY_META, KEY_BYTES, KEY_NOTES, KEY_MORE];
 /** Schlüssel ohne Bezug zur Datei; jeder zieht einzeln um. */
 const LOOSE_KEYS: readonly string[] = [

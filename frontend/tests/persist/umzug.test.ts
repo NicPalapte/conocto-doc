@@ -1,4 +1,4 @@
-// Umzug auf doc.conocto.app (Entscheidung neu-doc-eigene-adresse).
+// Umzug auf doc.conocto.app (Entscheidung 0121).
 
 import 'fake-indexeddb/auto';
 import { IDBFactory } from 'fake-indexeddb';

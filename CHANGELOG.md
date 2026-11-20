@@ -12,6 +12,13 @@ dem Merge daraus Version und Abschnitt.
 
 ---
 
+## 0.67.0 — 20.11.2026 · Eigene Adresse doc.conocto.app
+
+- Conocto liegt jetzt unter **doc.conocto.app**.
+- Alte Links auf conocto.app/doc/ leiten weiter, auch Links auf eine Position.
+- Gespeicherte Daten ziehen beim ersten Aufruf mit: letztes Projekt, Notizen, Marker, eigene
+  Regeln, Wortlisten und Farbnamen.
+
 ## 0.66.3 — 19.11.2026 · Kürzere Tooltips
 
 - **Tooltips** im Logo-Menü, in den Einstellungen, in der Tabelle und im Dokument sagen nur

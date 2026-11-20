@@ -27,7 +27,7 @@ export default defineConfig({
   // Zwei Seiten (Entscheidung 0092): Startseite in der Wurzel (index.html, ohne React),
   // der Viewer unter doc/ (doc/index.html). Beide teilen sich den Ordner assets/.
   // uebernahme.html nimmt beim Umzug auf doc.conocto.app die Daten der alten Adresse an
-  // (Entscheidung neu-doc-eigene-adresse).
+  // (Entscheidung 0121).
   build: {
     rolldownOptions: {
       input: {
