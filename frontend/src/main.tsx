@@ -9,11 +9,19 @@ import '@conocto/design/styles.css';
 import './index.css';
 import App from './App.tsx';
 import { countPageview } from './lib/usage/count';
+import { moveAndRedirect, moveTarget } from './lib/persist/umzug';
 
-countPageview();
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+// Unter der alten Adresse startet der Viewer nicht, er zieht um (Entscheidung
+// neu-doc-eigene-adresse).
+const target = moveTarget(window.location, import.meta.env.VITE_NUR_UMZUG === '1');
+if (target !== null) {
+  document.getElementById('root')!.textContent = 'Conocto zieht um nach doc.conocto.app …';
+  void moveAndRedirect(target);
+} else {
+  countPageview();
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}

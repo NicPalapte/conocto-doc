@@ -3,7 +3,8 @@ name: Deploy to GitHub Pages
 # Was macht dieser Workflow?
 # Baut die App und schreibt das fertige Bundle in den Branch `gh-pages`.
 # GitHub Pages liefert diesen Branch unter der eigenen Domain aus:
-#   https://conocto.app/  (Datei frontend/public/CNAME, Entscheidung 0082)
+#   https://doc.conocto.app/  (Datei frontend/public/CNAME, Entscheidung „Viewer auf eigener Adresse doc.conocto.app“)
+# Die Startseite conocto.app liegt bei Cloudflare Pages, nicht hier.
 #
 # Warum über einen Branch und nicht mehr über das Pages-Artefakt?
 # Nur so können die PR-Previews (pr-preview.yml) im selben Pages-Auftritt unter
@@ -16,7 +17,7 @@ name: Deploy to GitHub Pages
 
 # Nur bei einem neuen Release (Tag v…), nicht bei jedem Merge nach main.
 # main geht als Arbeitsversion zu Cloudflare Pages (eigenes Projekt, kein Workflow hier).
-# conocto.app bleibt so die stabile Beta. Siehe docs/decisions/0112-beta-nur-bei-release.md.
+# doc.conocto.app bleibt so die stabile Beta. Siehe docs/decisions/0112-beta-nur-bei-release.md.
 on:
   push:
     tags: ['v*']
@@ -40,7 +41,7 @@ jobs:
     # GitHub legt das Environment beim ersten Lauf selbst an.
     environment:
       name: Beta
-      url: https://conocto.app/doc/
+      url: https://doc.conocto.app/
     steps:
       - uses: actions/checkout@v4
 
@@ -63,6 +64,13 @@ jobs:
       - name: App bauen
         working-directory: frontend
         run: npm run build
+
+      # Unter doc.conocto.app ist der Viewer die Wurzel, die Startseite liegt auf conocto.app.
+      # doc/ bleibt zusätzlich da, damit alte Pfade (/doc/#lv=…) weiter gehen. Die Seite
+      # verweist nur auf /assets/…, deshalb passt sie unverändert an beide Stellen.
+      - name: Viewer in die Wurzel
+        working-directory: frontend
+        run: cp dist/doc/index.html dist/index.html
 
       # Der Veröffentlichungsschritt spiegelt frontend/dist nach gh-pages und löscht
       # dort alles, was im Ordner fehlt. Damit die Previews noch offener Pull Requests

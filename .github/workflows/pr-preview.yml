@@ -2,7 +2,7 @@ name: PR-Preview
 
 # Was macht dieser Workflow?
 # Ein Pull Request bekommt auf Zuruf eine eigene, klickbare Version der App unter
-#   https://conocto.app/pr-preview/pr-<nummer>/
+#   https://doc.conocto.app/pr-preview/pr-<nummer>/
 # Der Link wird automatisch als Kommentar in den PR geschrieben.
 #
 # Aufgeräumt wird hier NICHT. Die Preview eines geschlossenen PRs entfernt der
@@ -12,7 +12,7 @@ name: PR-Preview
 # Seiten-Build abbrach. Siehe docs/decisions/0007-previews-im-deploy-aufraeumen.md.
 #
 # Die Previews liegen im Branch `gh-pages` im Ordner `pr-preview/`; der Live-Stand von
-# conocto.app (letztes Release) liegt im Wurzelverzeichnis desselben Branches (siehe deploy-pages.yml).
+# doc.conocto.app (letztes Release) liegt im Wurzelverzeichnis desselben Branches (siehe deploy-pages.yml).
 #
 # Gebaut wird nur auf Zuruf: Kommentar `/preview` im Pull Request. Nicht bei jedem Push –
 # die meisten Zwischenstände braucht niemand zum Anklicken, und der Build dauert länger
@@ -116,7 +116,7 @@ jobs:
       - name: Link in den PR schreiben
         env:
           GH_TOKEN: ${{ github.token }}
-          URL: https://conocto.app/pr-preview/pr-${{ env.PR }}/
+          URL: https://doc.conocto.app/pr-preview/pr-${{ env.PR }}/
         run: |
           set -euo pipefail
           marke='<!-- pr-preview-link -->'
