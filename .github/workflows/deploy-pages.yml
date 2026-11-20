@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 # Was macht dieser Workflow?
 # Baut die App und schreibt das fertige Bundle in den Branch `gh-pages`.
 # GitHub Pages liefert diesen Branch unter der eigenen Domain aus:
-#   https://doc.conocto.app/  (Datei frontend/public/CNAME, Entscheidung neu-doc-eigene-adresse)
+#   https://doc.conocto.app/  (Datei frontend/public/CNAME, Entscheidung „Viewer auf eigener Adresse doc.conocto.app“)
 # Die Startseite conocto.app liegt bei Cloudflare Pages, nicht hier.
 #
 # Warum über einen Branch und nicht mehr über das Pages-Artefakt?
