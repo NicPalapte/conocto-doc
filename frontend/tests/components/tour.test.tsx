@@ -207,6 +207,17 @@ describe('Tour', () => {
     expect(screen.getByRole('dialog', { name: tourTitle(DOCS + 1) })).toBeTruthy();
   });
 
+  it('Escape schließt die Karte „Unterlagen dazu?“', async () => {
+    await setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
+    await nextUntil(DOCS);
+    await frames();
+    expect(screen.getByRole('dialog', { name: 'Unterlagen dazu?' })).toBeTruthy();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await frames();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('ist das PDF der Karte nicht lesbar, kommt beim nächsten PDF die Karte „PDFs sind da“', async () => {
     await setup();
     fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
