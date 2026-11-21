@@ -11,10 +11,12 @@ import { useViewer, useViewerDispatch } from '../../src/state/viewer';
 import type { LVDraft } from '@core';
 
 // Geladene PDFs je Test; ohne Provider gäbe es keine (wie in einer App ohne Dokumente).
-const pdfs = vi.hoisted(() => ({ count: 0 }));
-const openFiles = vi.hoisted(() => async (): Promise<void> => {
-  pdfs.count = 1;
+const pdfs = vi.hoisted(() => ({ count: 0, unreadable: false }));
+const openFiles = vi.hoisted(() => async (): Promise<number> => {
   await Promise.resolve();
+  if (pdfs.unreadable) return 0;
+  pdfs.count = 1;
+  return 1;
 });
 vi.mock('../../src/components/docs/DocumentsProvider', () => ({
   useOptionalDocuments: () => ({
@@ -113,6 +115,7 @@ function Harness({ without = [] }: { without?: readonly string[] }) {
 
 async function setup(without?: readonly string[], withPdfs = 0): Promise<void> {
   pdfs.count = withPdfs;
+  pdfs.unreadable = false;
   render(
     <ViewerProvider>
       <Harness without={without} />
@@ -202,6 +205,22 @@ describe('Tour', () => {
     await frames();
     await frames();
     expect(screen.getByRole('dialog', { name: tourTitle(DOCS + 1) })).toBeTruthy();
+  });
+
+  it('ist das PDF der Karte nicht lesbar, kommt beim nächsten PDF die Karte „PDFs sind da“', async () => {
+    await setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Tour starten' }));
+    await nextUntil(DOCS);
+    await frames();
+    pdfs.unreadable = true;
+    const file = new File(['kaputt'], 'bb.pdf', { type: 'application/pdf' });
+    fireEvent.change(screen.getByLabelText('PDF hinzufügen…'), { target: { files: [file] } });
+    await frames();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    pdfs.count = 1;
+    fireEvent.click(screen.getByText('eigene wählen'));
+    await frames();
+    expect(screen.getByRole('dialog', { name: 'PDFs sind da' })).toBeTruthy();
   });
 
   it('aus dem Logo-Menü läuft sie über alle Kapitel bis zum Ende', async () => {

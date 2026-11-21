@@ -428,7 +428,10 @@ export function Tour() {
               onFiles={(files) => {
                 setAskPdf(false);
                 setWantDocsTour(true);
-                void docsRef.current?.openFiles(files);
+                // Nicht lesbar: kein Sprung beim nächsten PDF, die Karte „PDFs sind da“ gilt.
+                void docsRef.current?.openFiles(files).then((read) => {
+                  if (read === 0) setWantDocsTour(false);
+                });
               }}
               className={`${BIG_BUTTON} border-accent-fill bg-accent-fill font-semibold text-white hover:bg-accent-fill-hover`}
             />

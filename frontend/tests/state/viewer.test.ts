@@ -418,6 +418,7 @@ describe('viewerReducer · Tour', () => {
     const next = viewerReducer(limited, { type: 'tour', step: 1 });
     expect(next.view.tour.until).toBe(5);
     const ended = viewerReducer(next, { type: 'tour', step: null });
+    expect(ended.view.tour.until).toBeNull();
     expect(viewerReducer(ended, { type: 'tour', step: 0 }).view.tour.until).toBeNull();
   });
 
