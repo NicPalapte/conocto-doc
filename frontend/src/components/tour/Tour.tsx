@@ -14,6 +14,7 @@ import { useViewer, useViewerDispatch } from '../../state/viewer';
 import { readTourSeen, saveTourSeen, type TourSeen } from '../../lib/persist/lastLv';
 import { useOptionalDocuments, type DocumentsApi } from '../docs/DocumentsProvider';
 import { PdfInput } from '../docs/PdfInput';
+import { scrollToFirst } from './scrollTarget';
 import {
   CARD_TARGET,
   chapterStart,
@@ -62,19 +63,6 @@ function findVisible(selector: string): Element | null {
     if (isVisible(element.getBoundingClientRect())) return element;
   }
   return null;
-}
-
-/**
- * Ziel, das nur aus dem Bild gescrollt ist (Karte weiter unten im Überblick), ins Bild holen.
- * Ohne Fläche (zugeklappt, nicht gezeichnet) bleibt es weg, dann überspringt die Tour.
- */
-function scrollToFirst(selector: string): boolean {
-  const element = document.querySelector(selector);
-  if (element === null) return false;
-  const rect = element.getBoundingClientRect();
-  if (rect.width === 0 && rect.height === 0) return false;
-  element.scrollIntoView({ block: 'nearest' });
-  return true;
 }
 
 function isVisible(rect: DOMRect): boolean {
@@ -291,7 +279,8 @@ export function Tour() {
     // neu gesucht wird erst, wenn es weg oder aus dem Bild ist.
     let element: Element | null = null;
     let searchedAt = -Infinity;
-    let scrolled = false;
+    // Punkte im Graphen nicht scrollen: das verschöbe die Zeichenfläche.
+    let scrolled = TOUR_STEPS[index]?.round === true;
     const tick = (): void => {
       const now = Date.now();
       let rect = element?.isConnected === true ? element.getBoundingClientRect() : null;
