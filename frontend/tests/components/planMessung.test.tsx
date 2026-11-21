@@ -72,6 +72,8 @@ async function ladeAppMitPlan(): Promise<void> {
   });
   // Die Seitenart wird im Hintergrund geschätzt; danach erscheint der Seitenfilter.
   await screen.findByRole('radiogroup', { name: 'Seiten' }, { timeout: 5000 });
+  // Das erste PDF bringt die Karte für die PDF-Kapitel der Tour.
+  await schliesseTourAngebot();
 }
 
 const seiten = (): number[] =>

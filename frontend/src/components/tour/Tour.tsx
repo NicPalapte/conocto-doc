@@ -3,14 +3,26 @@
 // fängt keine Klicks ab — wer mag, klickt das markierte Element selbst; manche
 // Schritte warten genau darauf (`done` in tourSteps.ts).
 //
-// Nach dem ersten LV bietet Conocto die Tour einmal als Willkommenskarte in der Mitte an,
-// der Graph dahinter abgedunkelt (0116). „Später", Escape oder ein
-// Tipp daneben schließen sie. Gesehen bleibt gemerkt (Entscheidung 0098).
+// Die Tour hat drei Kapitel; jedes lässt sich überspringen (Entscheidung neu-tour-in-kapiteln).
+// Nach dem ersten LV bietet Conocto sie einmal als Willkommenskarte in der Mitte an,
+// der Graph dahinter abgedunkelt (0116). Ohne PDF läuft dann nur Kapitel 1; Kapitel 2
+// und 3 bietet eine zweite Karte an, sobald das erste PDF da ist. „Später", Escape oder ein
+// Tipp daneben schließen die Karten. Gesehen bleibt je Teil gemerkt (Entscheidung 0098).
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useViewer, useViewerDispatch } from '../../state/viewer';
-import { readTourSeen, saveTourSeen } from '../../lib/persist/lastLv';
-import { CARD_TARGET, POINT_TARGET, TOUR_STEPS, type TourPrepare } from './tourSteps';
+import { readTourSeen, saveTourSeen, type TourSeen } from '../../lib/persist/lastLv';
+import { useOptionalDocuments, type DocumentsApi } from '../docs/DocumentsProvider';
+import { PdfInput } from '../docs/PdfInput';
+import {
+  CARD_TARGET,
+  chapterStart,
+  nextChapterStart,
+  POINT_TARGET,
+  TOUR_CHAPTERS,
+  TOUR_STEPS,
+  type TourPrepare,
+} from './tourSteps';
 
 /**
  * Abstand zwischen zwei Suchen nach dem Ziel. Der Punkt-Schritt sucht über alle
@@ -50,6 +62,19 @@ function findVisible(selector: string): Element | null {
     if (isVisible(element.getBoundingClientRect())) return element;
   }
   return null;
+}
+
+/**
+ * Ziel, das nur aus dem Bild gescrollt ist (Karte weiter unten im Überblick), ins Bild holen.
+ * Ohne Fläche (zugeklappt, nicht gezeichnet) bleibt es weg, dann überspringt die Tour.
+ */
+function scrollToFirst(selector: string): boolean {
+  const element = document.querySelector(selector);
+  if (element === null) return false;
+  const rect = element.getBoundingClientRect();
+  if (rect.width === 0 && rect.height === 0) return false;
+  element.scrollIntoView({ block: 'nearest' });
+  return true;
 }
 
 function isVisible(rect: DOMRect): boolean {
@@ -111,13 +136,36 @@ function cardPlace(spot: Box, width: number, height: number): CardPlace {
   return { left: clampX(left), top };
 }
 
-function runPrepare(prepare: TourPrepare, dispatch: ReturnType<typeof useViewerDispatch>): void {
+/** Ein PDF zeigen: das aktive, wenn es passt, sonst das erste passende. */
+function showDoc(docs: DocumentsApi | null, plan: boolean): void {
+  if (docs === null) return;
+  const fits = (id: string): boolean => (docs.kindOf(id).kind === 'plan') === plan;
+  const active = docs.active;
+  const doc = active !== null && fits(active.id) ? active : docs.docs.find((d) => fits(d.id));
+  if (doc === undefined) return;
+  docs.activate(doc.id);
+}
+
+function runPrepare(
+  prepare: TourPrepare,
+  dispatch: ReturnType<typeof useViewerDispatch>,
+  docs: DocumentsApi | null,
+): void {
   switch (prepare) {
     case 'closeFilter':
       dispatch({ type: 'filterBar', open: false });
       return;
-    case 'openSettings':
-      dispatch({ type: 'graphSettings', open: true });
+    case 'showOverview':
+      dispatch({ type: 'showPane', pane: 'overview' });
+      return;
+    case 'showDocOverview':
+      dispatch({ type: 'showPane', pane: 'doc' });
+      docs?.setOverview(true);
+      return;
+    case 'showDocText':
+    case 'showDocPlan':
+      dispatch({ type: 'showPane', pane: 'doc' });
+      showDoc(docs, prepare === 'showDocPlan');
       return;
     case 'closeSelection':
       dispatch({ type: 'closeSelection' });
@@ -140,12 +188,27 @@ export function Tour() {
   const state = useViewer();
   const dispatch = useViewerDispatch();
   const { lv } = state;
-  const { step: index, seen } = state.view.tour;
+  const { step: index, seen, until } = state.view.tour;
   const step = index === null ? undefined : TOUR_STEPS[index];
+  const docs = useOptionalDocuments();
+  const docsRef = useRef(docs);
+  useEffect(() => {
+    docsRef.current = docs;
+  });
+  const hasDocs = (docs?.docs.length ?? 0) > 0;
+
+  /** Ende des laufenden Durchgangs: ohne PDF endet das Angebot nach dem LV-Kapitel. */
+  const limit = until ?? TOUR_STEPS.length;
+  /** Kapitel 2 und 3 in dieser Sitzung angeboten, gestartet oder abgelehnt. */
+  const [docsAnswered, setDocsAnswered] = useState(false);
+  /** Kapitel 1 ohne PDF ist durch: Karte „PDF hinzufügen“ zeigen. */
+  const [askPdf, setAskPdf] = useState(false);
+  /** Über diese Karte ein PDF gewählt: sobald es da ist, gleich weiter mit Kapitel 2. */
+  const [wantDocsTour, setWantDocsTour] = useState(false);
 
   // Gesehen oder abgelehnt bleibt über das Neuladen gemerkt (Issue #191, Entscheidung 0098).
   // `null`, solange der Merker noch gelesen wird — bis dahin kein Angebot, sonst blitzt es auf.
-  const [stored, setStored] = useState<boolean | null>(null);
+  const [stored, setStored] = useState<TourSeen | null>(null);
   useEffect(() => {
     let active = true;
     void readTourSeen().then((value) => {
@@ -157,10 +220,17 @@ export function Tour() {
   }, []);
   const savedSeen = useRef(false);
   useEffect(() => {
-    if (!seen || stored === true || savedSeen.current) return;
+    if (!seen || stored === null || stored.lv || savedSeen.current) return;
     savedSeen.current = true;
-    void saveTourSeen();
+    void saveTourSeen('lv');
   }, [seen, stored]);
+  const savedDocs = useRef(false);
+  useEffect(() => {
+    if (!(docsAnswered || wantDocsTour) || stored === null || stored.unterlagen) return;
+    if (savedDocs.current) return;
+    savedDocs.current = true;
+    void saveTourSeen('unterlagen');
+  }, [docsAnswered, wantDocsTour, stored]);
 
   const [box, setBox] = useState<Box | null>(null);
   /** Richtung der letzten Bewegung — ein fehlendes Ziel wird in dieselbe Richtung übersprungen. */
@@ -191,16 +261,22 @@ export function Tour() {
   const go = useCallback(
     (next: number | null): void => {
       if (next !== null && index !== null) direction.current = next < index ? -1 : 1;
-      const valid = next !== null && next >= 0 && next < TOUR_STEPS.length;
+      const valid = next !== null && next >= 0 && next < limit;
+      // Ende eines Durchgangs ohne PDF: nach Unterlagen fragen (nicht bei „Beenden“).
+      if (next !== null && next >= limit && until !== null && !hasDocs) setAskPdf(true);
+      // Wer die PDF-Kapitel erreicht, bekommt sie nicht noch einmal angeboten.
+      if (valid && TOUR_STEPS[next]?.chapter !== 'lv') setDocsAnswered(true);
       dispatch({ type: 'tour', step: valid ? next : null });
     },
-    [dispatch, index],
+    [dispatch, index, limit, until, hasDocs],
   );
 
   // Beim Betreten eines Schritts den Bildschirm vorbereiten.
   useEffect(() => {
     if (index === null) return;
-    for (const prepare of TOUR_STEPS[index]?.prepare ?? []) runPrepare(prepare, dispatch);
+    for (const prepare of TOUR_STEPS[index]?.prepare ?? []) {
+      runPrepare(prepare, dispatch, docsRef.current);
+    }
   }, [index, dispatch]);
 
   // Ziel verfolgen: Bereiche, Zoom und Fenster verschieben es laufend.
@@ -216,6 +292,7 @@ export function Tour() {
     // neu gesucht wird erst, wenn es weg oder aus dem Bild ist.
     let element: Element | null = null;
     let searchedAt = -Infinity;
+    let scrolled = false;
     const tick = (): void => {
       const now = Date.now();
       let rect = element?.isConnected === true ? element.getBoundingClientRect() : null;
@@ -223,6 +300,7 @@ export function Tour() {
       if (rect === null && now - searchedAt >= SEARCH_MS) {
         searchedAt = now;
         element = findVisible(selector);
+        if (element === null && !scrolled) scrolled = scrollToFirst(selector);
         rect = element?.getBoundingClientRect() ?? null;
       }
       if (rect === null) {
@@ -261,9 +339,45 @@ export function Tour() {
 
   // Escape beendet die Tour — in der Capture-Phase, damit es nicht zusätzlich
   // die Auswahl zurücknimmt (ViewerPage).
-  const offering = lv !== null && index === null && !seen && stored === false;
+  const offerLv = lv !== null && index === null && !seen && stored !== null && !stored.lv;
+  const offerDocs =
+    lv !== null &&
+    index === null &&
+    !offerLv &&
+    hasDocs &&
+    !docsAnswered &&
+    !wantDocsTour &&
+    stored !== null &&
+    !stored.unterlagen;
+  const offering = offerLv || offerDocs;
+  // PDF über die Karte am Ende von Kapitel 1 gewählt: Kapitel 2 ohne zweite Nachfrage.
+  const docsTourStarted = useRef(false);
   useEffect(() => {
-    if (index === null && !offering) return;
+    if (!wantDocsTour || !hasDocs || index !== null || docsTourStarted.current) return;
+    docsTourStarted.current = true;
+    // „Dokument hinzufügen“ ist gerade erledigt: gleich zur Übersicht der Unterlagen.
+    dispatch({ type: 'tour', step: chapterStart('unterlagen') + 1 });
+  }, [wantDocsTour, hasDocs, index, dispatch]);
+  const decline = useCallback((): void => {
+    // Mit PDFs gilt die erste Karte für alle Kapitel; sonst käme gleich die zweite.
+    if (offerDocs || hasDocs) setDocsAnswered(true);
+    go(null);
+  }, [offerDocs, hasDocs, go]);
+  const start = (): void => {
+    if (offerDocs) {
+      setDocsAnswered(true);
+      go(chapterStart('unterlagen'));
+      return;
+    }
+    if (hasDocs) {
+      setDocsAnswered(true);
+      go(0);
+    } else {
+      dispatch({ type: 'tour', step: 0, until: chapterStart('unterlagen') });
+    }
+  };
+  useEffect(() => {
+    if (index === null && !offering && !askPdf) return;
     const onKey = (event: KeyboardEvent): void => {
       if (event.key !== 'Escape') return;
       // Ein anderes offenes Fenster oder die Suche bekommt Escape zuerst.
@@ -271,22 +385,74 @@ export function Tour() {
       if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
       if (document.querySelector('[role="dialog"]:not([data-tour-card])') !== null) return;
       event.stopImmediatePropagation();
-      go(null);
+      if (index !== null) go(null);
+      else if (askPdf) setAskPdf(false);
+      else decline();
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [index, offering, go]);
+  }, [index, offering, askPdf, go, decline]);
 
   if (lv === null) return null;
 
+  if (index === null && askPdf) {
+    return (
+      <>
+        <div
+          aria-hidden="true"
+          onClick={() => setAskPdf(false)}
+          className="fixed inset-0 z-[50] bg-[var(--spot)]"
+        />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tour-pdf-titel"
+          data-tour-card=""
+          className="ov-glass fixed left-1/2 top-1/2 z-[51] flex -translate-x-1/2 -translate-y-1/2 flex-col gap-[12px] p-[20px]"
+          style={{ width: OFFER_WIDTH, maxWidth: `calc(100vw - ${2 * EDGE}px)` }}
+        >
+          <b id="tour-pdf-titel" className="font-display text-[18px] font-semibold text-ink">
+            Unterlagen dazu?
+          </b>
+          <p className="m-0 font-sans text-[14px] leading-[1.45] text-dim">
+            Lade ein PDF, zum Beispiel die Baubeschreibung oder einen Plan. Dann zeigt dir die Tour,
+            wie du Stellen verknüpfst, misst und abarbeitest.
+          </p>
+          <div className="mt-[4px] flex flex-wrap items-center gap-[8px]">
+            <PdfInput
+              label="PDF hinzufügen…"
+              onFiles={(files) => {
+                setAskPdf(false);
+                setWantDocsTour(true);
+                void docsRef.current?.openFiles(files);
+              }}
+              className={`${BIG_BUTTON} border-accent-fill bg-accent-fill font-semibold text-white hover:bg-accent-fill-hover`}
+            />
+            <button
+              type="button"
+              onClick={() => setAskPdf(false)}
+              title="Die Tour meldet sich wieder, sobald du ein PDF lädst"
+              className={`${BIG_BUTTON} border-line bg-surface text-ink hover:bg-sunken`}
+            >
+              Später
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   if (index === null) {
     if (!offering) return null;
+    const from = offerDocs ? chapterStart('unterlagen') : 0;
+    const to = offerDocs || hasDocs ? TOUR_STEPS.length : chapterStart('unterlagen');
+    const minutes = Math.max(1, Math.round((to - from) / 5));
     return (
       <>
         {/* Abdunkeln wie bei der Tour; ein Tipp daneben heißt „Später". */}
         <div
           aria-hidden="true"
-          onClick={() => go(null)}
+          onClick={decline}
           className="fixed inset-0 z-[50] bg-[var(--spot)]"
         />
         <div
@@ -298,26 +464,30 @@ export function Tour() {
           style={{ width: OFFER_WIDTH, maxWidth: `calc(100vw - ${2 * EDGE}px)` }}
         >
           <b id="tour-angebot-titel" className="font-display text-[18px] font-semibold text-ink">
-            Willkommen bei Conocto
+            {offerDocs ? 'PDFs sind da' : 'Willkommen bei Conocto'}
           </b>
           <p className="m-0 font-sans text-[14px] leading-[1.45] text-dim">
-            In einer Minute die wichtigsten Griffe: Punkte, Positionskarte, Suche, Filter.
+            {offerDocs
+              ? 'Zwei kurze Kapitel: Unterlagen verknüpfen, kalkulieren und abarbeiten.'
+              : hasDocs
+                ? 'Drei kurze Kapitel: LV lesen, Unterlagen verknüpfen, kalkulieren. Jedes lässt sich überspringen.'
+                : 'Die wichtigsten Griffe im LV. Die Kapitel zu PDFs folgen, sobald du ein PDF lädst.'}
           </p>
           <span className="font-mono text-[11.5px] text-mute">
-            {TOUR_STEPS.length} Schritte · ca. 1 Minute
+            {to - from} Schritte · ca. {minutes} {minutes === 1 ? 'Minute' : 'Minuten'}
           </span>
           <div className="mt-[4px] flex flex-wrap items-center gap-[8px]">
             <button
               type="button"
               autoFocus
-              onClick={() => go(0)}
+              onClick={start}
               className={`${BIG_BUTTON} border-accent-fill bg-accent-fill font-semibold text-white hover:bg-accent-fill-hover`}
             >
               Tour starten
             </button>
             <button
               type="button"
-              onClick={() => go(null)}
+              onClick={decline}
               title="Die Tour bleibt im Logo-Menü unter „Hilfe & Feedback“"
               className={`${BIG_BUTTON} border-line bg-surface text-ink hover:bg-sunken`}
             >
@@ -334,7 +504,14 @@ export function Tour() {
   const spot = spotBox(box, step.round === true);
   const place = cardPlace(spot, window.innerWidth, window.innerHeight);
   const waiting = step.done !== undefined && !fulfilled;
-  const last = index === TOUR_STEPS.length - 1;
+  const last = index >= limit - 1;
+  const chapterNo = TOUR_CHAPTERS.findIndex((chapter) => chapter.id === step.chapter);
+  const inChapter = TOUR_STEPS.map((entry, at) => ({ entry, at })).filter(
+    ({ entry, at }) => entry.chapter === step.chapter && at < limit,
+  );
+  const chapterAt = inChapter.findIndex(({ at }) => at === index);
+  const skipTo = nextChapterStart(index);
+  const canSkip = skipTo !== null && skipTo < limit;
 
   return (
     <>
@@ -363,10 +540,24 @@ export function Tour() {
           ...place,
         }}
       >
+        <div className="flex items-center justify-between gap-[8px]">
+          <span className="min-w-0 truncate font-mono text-[11px] text-mute">
+            Kapitel {chapterNo + 1} · {TOUR_CHAPTERS[chapterNo]?.title}
+          </span>
+          {canSkip && (
+            <button
+              type="button"
+              onClick={() => go(skipTo)}
+              className="shrink-0 cursor-pointer rounded-[var(--r-pill)] border border-dashed border-line2 bg-transparent px-[8px] py-[2px] font-mono text-[11px] text-dim hover:bg-sunken hover:text-ink"
+            >
+              Kapitel überspringen ›
+            </button>
+          )}
+        </div>
         <div className="flex items-baseline justify-between gap-[8px]">
           <b className="font-display text-[14px] font-semibold text-ink">{step.title}</b>
           <span className="font-mono text-[11px] text-mute">
-            {index + 1} / {TOUR_STEPS.length}
+            {chapterAt + 1} / {inChapter.length}
           </span>
         </div>
         <p className="m-0 font-sans text-[13.5px] leading-[1.45] text-dim">{step.text}</p>
@@ -393,7 +584,7 @@ export function Tour() {
           )}
           <button
             type="button"
-            onClick={() => go(last ? null : index + 1)}
+            onClick={() => go(index + 1)}
             className={
               waiting
                 ? `${BUTTON} border-line bg-surface text-dim hover:bg-sunken`

@@ -77,6 +77,8 @@ async function ladeAppMitPdf(seiten: readonly string[] = SEITEN): Promise<void> 
   // Lokal ~1 s. Frühere Ausreißer über 15 s waren kein Zeitproblem: Ein PDF direkt nach
   // dem LV-Laden wurde verworfen (behoben in `DocumentsProvider`, Layout-Effekt).
   await screen.findByRole('group', { name: 'Durchgehen' }, { timeout: PDF_MS });
+  // Das erste PDF bringt die Karte für die PDF-Kapitel der Tour.
+  await schliesseTourAngebot();
 }
 
 /** Öffnet das Menü des Blätterers mit den Schaltern je Art (Issue #191, Runde 3). */

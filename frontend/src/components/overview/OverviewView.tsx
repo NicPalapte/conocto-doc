@@ -40,14 +40,20 @@ const CRUMB =
 function Card({
   title,
   note,
+  tour,
   children,
 }: {
   title: string;
   note?: string;
+  /** Ziel der geführten Tour (`components/tour/tourSteps.ts`). */
+  tour?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="min-w-0 flex-1 basis-[300px] rounded-[var(--r-md)] border border-line bg-surface px-[14px] py-[12px]">
+    <section
+      data-tour={tour}
+      className="min-w-0 flex-1 basis-[300px] rounded-[var(--r-md)] border border-line bg-surface px-[14px] py-[12px]"
+    >
       <BlockLabel right={note}>{title}</BlockLabel>
       {children}
     </section>
@@ -211,12 +217,12 @@ export function OverviewView() {
               <Card title="Pareto · 80 % der Summe">
                 <ParetoCard pareto={model.pareto} />
               </Card>
-              <Card title="Mengen je Einheit" note="absteigend">
+              <Card title="Mengen je Einheit" note="absteigend" tour="units">
                 <UnitTotals units={model.units} active={activeUnits} onPick={pickUnit} />
               </Card>
             </>
           ) : (
-            <Card title="Größte Mengen" note="je Einheit">
+            <Card title="Größte Mengen" note="je Einheit" tour="units">
               <LargestQuantities
                 units={model.largest}
                 selectedId={selection.positionId}
@@ -227,7 +233,7 @@ export function OverviewView() {
         </div>
 
         {mitnehmen.hatBeton && (
-          <Card title="Betonsorten">
+          <Card title="Betonsorten" tour="beton">
             <BetonSortenCard
               liste={betonSorten}
               active={activeSorten}

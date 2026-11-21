@@ -1,5 +1,6 @@
 // Die Willkommenskarte der Tour (0116) liegt beim ersten Laden modal
-// über dem Graphen und fängt Tasten ab. Tests, die nicht die Tour prüfen, schließen sie.
+// über dem Graphen und fängt Tasten ab, ebenso die Karte nach dem ersten PDF. Tests, die nicht
+// die Tour prüfen, schließen sie.
 
 import { fireEvent, screen } from '@testing-library/react';
 

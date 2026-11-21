@@ -105,6 +105,7 @@ export function StepNav({
     <span
       ref={anchorRef}
       role="group"
+      data-tour="suggest"
       aria-label="Durchgehen"
       className="flex shrink-0 items-center gap-[2px]"
     >

@@ -402,15 +402,23 @@ describe('viewerReducer · Vergleich (Entscheidung 0037)', () => {
 describe('viewerReducer · Tour', () => {
   it('Start und Ende zählen als gesehen; ein neues LV beendet die Tour, bietet sie aber nicht neu an', () => {
     const started = viewerReducer(loadedState(), { type: 'tour', step: 0 });
-    expect(started.view.tour).toEqual({ step: 0, seen: true });
+    expect(started.view.tour).toEqual({ step: 0, seen: true, until: null });
     const reloaded = loadedState(started);
-    expect(reloaded.view.tour).toEqual({ step: null, seen: true });
+    expect(reloaded.view.tour).toEqual({ step: null, seen: true, until: null });
   });
 
   it('Ablehnen ohne Start merkt sich das Angebot', () => {
     const declined = viewerReducer(loadedState(), { type: 'tour', step: null });
-    expect(declined.view.tour).toEqual({ step: null, seen: true });
+    expect(declined.view.tour).toEqual({ step: null, seen: true, until: null });
     expect(viewerReducer(declined, { type: 'tour', step: null })).toBe(declined);
+  });
+
+  it('ein Start mit Ende behält es beim Weiterblättern, ein neuer Start ohne Ende nicht', () => {
+    const limited = viewerReducer(loadedState(), { type: 'tour', step: 0, until: 5 });
+    const next = viewerReducer(limited, { type: 'tour', step: 1 });
+    expect(next.view.tour.until).toBe(5);
+    const ended = viewerReducer(next, { type: 'tour', step: null });
+    expect(viewerReducer(ended, { type: 'tour', step: 0 }).view.tour.until).toBeNull();
   });
 
   it('lässt Filter und Auswahl in Ruhe', () => {

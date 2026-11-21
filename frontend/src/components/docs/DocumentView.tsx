@@ -772,6 +772,7 @@ function OpenDocument({ doc, ownWindow }: { doc: OpenedPdf; ownWindow: boolean }
         <div
           ref={attachScroller}
           onContextMenu={onContextMenu}
+          data-tour="doc-page"
           {...plan.scrollerProps}
           className="relative min-h-0 flex-1 overflow-auto bg-grid2"
           style={{ padding: GUTTER }}
