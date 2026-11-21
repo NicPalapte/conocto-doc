@@ -226,11 +226,10 @@ export function Tour() {
   }, [seen, stored]);
   const savedDocs = useRef(false);
   useEffect(() => {
-    if (!(docsAnswered || wantDocsTour) || stored === null || stored.unterlagen) return;
-    if (savedDocs.current) return;
+    if (!docsAnswered || stored === null || stored.unterlagen || savedDocs.current) return;
     savedDocs.current = true;
     void saveTourSeen('unterlagen');
-  }, [docsAnswered, wantDocsTour, stored]);
+  }, [docsAnswered, stored]);
 
   const [box, setBox] = useState<Box | null>(null);
   /** Richtung der letzten Bewegung — ein fehlendes Ziel wird in dieselbe Richtung übersprungen. */
@@ -355,6 +354,11 @@ export function Tour() {
   useEffect(() => {
     if (!wantDocsTour || !hasDocs || index !== null || docsTourStarted.current) return;
     docsTourStarted.current = true;
+    // Erst jetzt gemerkt: scheitert das PDF, kommt die Karte „PDFs sind da“ später noch.
+    if (!savedDocs.current) {
+      savedDocs.current = true;
+      void saveTourSeen('unterlagen');
+    }
     // „Dokument hinzufügen“ ist gerade erledigt: gleich zur Übersicht der Unterlagen.
     dispatch({ type: 'tour', step: chapterStart('unterlagen') + 1 });
   }, [wantDocsTour, hasDocs, index, dispatch]);
