@@ -192,6 +192,8 @@ export interface TourState {
   step: number | null;
   /** Einmal je Sitzung: nach dem ersten LV bietet Conocto die Tour an, danach nicht mehr. */
   seen: boolean;
+  /** Schritt, vor dem der laufende Durchgang endet; `null` = alle Kapitel. */
+  until: number | null;
 }
 
 export interface ViewState {
@@ -224,7 +226,7 @@ export type ViewAction =
   | { type: 'filterBar'; open: boolean }
   | { type: 'graphSettings'; open: boolean }
   /** Tour auf einen Schritt setzen; `null` beendet sie. Start oder Ende zählen als gesehen. */
-  | { type: 'tour'; step: number | null }
+  | { type: 'tour'; step: number | null; until?: number }
   | { type: 'compareWindow'; open: boolean }
   | { type: 'compareWindowPos'; pos: CardPos }
   | { type: 'compareWindowSize'; size: PanelSize }
@@ -293,7 +295,7 @@ export const INITIAL_VIEW_STATE: ViewState = {
   mode: 'graph',
   filterBar: false,
   graphSettings: false,
-  tour: { step: null, seen: false },
+  tour: { step: null, seen: false, until: null },
   compareWindow: { open: false, pos: DEFAULT_COMPARE_POS, size: DEFAULT_COMPARE_SIZE },
   // Einstieg ist das LV in seiner Gliederung; „Matrix" ist der zweite Blick.
   graph: {
@@ -331,7 +333,7 @@ export function viewStateForNewLv(state: ViewState): ViewState {
       pos: state.compareWindow.pos,
       size: state.compareWindow.size,
     },
-    tour: { step: null, seen: state.tour.seen },
+    tour: { step: null, seen: state.tour.seen, until: null },
     workspace: state.workspace,
   };
 }
@@ -359,11 +361,21 @@ export function viewReducer(state: ViewState, action: ViewAction): ViewState {
     case 'graphSettings':
       return state.graphSettings === action.open ? state : { ...state, graphSettings: action.open };
     case 'tour':
-      return state.tour.step === action.step && state.tour.seen
+      if (action.step === null) {
+        return state.tour.step === null && state.tour.seen
+          ? state
+          : { ...state, tour: { step: null, seen: true, until: null } };
+      }
+      return state.tour.step === action.step && state.tour.seen && action.until === undefined
         ? state
         : {
             ...state,
-            tour: { step: action.step === null ? null : Math.max(0, action.step), seen: true },
+            tour: {
+              step: Math.max(0, action.step),
+              seen: true,
+              // Weiterblättern behält das Ende des Durchgangs; ein neuer Start setzt es.
+              until: action.until ?? (state.tour.step === null ? null : state.tour.until),
+            },
           };
     case 'compareWindow':
       return state.compareWindow.open === action.open

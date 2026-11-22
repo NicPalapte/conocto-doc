@@ -93,6 +93,7 @@ export function DocCards({
     <div
       {...graphOverlayProps}
       aria-label="Begleit-PDFs"
+      data-tour="doc-cards"
       onScroll={onScroll}
       className="pointer-events-auto absolute right-[16px] top-[16px] z-[10] flex max-h-[calc(100%-100px)] flex-col gap-[8px] overflow-y-auto"
       style={{ width }}

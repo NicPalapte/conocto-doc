@@ -63,7 +63,8 @@ export interface DocumentsApi {
   readonly jump: DocJump | null;
   open: (file: File) => Promise<void>;
   /** Öffnet alle PDFs der Liste nacheinander; andere Dateien bleiben liegen. */
-  openFiles: (files: readonly File[]) => Promise<void>;
+  /** Liefert die Zahl der gelesenen PDFs; 0, wenn keines lesbar war. */
+  openFiles: (files: readonly File[]) => Promise<number>;
   close: (id: string) => void;
   /** Zeigt dieses PDF zum Lesen (verlässt die Übersicht). */
   activate: (id: string) => void;
@@ -285,9 +286,9 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   // Mehrere PDFs: Fehler sammeln und am Ende zusammen zeigen — sonst löschte das nächste,
   // lesbare PDF die Meldung zum vorigen.
   const openFiles = useCallback(
-    async (files: readonly File[]): Promise<void> => {
+    async (files: readonly File[]): Promise<number> => {
       const pdfs = files.filter(isPdfFile);
-      if (pdfs.length === 0) return;
+      if (pdfs.length === 0) return 0;
       setError(null);
       const failed: { name: string; message: string }[] = [];
       for (const file of pdfs) {
@@ -295,8 +296,9 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
         if (message !== null) failed.push({ name: file.name, message });
       }
       // Mehrere auf einmal: erst die Übersicht, damit man sieht, was alles da ist.
-      setOverview(pdfs.length - failed.length > 1);
-      if (failed.length === 0) return;
+      const read = pdfs.length - failed.length;
+      setOverview(read > 1);
+      if (failed.length === 0) return read;
       setError(
         pdfs.length === 1
           ? failed[0].message
@@ -304,6 +306,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
               .map((entry) => entry.name)
               .join(', ')}`,
       );
+      return read;
     },
     [load],
   );

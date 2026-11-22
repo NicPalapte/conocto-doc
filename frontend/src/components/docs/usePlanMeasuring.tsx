@@ -651,6 +651,7 @@ export function usePlanMeasuring(doc: OpenedPdf, sizes: ReadonlyMap<number, Page
         <button
           type="button"
           aria-pressed={tool !== null}
+          data-tour="measure"
           onClick={() => {
             setTool((current) => (current === null ? 'laenge' : null));
             setDraft(null);

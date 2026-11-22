@@ -490,31 +490,52 @@ export async function saveSurveyDone(done: SurveyDone): Promise<boolean> {
 }
 
 /**
- * Ob die „Kurze Tour“ schon gesehen oder abgelehnt ist. Ohne IndexedDB `false` — dann
- * bietet sie sich in jeder Sitzung an, ohne Fehler.
+ * Welche Teile der Tour schon angeboten waren (Entscheidung neu-tour-in-kapiteln). `lv`: Kapitel 1
+ * nach dem ersten LV; `unterlagen`: Kapitel 2 und 3 nach dem ersten PDF.
  */
-export async function readTourSeen(): Promise<boolean> {
+export interface TourSeen {
+  readonly lv: boolean;
+  readonly unterlagen: boolean;
+}
+
+export const TOUR_UNSEEN: TourSeen = { lv: false, unterlagen: false };
+
+/** Gespeicherten Merker lesen. `true` (ohne Teile) zählt als gesehenes Kapitel 1. */
+export function toTourSeen(stored: unknown): TourSeen {
+  if (stored === true) return { lv: true, unterlagen: false };
+  if (typeof stored !== 'object' || stored === null) return TOUR_UNSEEN;
+  const record = stored as Record<string, unknown>;
+  return { lv: record.lv === true, unterlagen: record.unterlagen === true };
+}
+
+export async function readTourSeen(): Promise<TourSeen> {
   const db = await openDb();
-  if (db === null) return false;
+  if (db === null) return TOUR_UNSEEN;
   try {
     const stored: unknown = await requestResult(
       db.transaction(STORE, 'readonly').objectStore(STORE).get(KEY_TOUR),
     );
-    return stored === true;
+    return toTourSeen(stored);
   } catch {
-    return false;
+    return TOUR_UNSEEN;
   } finally {
     db.close();
   }
 }
 
-/** Merkt sich, dass die Tour gesehen oder abgelehnt ist — nur ja, keine Inhalte. */
-export async function saveTourSeen(): Promise<boolean> {
+/** Merkt sich, welche Teile der Tour gesehen oder abgelehnt sind — nur ja, keine Inhalte. */
+export async function saveTourSeen(part: keyof TourSeen = 'lv'): Promise<boolean> {
   const db = await openDb();
   if (db === null) return false;
   try {
     const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).put(true, KEY_TOUR);
+    const store = tx.objectStore(STORE);
+    const before = toTourSeen(await requestResult(store.get(KEY_TOUR)));
+    const next: TourSeen = {
+      lv: before.lv || part === 'lv',
+      unterlagen: before.unterlagen || part === 'unterlagen',
+    };
+    store.put(next, KEY_TOUR);
     await transactionDone(tx);
     return true;
   } catch {
