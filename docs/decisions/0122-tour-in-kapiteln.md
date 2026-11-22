@@ -1,4 +1,4 @@
-# NEU – Tour in drei Kapiteln, PDF-Teil erst mit PDF
+# DOC-0122 – Tour in drei Kapiteln, PDF-Teil erst mit PDF
 
 - **Status:** akzeptiert
 - **Datum:** 2026-11-21

@@ -3,7 +3,7 @@
 // fängt keine Klicks ab — wer mag, klickt das markierte Element selbst; manche
 // Schritte warten genau darauf (`done` in tourSteps.ts).
 //
-// Die Tour hat drei Kapitel; jedes lässt sich überspringen (Entscheidung neu-tour-in-kapiteln).
+// Die Tour hat drei Kapitel; jedes lässt sich überspringen (Entscheidung 0122).
 // Nach dem ersten LV bietet Conocto sie einmal als Willkommenskarte in der Mitte an,
 // der Graph dahinter abgedunkelt (0116). Ohne PDF läuft dann nur Kapitel 1; Kapitel 2
 // und 3 bietet eine zweite Karte an, sobald das erste PDF da ist. „Später", Escape oder ein

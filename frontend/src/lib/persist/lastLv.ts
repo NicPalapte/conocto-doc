@@ -490,7 +490,7 @@ export async function saveSurveyDone(done: SurveyDone): Promise<boolean> {
 }
 
 /**
- * Welche Teile der Tour schon angeboten waren (Entscheidung neu-tour-in-kapiteln). `lv`: Kapitel 1
+ * Welche Teile der Tour schon angeboten waren (Entscheidung 0122). `lv`: Kapitel 1
  * nach dem ersten LV; `unterlagen`: Kapitel 2 und 3 nach dem ersten PDF.
  */
 export interface TourSeen {

@@ -1,4 +1,4 @@
-// Merker der Tour je Teil (Entscheidung neu-tour-in-kapiteln). `true` (ohne Teile)
+// Merker der Tour je Teil (Entscheidung 0122). `true` (ohne Teile)
 // und muss weiter lesbar bleiben (0117).
 
 import 'fake-indexeddb/auto';

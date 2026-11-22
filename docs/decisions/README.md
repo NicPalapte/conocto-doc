@@ -131,6 +131,7 @@ Designsystem `DS-`). Neue Nummern vergibt erst der Bot nach dem Merge (0113).
 | 0119 | [CLAUDE.md schlank, Doku nur bei Bedarf lesen](0119-claude-md-schlank.md)                                      | akzeptiert                         | 2026-11-19 |
 | 0120 | [Links zu Beta und Arbeitsversion auf der Repo-Seite](0120-deployment-links.md)                                | akzeptiert                         | 2026-11-19 |
 | 0121 | [Viewer auf eigener Adresse doc.conocto.app](0121-doc-eigene-adresse.md)                                       | vorgeschlagen                      | 2026-11-20 |
+| 0122 | [Tour in drei Kapiteln, PDF-Teil erst mit PDF](0122-tour-in-kapiteln.md)                                       | akzeptiert                         | 2026-11-21 |
 
 ## Wann schreibe ich eine neue Datei?
 

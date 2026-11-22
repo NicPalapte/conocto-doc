@@ -1,4 +1,4 @@
-// Schritte der geführten Tour in drei Kapiteln (Entscheidung neu-tour-in-kapiteln). Jeder
+// Schritte der geführten Tour in drei Kapiteln (Entscheidung 0122). Jeder
 // Schritt zeigt auf ein echtes Bedienelement; manche warten, bis man es selbst anklickt.
 // Ziele sind `data-tour`-Attribute, damit Umbauten an Klassen die Tour nicht
 // stillschweigend brechen. Fehlt ein Ziel (z. B. „Betonsorten“ ohne Beton, ein PDF-Schritt

@@ -12,6 +12,14 @@ dem Merge daraus Version und Abschnitt.
 
 ---
 
+## 0.68.0 — 22.11.2026 · Tour in drei Kapiteln
+
+- **Neue Tour** mit 17 Schritten: LV lesen, Unterlagen verknüpfen, kalkulieren und abarbeiten.
+- **Kapitel überspringen** direkt in der Tour.
+- **Ohne PDF** endet die Tour nach dem LV und bietet „PDF hinzufügen…“ an. Kommt das erste PDF
+  später, meldet sich die Tour mit den PDF-Kapiteln.
+- **Behoben:** Der erste Schritt markierte den ganzen Graphen statt eines Punkts.
+
 ## 0.67.1 — 20.11.2026 · Startseite führt direkt zu doc.conocto.app
 
 - Die Knöpfe „Mit eigenen Daten ausprobieren“ und „Demo starten“ auf conocto.app öffnen den
